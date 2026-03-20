@@ -33,7 +33,7 @@ services:
       MYSQL_DATABASE: finance_payment
       MYSQL_ROOT_PASSWORD: googolplex10100!
       MYSQL_USER: finance_payment
-      MYSQL_PASSWORD: finance_payment
+      MYSQL_PASSWORD: "Fp_2026_Secure!"
     volumes:
       - mysql-data:/var/lib/mysql
     ports:

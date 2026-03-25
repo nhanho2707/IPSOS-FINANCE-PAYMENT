@@ -40,7 +40,7 @@ RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/bootstrap/cache
 
 # Expose the port Laravel runs on
-EXPOSE 9000
+EXPOSE 8000
 
 # Start PHP-FPM server
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]

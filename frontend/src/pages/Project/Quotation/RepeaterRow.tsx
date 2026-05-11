@@ -69,21 +69,49 @@ const RepeaterRow = memo(({ row, isEditing, onChange}: Props) => {
     const renderSavedField = (field: FieldSchema, rowItem: RepeaterRowData, cellStyle: any) => {
         const value = rowItem[field.name];
 
-        return (
-            <Box
-                key={field.name}
-                sx={cellStyle}
-            >
-                {Array.isArray(value)
-                    ? value.map(v => v.label).join(',')
-                    : value.label || value}
-            </Box>
-        );
+        if(Object.keys(rowItem).includes(field.name)){
+            return (
+                <Box
+                    key={field.name}
+                    sx={cellStyle}
+                >
+                    {Array.isArray(value)
+                        ? value.map(v => v.label).join(',')
+                        : value.label || value}
+                </Box>
+            );
+        } else {
+            return (
+                <Box
+                    key={field.name}
+                    sx={cellStyle}
+                >
+                </Box>
+            );
+        }
+        
     }
 
     const renderField = (field: FieldSchema, cellStyle: any) => {
         switch(field.type){
             case "number":
+                return (
+                    <Box
+                        key={field.name}
+                        sx={cellStyle}
+                    >
+                        <TextField
+                            fullWidth
+                            autoFocus
+                            size="small"
+                            disabled={!isEditing}
+                            type={field.type}
+                            value={draft[field.name] ?? ""}
+                            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                        />
+                    </Box>
+                )
+            case "text":
                 return (
                     <Box
                         key={field.name}

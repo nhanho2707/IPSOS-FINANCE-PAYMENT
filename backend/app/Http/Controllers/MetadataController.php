@@ -18,15 +18,37 @@ class MetadataController extends Controller
     {
         try
         {
-            $projectTypes = Cache::remember('project_types', 3600, fn() => ProjectType::all(['id', 'name']));
-            $departments = Cache::remember('deparments', 3600, fn() => Department::all(['id', 'name']));
-            $roles = Cache::remember('roles', 3600, fn() => Role::all(['id', 'name', 'department_id']));
-            $teams = Cache::remember('teams', 3600, fn() => Team::whereIn('department_id', [2, 3])->get(['id', 'name']));
+            $projects = Cache::remember('metadata_projects', 3600, function() {
+                return Project::with('projectDetails')
+                        ->orderByRaw("
+                            (
+                                SELECT
+                                    CASE project_details.status
+                                        WHEN 'completed' THEN 1
+                                        WHEN 'on going' THEN 2
+                                        WHEN 'in coming' THEN 3
+                                        WHEN 'planned' THEN 4
+                                        WHEN 'on hold' THEN 5
+                                        WHEN 'cancelled' THEN 6   
+                                    END
+                                FROM project_details
+                                WHERE project_details.project_id = projects.id
+                                LIMIT 1
+                            )
+                        ")
+                        ->latest()
+                        ->get(['id', 'internal_code', 'project_name']);
+            });
+            $projectTypes = Cache::remember('metadata_project_types', 3600, fn() => ProjectType::all(['id', 'name']));
+            $departments = Cache::remember('metadata_deparments', 3600, fn() => Department::all(['id', 'name']));
+            $roles = Cache::remember('metadata_roles', 3600, fn() => Role::all(['id', 'name', 'department_id']));
+            $teams = Cache::remember('metadata_teams', 3600, fn() => Team::whereIn('department_id', [2, 3])->get(['id', 'name']));
 
             return response()->json([
                 'status_code' => 200,
                 'message' => 'Metadata fetched successfully',
                 'data' => [
+                    'projects' => $projects,
                     'project_types' => $projectTypes,
                     'departments' => $departments,
                     'roles' => $roles,

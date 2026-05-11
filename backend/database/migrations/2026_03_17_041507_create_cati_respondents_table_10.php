@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
             $table->string('name'); // batch name
-            $table->enum('status', ['active', 'closed'])->default('active');
+            $table->enum('status', ['active', 'blocked'])->default('active');
             $table->integer('total_records')->default(0);
             $table->foreignId('created_user_id')->constrained('users');
             $table->timestamps();
@@ -39,7 +39,7 @@ return new class extends Migration
             $table->string('filter_4')->nullable();
             $table->string('status')->default('New'); // New, Calling, Done...
             $table->text('comment')->nullable();
-            $table->string('assigned_to')->nullable()->constrained('employees')->nullOnDelete();
+            $table->foreignId('assigned_to')->nullable()->constrained('employees')->nullOnDelete();
             $table->timestamp('locked_at')->nullable();
             $table->timestamps();
 

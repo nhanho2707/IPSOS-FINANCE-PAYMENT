@@ -2,16 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import SearchTextBox from "../../components/SearchTextBox";
-import { Box, Button, IconButton } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { useTransactions } from "../../hook/useTransactions";
 import { TransactionCellConfig, TransactionData } from "../../config/TransactionFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { useProjects } from "../../hook/useProjects";
-import TextsmsIcon from "@mui/icons-material/Textsms";
-import SendIcon from "@mui/icons-material/Send";
 import SmsIcon from "@mui/icons-material/Sms";
-import { error } from "console";
 
 const Transactions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +16,7 @@ const Transactions: React.FC = () => {
   const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
 
   const { getProject } = useProjects();
-  const { transactions, loading, error: errorTransactions, message: messageTransactions, page, setPage, rowsPerPage, setRowsPerPage, total, setSearchTerm } = useTransactions(projectId);
+  const { transactions, loading: loadingTransactions, error: errorTransactions, message: messageTransactions, page, setPage, rowsPerPage, setRowsPerPage, total, setSearchTerm } = useTransactions(projectId);
   const [ transactionCellConfig, setTransactionCellConfig ] = useState(TransactionCellConfig);
   
   const handleSearchChange = (value: string) => {
@@ -116,11 +113,10 @@ const Transactions: React.FC = () => {
             columns={columns}
             data={transactions}
             actionStatus={{
-              fetch: {
-                loading: loading,
-                error: errorTransactions,
-                message: messageTransactions
-              }
+              type: 'fetch',
+              loading: loadingTransactions,
+              error: errorTransactions,
+              message: messageTransactions
             }}
             page = {page}
             rowsPerPage = {rowsPerPage}

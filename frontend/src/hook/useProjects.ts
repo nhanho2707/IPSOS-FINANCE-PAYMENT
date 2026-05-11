@@ -3,12 +3,18 @@ import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
 import { ProjectData } from "../config/ProjectFieldsConfig";
 import dayjs, { Dayjs } from "dayjs";
+import { ActionState } from "../components/Table/ReusableTable";
 
 export function useProjects() {
 
     const [ projects, setProjects ] = useState<ProjectData[]>([]);
-    const [ loading, setLoading ] = useState(false);
-    const [ error, setError ] = useState<string | null>(null);
+    
+    const [ actionState, setActionState ] = useState<ActionState>({
+        type: 'idle',
+        loading: false,
+        error: false,
+        message: ""
+    });
 
     const [ page, setPage ] = useState(0);
     const [ rowsPerPage, setRowsPerPage ] = useState(10);
@@ -20,10 +26,14 @@ export function useProjects() {
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0); //Tổng số projects từ backend
 
-    const fetchProjects = useCallback(async () => {
+    const fetchProjects = useCallback(async (options?: {silent?: boolean}) => {
         try{
-            setLoading(true);
-            setError(null);
+            setActionState((prev) => ({
+                ...prev,
+                type: 'fetch',
+                loading: true,
+                ...(options?.silent ? {} : { message: "", error: false })
+            }));
 
             const token = localStorage.getItem("authToken");
 
@@ -47,16 +57,35 @@ export function useProjects() {
             setMeta(response.data.meta);
             setTotal(response.data.meta.total);
 
+            setActionState((prev) => ({
+                ...prev,
+                loading: false,
+                ...options?.silent ? {} : { message: response.data.message }
+            }));
         }catch(error: any){
-            setError(error.message || "Failed to fetch Projects");
-        } finally{
-            setLoading(false);
-        }
+            let message = 'Failed to fetch Projects';
+            
+            if(axios.isAxiosError(error)){
+                message = error.response?.data.message || error.response?.data.error || error.message
+            } else {
+                message = error.response?.error
+            }
+            
+            setActionState((prev) => ({
+                ...prev,
+                loading: false,
+                error: true,
+                ...(options?.silent ? {} : {
+                    message: message
+                })
+            }));
+        }; 
 
     }, [page, rowsPerPage, searchTerm, searchFromDate, searchToDate]);
 
     const addProject = useCallback(async (payload: Partial<ProjectData>) => {
-        try{
+        try
+        {
             const token = localStorage.getItem("authToken");
 
             const response = await axios.post(ApiConfig.project.addProject, payload, {
@@ -114,11 +143,12 @@ export function useProjects() {
     }, []);
     
     useEffect(() => {
-        fetchProjects();
+        fetchProjects({silent: true});
     }, [page, rowsPerPage, searchTerm, searchFromDate, searchToDate, fetchProjects]);
 
     return {
         projects,
+        actionState,
         meta,
         total,
         page,
@@ -131,8 +161,6 @@ export function useProjects() {
         setSearchFromDate,
         searchToDate,
         setSearchToDate,
-        loading,
-        error,
         fetchProjects,
         getProject,
         addProject,

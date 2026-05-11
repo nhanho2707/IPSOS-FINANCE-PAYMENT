@@ -41,8 +41,8 @@ class Employee extends Model
         return $this->belongsTo(Role::class);
     }
 
-    public function projectEmployees()
+    public function projects()
     {
-        return $this->hasMany(ProjectEmployee::class, 'employee_id', 'id');
+        return $this->belongsToMany(Project::class, 'project_employees', 'employee_id', 'project_id');
     }
 }

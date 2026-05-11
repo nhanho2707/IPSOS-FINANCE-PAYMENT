@@ -27,6 +27,13 @@ class ProjectDetail extends Model
         'remember_uuid'
     ];
 
+    protected $casts = [
+        'planned_field_start' => 'datetime', 
+        'planned_field_end' => 'datetime', 
+        'actual_field_start' => 'datetime', 
+        'actual_field_end' => 'datetime'
+    ];
+
     protected static function boot()
     {
         parent::boot();

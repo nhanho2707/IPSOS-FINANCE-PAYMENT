@@ -2,22 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { CATIBatchData } from "../config/MiniCATIFieldsConfig";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
+import { ActionState, ActionType } from "../components/Table/ReusableTable";
 
 export const useCATIBatch = (projectId: number) => {
 
     const [ batches, setBatches ] = useState<CATIBatchData[]>([])
     
-    const [ loading, setLoading ] = useState(false);
-    const [ error, setError ] = useState(false);
-    const [ message, setMessage ] = useState("");
-
-    const [ importLoading, setImportLoading ] = useState(false);
-    const [ importError, setImportError ] = useState(false);
-    const [ importMessage, setImportMessage ] = useState("");
-
-    const [ destroyLoading, setDestroyLoading ] = useState(false);
-    const [ destroyError, setDestroyError ] = useState(false);
-    const [ destroyMessage, setDestroyMessage ] = useState("");
+    const [ actionState, setActionState ] = useState<ActionState>({
+        type: 'idle',
+        loading: false,
+        error: false,
+        message: ""
+    });
 
     const [ page, setPage ] = useState(0);
     const [ rowsPerPage, setRowsPerPage ] = useState(10);
@@ -26,14 +22,17 @@ export const useCATIBatch = (projectId: number) => {
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0);
 
-    const fetchCATIBatches = useCallback(async () => {
+    const fetchCATIBatches = useCallback(async (options?: { silent?: boolean}) => {
         try
         {
             if(!projectId) return;
 
-            setLoading(true);
-            setError(false);
-            setMessage("");
+            setActionState((prev) => ({
+                ...prev,
+                type: 'fetch',
+                loading: true,
+                ...(options?.silent ? {} : { message: "", error: false })
+            }));
 
             const token = localStorage.getItem('authToken');
 
@@ -55,20 +54,33 @@ export const useCATIBatch = (projectId: number) => {
             setBatches(response.data.data);
             setMeta(response.data.meta);
             setTotal(response.data.meta.total);
+
+            setActionState((prev) => ({
+                ...prev,
+                loading: false,
+                ...options?.silent ? {} : { message: response.data.message }
+            }));
         } catch(error:any){
-            setError(true);
-            setMessage(error.message || 'Failed to fetch CATI Batches!');
-        } finally {
-            setLoading(false);
+            setActionState((prev) => ({
+                ...prev,
+                loading: false,
+                error: true,
+                ...(options?.silent ? {} : {
+                    message: error.response.data.error || 'Failed to fetch CATI Batches!'
+                })
+            }));
         }
     }, [page, rowsPerPage, searchTerm])
 
     const importCATIBatch = async (file: any, batchName: string) => {
         try
         {
-            setImportLoading(true);
-            setImportError(false);
-            setImportMessage("");
+            setActionState({
+                type: 'import',
+                loading: true,
+                error: false,
+                message: ""
+            });
 
             const token = localStorage.getItem('authToken');
 
@@ -85,21 +97,33 @@ export const useCATIBatch = (projectId: number) => {
                 },
             });
 
-            setImportMessage(response.data.message);
+            setActionState({
+                type: 'import',
+                loading: false,
+                error: false,
+                message: response.data.message
+            });
+
+            await fetchCATIBatches({silent: true});
         } catch(error: any){
-            setImportError(true);
-            setImportMessage(error.response.data.message || 'Failed to import CATI Batch!');
-        } finally{
-            setImportLoading(false);
+            setActionState({
+                type: 'import',
+                loading: false,
+                error: true,
+                message: error.response.data.message || 'Failed to import CATI Batch!'
+            });
         }
     };
 
     const destroyBatch = async (batchId: number) => {
         try
         {
-            setDestroyLoading(true);
-            setDestroyError(false);
-            setDestroyMessage("");
+            setActionState({
+                type: 'delete',
+                loading: true,
+                error: false,
+                message: ""
+            });
 
             const token = localStorage.getItem('authToken');
 
@@ -114,48 +138,107 @@ export const useCATIBatch = (projectId: number) => {
             });
 
             if(response.data.status_code === 400){
-                setDestroyError(true);
-                setDestroyMessage(response.data.error)
+                setActionState({
+                    type: 'delete',
+                    loading: false,
+                    error: true,
+                    message: response.data.error
+                });
             } else {
-                setDestroyMessage(response.data.message);
+                setActionState({
+                    type: 'delete',
+                    loading: false,
+                    error: false,
+                    message: response.data.message
+                });
+
+                await fetchCATIBatches({silent: true});
             }
         } catch(error: any){
-            setDestroyError(true);
-            setDestroyMessage(error.response.data.message || 'Failed to delete CATI Batch!');
-        } finally{
-            setDestroyLoading(false);
+            setActionState({
+                type: 'delete',
+                loading: false,
+                error: true,
+                message: error.response.data.error || 'Failed to delete CATI Batch!'
+            });
+        }
+    }
+
+    const updateStatus = async (batchId: number, status: string) => {
+        try
+        {
+            setActionState({
+                type: 'update',
+                loading: false,
+                error: false,
+                message: ""
+            });
+
+            const token = localStorage.getItem('authToken');
+
+            const url = `${ApiConfig.minicati.updateBatchStatus.replace("{projectId}", projectId.toString()).replace('{batchId}', batchId.toString()) }`;
+
+            const response = await axios.put(url, { status: status }, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+            });
+            
+            const batch = response.data.data;
+
+            setBatches((prev) => prev.map(b => b.id === batch.id ? {...b, status } : b))
+
+            setActionState({
+                    type: 'update',
+                    loading: false,
+                    error: true,
+                    message: response.data.error
+                });
+        } catch(error: any){
+            setActionState({
+                type: 'update',
+                loading: false,
+                error: true,
+                message: error.response.data.error || 'Failed to update CATI Batch!'
+            });
         }
     }
 
     useEffect(() => {
-        fetchCATIBatches();
+        fetchCATIBatches({silent: true});
     }, [page, rowsPerPage, searchTerm])
+
+    useEffect(() => {
+        if(!actionState.message) return;
+
+        const timer = setTimeout(() => {
+            setActionState(prev => ({...prev, message: ""}));
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [actionState.message])
 
     return {
         batches,
+        actionState,
         meta,
         total,
         page,
         setPage,
         rowsPerPage,
+
+        setActionState,
+
         setRowsPerPage,
         searchTerm,
         setSearchTerm,
-        loading,
-        error,
-        message,
-
-        importLoading,
-        importError,
-        importMessage,
-
-        destroyLoading,
-        destroyError,
-        destroyMessage,
 
         fetchCATIBatches,
         importCATIBatch,
 
-        destroyBatch
+        destroyBatch,
+        updateStatus
     }
 }

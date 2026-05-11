@@ -22,7 +22,9 @@ class CATIRespondent extends Model
         'filter_2',
         'filter_3',
         'filter_4',
-        'status'
+        'status',
+        'assigned_to',
+        'lock_at'
     ];
 
     protected $casts = [

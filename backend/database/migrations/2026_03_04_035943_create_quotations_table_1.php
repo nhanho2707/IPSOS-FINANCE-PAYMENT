@@ -19,10 +19,13 @@ return new class extends Migration
             $table->enum('status', ['draft','submitted','approved','rejected'])->default('draft');
             $table->foreignId('created_user_id')->constrained('users');
             $table->foreignId('updated_user_id')->nullable()->constrained('users');
+            $table->foreignId('submitted_user_id')->nullable()->contrained('users');
             $table->foreignId('approved_user_id')->nullable()->constrained('users');
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
         });
+
+        $table->unique('project_id', 'version');
     }
 
     /**

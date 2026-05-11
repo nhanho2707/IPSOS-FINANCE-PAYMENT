@@ -31,6 +31,8 @@ import AccountManagement from "./pages/AccountManagement/AccountManagement";
 import ConfirmPassword from "./pages/Auth/ConfirmPassword";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import CATISettings from "./pages/Project/CATISettings";
+import MiniCATILogin from "./pages/MiniCATI/MiniCATILogin";
+import CATIProtectedRoute from "./routes/CATIProtectedRoute";
 
 // Fetch the CSRF token from the meta tag
 const csrfToken = document
@@ -51,9 +53,7 @@ const App: React.FC = () => {
             <Route path="/confirm-password" element={<ConfirmPassword/>} />
             <Route path="/forgot-password" element={<ForgotPassword/>} />
             <Route path="/page200" element={<Page200 messageSuccess="" />} />
-            <Route path="/error" element={<ErrorPage />} />
-
-            <Route path="/mini-cati" element={<MiniCATI />} />
+            <Route path="/error" element={<ErrorPage />} />            
             <Route path="/custom-voucher/:token" element={<CustomVoucher />} />
             <Route path='/search-link' element={<CustomVoucherLog />} />
 
@@ -111,7 +111,12 @@ const App: React.FC = () => {
                 element={<Settings />}
               />
             </Route>
+            {/* ================= MINI CATI============ */}
+            <Route path="/mini-cati/login" element={<MiniCATILogin />} />
             
+            <Route element={<CATIProtectedRoute />}>
+              <Route path="/mini-cati" element={<MiniCATI /> } />
+            </Route>
             {/* ================= 404 ================= */}
             <Route 
               path="*" 

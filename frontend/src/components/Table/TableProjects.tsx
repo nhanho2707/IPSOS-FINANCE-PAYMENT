@@ -32,7 +32,7 @@ import AlertDialog from "../AlertDialog/AlertDialog";
 import SearchTextBox from "../SearchTextBox";
 import dayjs, { Dayjs } from 'dayjs';
 import SearchDatePickerFromTo from "../SearchDatePickerFromTo";
-import { TableCellConfig } from "../../config/ProjectFieldsConfig";
+import { ProjectCellConfig } from "../../config/ProjectFieldsConfig";
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 const TableProjects = () => {
@@ -67,7 +67,7 @@ const TableProjects = () => {
   const [anchorElStatus, setAnchorElStatus] = useState<HTMLElement | null>(null);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
 
-  const { projects, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, loading: projectsLoading, error: projectError } = useProjects();
+  const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus } = useProjects();
   const { data, isLoading, isError } = useMetadata();
 
   const handleChangePage = (event: any, newPage: number) => {
@@ -208,13 +208,13 @@ const TableProjects = () => {
           </div>
         </div>
         
-        { (projectError && isError) ? (
+        { (actionState.error && isError) ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
             <SdCardAlertOutlinedIcon />
-            <div>{projectError ?? isError}</div>
+            <div>{actionState.error ?? isError}</div>
           </Box>
         ) : (
-          (projectsLoading && isLoading) ? (
+          (actionState.loading && isLoading) ? (
             <Box display="flex" justifyContent="center" alignItems="center" height="100%">
               <CircularProgress />
             </Box>
@@ -223,7 +223,7 @@ const TableProjects = () => {
               <Table>
                 <TableHead>
                   <TableRow className="header-table">
-                    {TableCellConfig.map((item, index) => {
+                    {ProjectCellConfig.map((item, index) => {
                       return <TableCell 
                               key={index}
                               align={ item.label === 'Status' ? 'center' : 'left' }
@@ -253,7 +253,7 @@ const TableProjects = () => {
                   {projects
                     .map((project: any) => (
                       <TableRow key={project.id} className="table-row" hover={true}>
-                        {TableCellConfig.map((item, index) => (
+                        {ProjectCellConfig.map((item, index) => (
                           <TableCell 
                             key={item.name} 
                             className="table-cell"
@@ -339,7 +339,7 @@ const TableProjects = () => {
                           <IconButton
                             aria-label="actions"
                             onClick={() =>
-                              navigate(`/project-management/projects/${project.id}/quotation`)
+                              navigate(`/project-management/projects/${project.id}/quotation`, )
                             }
                             sx={{
                               backgroundColor: '#f6f6f6', 

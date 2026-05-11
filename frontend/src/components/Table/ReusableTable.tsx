@@ -3,22 +3,13 @@ import { ColumnFormat } from "../../config/ColumnConfig";
 import CloseIcon from "@mui/icons-material/Close";
 import { Alert, Box, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow } from "@mui/material";
 
-type ActionState = {
-    fetch?: {
-        loading?: boolean,
-        error?: boolean
-        message?: string
-    };
-    import?: {
-        loading?: boolean,
-        error?: boolean,
-        message?: string
-    };
-    delete?: {
-        loading?: boolean,
-        error?: boolean,
-        message?: string
-    }
+export type ActionType = 'fetch' | 'clone' | 'approve' | 'submit' | 'import' | 'export' | 'update' | 'delete' | 'idle';
+
+export interface ActionState {
+    loading?: boolean,
+    error?: boolean,
+    message?: string,
+    type?: ActionType
 }
 
 interface ReusableTableProps {
@@ -52,33 +43,26 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
 }) => {
     const [ openAlert, setOpenAlert] = useState(false);
 
-    const fetchLoading = actionStatus.fetch?.loading;
-    const fetchError = actionStatus.fetch?.error;
-    const fetchMessage = actionStatus.fetch?.message;
-
-    const deleteLoading = actionStatus.delete?.loading;
-    const deleteError = actionStatus.delete?.error;
-    const deleteMessage = actionStatus.delete?.message;
-
-    const importLoading = actionStatus.import?.loading;
-    const importError = actionStatus.import?.error;
-    const importMessage = actionStatus.import?.message;
-
     useEffect(() => {
-        if(fetchMessage || importMessage || deleteMessage){
+        if(actionStatus.message){
             setOpenAlert(true);
         } else {
             setOpenAlert(false);
         }
-    }, [fetchMessage, importMessage, deleteMessage])
+    }, [actionStatus])
 
     return (
-        <Box className="box-table">
+        <Box
+            sx={{
+                pr: 2,
+                pl: 2
+            }}
+        >
             {openAlert && (
                 <Box sx={{ p: 2 }}>
-                    {(fetchMessage) && (
+                    {(actionStatus.message) && (
                         <Alert 
-                            severity= {fetchError ? "error" : "success"} 
+                            severity= {actionStatus.error ? "error" : "success"} 
                             sx={{ width: "100%", alignItems: "center", mb: 2 }}
                             action={
                                 <IconButton
@@ -91,52 +75,31 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                                 </IconButton>
                             }
                         >
-                            {fetchMessage}
-                        </Alert>
-                    )}
-                    {(importMessage) && (
-                        <Alert 
-                            severity= {importError ? "error" : "success"} 
-                            sx={{ width: "100%", alignItems: "center", mb: 2 }}
-                            action={
-                                <IconButton
-                                    aria-label="close"
-                                    color="inherit"
-                                    size="small"
-                                    onClick={() => setOpenAlert(false)}
-                                >
-                                    <CloseIcon fontSize="inherit" />
-                                </IconButton>
-                            }
-                        >
-                            {importMessage}
-                        </Alert>
-                    )}
-                    {(deleteMessage) && (
-                        <Alert 
-                            severity= {deleteError ? "error" : "success"} 
-                            sx={{ width: "100%", alignItems: "center", mb: 2 }}
-                            action={
-                                <IconButton
-                                    aria-label="close"
-                                    color="inherit"
-                                    size="small"
-                                    onClick={() => setOpenAlert(false)}
-                                >
-                                    <CloseIcon fontSize="inherit" />
-                                </IconButton>
-                            }
-                        >
-                            {deleteMessage}
+                            {actionStatus.message}
                         </Alert>
                     )}
                 </Box>
             )}
-            <TableContainer component={Paper} className="table-container">
+
+            <TableContainer 
+                component={Paper}
+                sx={{
+                    maxHeight: 'calc(100vh - 100px)',
+                    backgroundColor: 'var(--background-color) !important',
+                    overflowX: "auto !important",
+                    boxShadow: "none !important"
+                }}
+            >
                 {topToolbar}
 
-                <Table sx={{ tableLayout: 'auto', width: '100%' }}>
-                    <TableHead className="header-table">
+                <Table 
+                    stickyHeader
+                    sx={{ 
+                        tableLayout: 'fixed', 
+                        width: '100%'
+                    }}
+                >
+                    <TableHead>
                         <TableRow>
                             {columns.map((col, idx) => (
                                 <TableCell 
@@ -145,7 +108,7 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                                         whiteSpace: "nowrap",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
-                                        width: col.name == "actions" ? 120 : "auto"
+                                        width: col.width ?? "auto"
                                     }}
                                     align="left"
                                 >
@@ -156,7 +119,7 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                     </TableHead>
                     <TableBody>
                         {
-                            fetchLoading ? (
+                            actionStatus.loading ? (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} align="center">
                                         <CircularProgress />
@@ -173,7 +136,8 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                                                 sx={{
                                                     whiteSpace: "nowrap",
                                                     overflow: "hidden",
-                                                    textOverflow: "ellipsis"
+                                                    textOverflow: "ellipsis",
+                                                    width: col.width ?? "auto"
                                                 }}
                                                 align={ col.align ? col.align : "left" }
                                             >

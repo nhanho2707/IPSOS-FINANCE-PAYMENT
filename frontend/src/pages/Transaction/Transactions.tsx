@@ -9,6 +9,10 @@ import { Skeleton } from "@mui/material";
 import { useGotItAccount } from "../../hook/useGotItAccount";
 import dayjs, { Dayjs } from "dayjs"
 import SearchDatePickerFromTo from "../../components/SearchDatePickerFromTo";
+import { ProjectData } from "../../config/ProjectFieldsConfig";
+import { useMetadata } from "../../hook/useMetadata";
+import LoadingButton from "@mui/lab/LoadingButton";
+import SendIcon from '@mui/icons-material/Send';
 
 const Transactions = () => {
     const { loading: vinnetLoading, vinnetAccount } = useVinnetAccount();
@@ -20,9 +24,13 @@ const Transactions = () => {
     const [ toDate, setToDate ] = useState<Dayjs | null>(null);
     
     const [ loadingExport, setLoadingExport ] = useState<boolean>(false);
+    const [ loadingExportByProjects, setLoadingExportByProjects ] = useState<boolean>(false); 
     
-    const [ projects, setProjects ] = useState<string[]>(["Project A", "Project B"]);
-    const [ selectedProjects, setSelectedProjects ] = useState<string[]>([]);
+    const { data } = useMetadata();
+
+    const [ selectedProjects, setSelectedProjects ] = useState<ProjectData[]>([]);
+
+    const [ loadingExportExcelByProjects, setLoadingExportExcelByProjects ]= useState<boolean>(false);
 
     const token = localStorage.getItem("authToken");
 
@@ -31,10 +39,6 @@ const Transactions = () => {
 
         setAmount("");
         setOpen(false);
-    }
-
-    const handleProjectChange = (value: any) => {
-
     }
 
     const handleExport = async (from: Dayjs | null, to: Dayjs | null) => {
@@ -71,6 +75,42 @@ const Transactions = () => {
             console.log("Export failed", error);
         } finally{
             setLoadingExport(false);
+        }
+    }
+
+    const handleExportExcelByProjects = async () => {
+        try
+        {
+            setLoadingExportByProjects(true);
+
+            const project_ids = selectedProjects.map((p) => p.id);
+
+            const response = await axios.get(ApiConfig.functions.exportTransactionsByProjecs, {
+                params: {
+                    project_ids: project_ids
+                },
+                responseType: 'blob',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.setAttribute("download", "transactions.xlsx");
+
+            document.body.appendChild(link);
+            link.click();
+
+            link.remove();
+
+
+        }catch(error){
+            console.log("Export failed", error);
+        } finally{
+            setLoadingExportByProjects(false);
         }
     }
     
@@ -212,41 +252,72 @@ const Transactions = () => {
             </Grid>
             <Grid item xs={12}>
                 <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                    Chọn ngày để xuất transaction (Ví dụ: 01/01/2026 - 01/31/2026)
+                    Chọn ngày để xuất transactions (Ví dụ: 01/01/2026 - 01/31/2026)
                 </Typography>
                 <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="EXPORT EXCEL" loadingButton={loadingExport} onSearchChange={handleExport} />
                 <Divider sx={{ mt: 2 }} />
             </Grid>
             <Grid item xs={12}>
-                <div style={{ marginBottom: "1rem" }}>
-                    <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                        Project Name:
-                    </Typography>
-                    <Autocomplete
-                        multiple
-                        disableCloseOnSelect
-                        options={projects || []}
-                        value={selectedProjects || []}
-                        onChange={(event, newValue) => setSelectedProjects(newValue)}
-                        getOptionLabel={(option) => option}
-                        renderOption={(props, option, { selected }) => (
-                            <li {...props}>
-                                <Checkbox
-                                    style={{ marginRight: 8 }}
-                                    checked={selected}
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 2,
+                    }}
+                >
+                    <Box
+                        sx={{
+                            flex: 1
+                        }}
+                    >
+                        <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
+                            Chọn dự án để xuất transactions:
+                        </Typography>
+                        <Autocomplete
+                            multiple
+                            disableCloseOnSelect
+                            options={data.projects || {}}
+                            value={selectedProjects || []}
+                            onChange={(event, newValue) => setSelectedProjects(newValue)}
+                            getOptionLabel={(option) => `${option.internal_code} - ${option.project_name}`}
+                            renderOption={(props, option, { selected }) => (
+                                <li {...props}>
+                                    <Checkbox
+                                        style={{ marginRight: 8 }}
+                                        checked={selected}
+                                    />
+                                    {option.internal_code} - {option.project_name}
+                                </li>
+                            )}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    size="small"
+                                    placeholder="Select..."
                                 />
-                                {option}
-                            </li>
-                        )}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                size="small"
-                                placeholder="Select..."
-                            />
-                        )}
-                    />
-                </div>
+                            )}
+                        />
+                    </Box>
+                    <Box
+                        sx={{
+                            pt: 5.2
+                        }}
+                    >
+                        <LoadingButton
+                            onClick={handleExportExcelByProjects}
+                            size="small"
+                            startIcon ={<SendIcon />}
+                            loading={loadingExportExcelByProjects}
+                            loadingPosition="end"
+                            variant="contained"
+                            disabled={selectedProjects.length == 0}
+                            className='btn bg-vinnet-primary'
+                            >
+                                <span>EXPORT EXCEL</span>
+                        </LoadingButton>
+                    </Box>
+                </Box>
+                
             </Grid>
             
             <GenericDialog

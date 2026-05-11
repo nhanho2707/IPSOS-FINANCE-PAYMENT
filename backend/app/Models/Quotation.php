@@ -18,6 +18,7 @@ class Quotation extends Model
         'status',
         'created_user_id',
         'updated_user_id',
+        'submitted_user_id',
         'approved_user_id',
         'approved_at'
     ];
@@ -34,6 +35,11 @@ class Quotation extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_user_id');
+    }
+
+    public function submittor()
+    {
+        return $this->belongsTo(User::class, 'submitted_user_id');
     }
 
     public function approver()

@@ -20,7 +20,7 @@ const ParttimeEmployees = () => {
     const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
 
     const { getProject } = useProjects();
-    const { employees, meta, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading, error: errorEmployees, message: messageEmployees, addEmployees, removeEmployee } = useEmployees(projectId);
+    const { employees, meta, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading: loadingEmployees, error: errorEmployees, message: messageEmployees, addEmployees, removeEmployee } = useEmployees(projectId);
     
     const { canView } = useVisibility();
     
@@ -107,7 +107,7 @@ const ParttimeEmployees = () => {
             align: "center",
             flex: 1,
             renderAction: (row: any) => {
-                const disabled = loading || row.transaction_total > 0;
+                const disabled = loadingEmployees || row.transaction_total > 0;
 
                 return (
                     <IconButton
@@ -179,11 +179,10 @@ const ParttimeEmployees = () => {
                 columns={columns}
                 data={employees}
                 actionStatus={{
-                    fetch: {
-                        loading: loading,
-                        error: errorEmployees,
-                        message: messageEmployees
-                    }
+                    type: 'fetch',
+                    loading: loadingEmployees,
+                    error: errorEmployees,
+                    message: messageEmployees
                 }}
                 page = {page}
                 rowsPerPage = {rowsPerPage}

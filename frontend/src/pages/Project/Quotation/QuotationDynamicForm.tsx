@@ -23,6 +23,7 @@ export interface FieldSchema {
     required?: boolean;
     default?: string | number;
     layout?: LayoutSchema,
+    hidden: boolean,
     options?: {value: string, label: string}[];
     fields?: FieldSchema[];
 }

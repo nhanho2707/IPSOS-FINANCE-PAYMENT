@@ -15,24 +15,61 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import useDialog from "../../../hook/useDialog";
 import AlertDialog from "../../../components/AlertDialog/AlertDialog";
+import GenericDialog from "../../../components/Dialogs/GenericDialog";
 
 const Quotation: React.FC = () => {
     const { id } = useParams<{id: string}>();
+    const projectId = Number(id) || 0;
 
     const [ formKey, setFormKey ] = useState(0);
     const [ schema, setSchema ] = useState([]);
 
-    useEffect(() => {
-        axios
-            .get(ApiConfig.schema.quotationSchema)
-            .then((res) => setSchema(res.data));
-    }, []);
-
-    const { loading, error, message: messageQuotation, project, versions, selectedVersion, setSelectedVersion, canEdit, setCanEdit, getQuotationVersions, addQuotation, updateQuotation, destroyQuotation } = useQuotation(Number(id));
+    const { actionState, 
+            project, 
+            versions, 
+            selectedVersion, 
+            setSelectedVersion, 
+            canEdit, 
+            setCanEdit, 
+            getQuotationVersions, 
+            addQuotation, 
+            updateQuotationVersion, 
+            destroyQuotationVersion,
+            submitQuotationVersion,
+            cloneQuotationVersion,
+            approveQuotationVersion
+    } = useQuotation(Number(id));
     const [ openAlert, setOpenAlert ] = useState(false);
     const [ isEditing, setIsEditing ] = useState(false);
 
     const { open, title, message: messageDialog, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    
+    const [ openCloneNewVersion, setOpenCloneNewVersion ] = useState<boolean>(false);
+    const [ selectedCloneVersion, setSelectedCloneVersion ] = useState<QuotationVersionData | null>(null);
+
+    useEffect(() => {
+        const getQuotationSchema = async () => {
+            try{
+                const token = localStorage.getItem('authToken');
+
+                const url = ApiConfig.project.getQuotationSchema.replace("{projectId}", projectId.toString());
+
+                const response = await axios.get(url, {
+                    method: "GET",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+
+                setSchema(response.data)
+            } catch(error: any){
+                console.error(error.response.data || error.message);
+            }
+        }
+
+        getQuotationSchema();
+    }, [projectId]);
     
     const handleSaveVersion = async (data:any) => {
         try
@@ -40,20 +77,19 @@ const Quotation: React.FC = () => {
             let quotation = null;
 
             if(isEditing){
-                quotation = await updateQuotation(data);
+                quotation = await updateQuotationVersion(data);
             } else {
                 quotation = await addQuotation(data);
             }
 
-            await getQuotationVersions();
+            await getQuotationVersions({silent: true});
 
             setIsEditing(false);
             setCanEdit(true);
             setOpenAlert(true);
 
             setFormKey(formKey + 1);
-        } catch(error){
-            console.log(error);
+        } catch(error: any){
             setOpenAlert(true);
         }
     };
@@ -68,10 +104,10 @@ const Quotation: React.FC = () => {
     const handleRemove = () => {
         openDialog({
             title: "Delete Version",
-            message: `Are you sure that you want to this version "${selectedVersion?.version}"?`,
+            message: `Are you sure that you want to remove this version "${selectedVersion?.version}"?`,
             showConfirmButton: true,
             onConfirm: async () => {
-                await destroyQuotation();
+                await destroyQuotationVersion();
 
                 setFormKey(formKey + 1);
 
@@ -82,9 +118,48 @@ const Quotation: React.FC = () => {
         });
     }
 
-    const handleApproveVersion = () => {
-
+    const handleSubmit = () => {
+        
+        openDialog({
+            title: 'Submit Version',
+            message: `Are you sure that you want to submit this version?`,
+            showConfirmButton: true,
+            onConfirm: async () => {
+                await submitQuotationVersion();
+            }
+        });
     };
+
+    const handleApprove = () => {
+
+        openDialog({
+            title: 'Submit Version',
+            message: `Are you sure that you want to approve this version?`,
+            showConfirmButton: true,
+            onConfirm: async () => {
+                await approveQuotationVersion();
+            }
+        });
+    }
+
+    const handleOpenCloneNewVersionDialog = () => {
+        setOpenCloneNewVersion(true);
+    }
+
+    const handleCloneNewVersion = async () => {
+        if(!selectedCloneVersion) return;
+
+        await cloneQuotationVersion(selectedCloneVersion);
+
+        setFormKey(formKey + 1);
+
+        setOpenCloneNewVersion(false);
+        setSelectedCloneVersion(null);
+
+        setIsEditing(true);
+        setCanEdit(true);
+        setOpenAlert(true);
+    }
 
     const [value, setValue] = useState('one');
     
@@ -98,7 +173,7 @@ const Quotation: React.FC = () => {
                 <Grid item xs={12} sm={6} md={4}>
                     {openAlert && (
                         <Alert 
-                            severity= {error ? "error" : "success"} 
+                            severity= {actionState.error ? "error" : "success"} 
                             sx={{ width: "100%", alignItems: "center", mb: 2 }}
                             action={
                                 <IconButton
@@ -112,7 +187,7 @@ const Quotation: React.FC = () => {
                             }
                         >
                             <span 
-                                dangerouslySetInnerHTML={{ __html: messageQuotation ?? "" }}
+                                dangerouslySetInnerHTML={{ __html: actionState.message ?? "" }}
                             ></span>
                         </Alert>
                     )}
@@ -148,7 +223,7 @@ const Quotation: React.FC = () => {
                                     setSelectedVersion(version ?? null);
                                     setOpenAlert(false);
                                 }}
-                                sx={{width: "150px"}}
+                                sx={{width: "250px"}}
                             >
                                 {versions?.map((v: QuotationVersionData) => {
                                     return (
@@ -156,22 +231,30 @@ const Quotation: React.FC = () => {
                                             key={v.id} 
                                             value={v.id}
                                         >
-                                            Version {v.version}
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                    width: "100%"
+                                                }}
+                                            >
+                                                <span>Version {v.version}</span>
+                                                
+                                                <Chip
+                                                    label={v.status}
+                                                    size="small"
+                                                    color={
+                                                        v.status === "draft" ? "default" : v.status === "submitted" ? "warning" : "success"
+                                                    }
+                                                />
+                                            </Box>
+                                            
                                         </MenuItem>
                                     )
                                 })}
                             </TextField>
-
-                            {selectedVersion && (
-                                <Chip
-                                    label={selectedVersion.status}
-                                    color={
-                                        selectedVersion.status === "draft" ? "default" : selectedVersion.status === "submitted" ? "warning" : "success"
-                                    }
-                                    size="small"
-                                />
-                            )}
-
+                            
                             {canEdit && (
                                 <>
                                     <Tooltip title={!isEditing ? "Edit" : "Cancel Edit"}>
@@ -181,9 +264,11 @@ const Quotation: React.FC = () => {
                                                 if(isEditing){
                                                     handleCancel();
                                                 } else {
+                                                    setOpenAlert(false);
                                                     setIsEditing(true);
                                                 }
                                             }}
+                                            disabled={!(selectedVersion.status === 'draft')}
                                         >
                                             {isEditing ? <CloseIcon/> : <EditIcon/>}
                                         </IconButton>
@@ -193,36 +278,32 @@ const Quotation: React.FC = () => {
                                         <IconButton
                                             color="error"
                                             onClick={() => handleRemove()}
-                                            disabled={isEditing}
+                                            disabled={isEditing || (!isEditing && !(selectedVersion.status === 'draft'))}
                                         >
                                             <DeleteIcon />
                                         </IconButton>
                                     </Tooltip>
-
-                                    <Tooltip title={"Submit Version"}>
+                                    
+                                    <Tooltip title={selectedVersion.status === 'draft' ? "Submit Version" : "Approve Version"}>
                                         <IconButton
-                                            color="warning"
-                                            onClick={() => handleRemove()}
+                                            color={selectedVersion.status === 'draft' ? "warning" : "success"}
+                                            onClick={() => {
+                                                if(selectedVersion.status === 'draft'){
+                                                    handleSubmit();
+                                                } else {
+                                                    handleApprove();
+                                                }
+                                            }}
                                             disabled={isEditing}
                                         >
-                                            <SendIcon />
-                                        </IconButton>
-                                    </Tooltip>
-
-                                    <Tooltip title={"Approve Version"}>
-                                        <IconButton
-                                            color="success"
-                                            onClick={() => handleRemove()}
-                                            disabled={isEditing}
-                                        >
-                                            <CheckCircleIcon />
+                                            {selectedVersion.status === 'draft' ? <SendIcon /> : <CheckCircleIcon />}
                                         </IconButton>
                                     </Tooltip>
 
                                     <Tooltip title="Create new version">
                                         <IconButton
                                             color="success"
-                                            onClick={handleRemove}
+                                            onClick={handleOpenCloneNewVersionDialog}
                                         >
                                             <AddIcon />
                                         </IconButton>
@@ -230,17 +311,6 @@ const Quotation: React.FC = () => {
                                 </>
                             )}
 
-                            {/* {canEdit && selectedVersion.status === 'draft' && (
-                                <Tooltip title={"Delete Draft"}>
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => handleRemove()}
-                                        disabled={isEditing}
-                                    >
-                                        <DeleteIcon />
-                                    </IconButton>
-                                </Tooltip>
-                            )} */}
                         </Box>
                         <Divider style={{ margin: "10px 0" }} />
                         <Box
@@ -252,7 +322,7 @@ const Quotation: React.FC = () => {
                         >
                             {selectedVersion && (
                                 <Typography variant="body2" color="text.secondary">
-                                    Created by: {" "} 
+                                    {selectedVersion.status === 'draft' ? 'Created by' : 'Submitted by'}: {" "} 
                                     <strong>
                                         {selectedVersion.created_user?.name} ({selectedVersion.created_user?.email})
                                     </strong>
@@ -261,7 +331,7 @@ const Quotation: React.FC = () => {
 
                             {selectedVersion && selectedVersion.created_at && (
                                 <Typography variant="body2" color="text.secondary">
-                                    Created at: {" "}
+                                    {selectedVersion.status === 'draft' ? 'Created at' : 'Submitted at'}: {" "}
                                     {new Date(
                                         selectedVersion.created_at
                                     ).toLocaleDateString()}
@@ -303,8 +373,8 @@ const Quotation: React.FC = () => {
                 aria-label="secondary tabs example"
                 >
                 <Tab value="one" label="GENERAL" />
-                <Tab value="two" label="SAMPLE" />
-                <Tab value="three" label="OPERATION" />
+                {/* <Tab value="two" label="SAMPLE" />
+                <Tab value="three" label="OPERATION" /> */}
             </Tabs>
 
             <TabPanel value={value} index="one">
@@ -324,6 +394,39 @@ const Quotation: React.FC = () => {
                 showConfirmButton={showConfirmButton}
                 onClose={closeDialog}
                 onConfirm={confirmDialog}
+            />
+
+            <GenericDialog
+                open={openCloneNewVersion}
+                title="Create a New Version" 
+                children={
+                    <TextField
+                        select
+                        fullWidth
+                        variant="outlined"
+                        value={selectedCloneVersion?.id ?? ""}
+                        onChange={(e) => {
+                            const version = versions?.find(v => v.id === Number(e.target.value));
+                            setSelectedCloneVersion(version || null);
+                        }}
+                        sx={{width: "150px"}}
+                    >
+                        {versions?.map((v: QuotationVersionData) => {
+                            return (
+                                <MenuItem
+                                    key={v.id} 
+                                    value={v.id}
+                                >
+                                    Version {v.version}
+                                </MenuItem>
+                            )
+                        })}
+                    </TextField>
+                } 
+                onClose={() => setOpenCloneNewVersion(false)} 
+                onSubmit={handleCloneNewVersion} 
+                submitText = "SUBMIT"
+                cancelText = "CANCEL"
             />
         </>
     )

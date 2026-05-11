@@ -9,7 +9,7 @@ import { error } from "console";
 
 const AccountManagement = () => {
     const { data, isLoading } = useMetadata();
-    const { accounts, meta, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading, error: errorAccounts, message: messageAccount, storeAccount, fetchAcounts } = useAccounts();
+    const { accounts, meta, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading: loadingAccount, error: errorAccounts, message: messageAccount, storeAccount, fetchAcounts } = useAccounts();
     
     const [ openCreateDialog, setOpenCreateDialog ] = useState<boolean>(false);
 
@@ -76,11 +76,10 @@ const AccountManagement = () => {
                 columns={columns}
                 data={accounts}
                 actionStatus={{
-                    fetch: {
-                        loading: loading,
-                        error: errorAccounts,
-                        message: messageAccount
-                    }
+                    type: 'fetch',
+                    loading: loadingAccount,
+                    error: errorAccounts,
+                    message: messageAccount
                 }}
                 page = {page}
                 rowsPerPage = {rowsPerPage}

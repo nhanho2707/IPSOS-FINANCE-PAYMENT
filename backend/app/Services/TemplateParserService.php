@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class TemplateParserService
 {
-    public function parse(string $filePath): array
+    public function parse(string $filePath, string $projectType): array
     {
         $sheet = Excel::toArray([], $filePath);
 
@@ -19,7 +19,7 @@ class TemplateParserService
         $selectSheet = $this->getBySheetName($filePath, 'SELECT');
 
         $dropdownMap = $this->parseSelectSheet($selectSheet);
-        $configMap = $this->parseConfigSheet($configSheet, $dropdownMap);
+        $configMap = $this->parseConfigSheet($configSheet, $dropdownMap, $projectType);
         
         return $this->parseFieldSheet($fieldsSheet, $dropdownMap, $configMap);
     }
@@ -62,20 +62,21 @@ class TemplateParserService
         return $map;
     }
 
-    private function parseConfigSheet(array $rows, array $dropdownMap): array
+    private function parseConfigSheet(array $rows, array $dropdownMap, string $projectType): array
     {
         $configMap = [];
 
         foreach($rows as $index => $row){
             if($index === 0) continue;
 
-            $groupKey    = $row[0] ?? null;
-            $fieldName   = $row[1] ?? null;
-            $label       = $row[2] ?? null;
-            $type        = $row[3] ?? null;
-            $required    = $row[4] ?? null;
-            $default     = $row[5] ?? null;
-            $optionsKey  = $row[6] ?? null;
+            $groupKey           = $row[0] ?? null;
+            $fieldName          = $row[1] ?? null;
+            $label              = $row[2] ?? null;
+            $type               = $row[3] ?? null;
+            $required           = $row[4] ?? null;
+            $default            = $row[5] ?? null;
+            $optionsKey         = $row[6] ?? null;
+            $projectTypeOptions = explode(",", $row[7]) ?? null;
 
             if(!$groupKey || !$fieldName) continue;
 
@@ -84,7 +85,8 @@ class TemplateParserService
                 'label'    => trim($label),
                 'type'     => trim($type),
                 'required' => (bool)$required,
-                'default'  => $default
+                'default'  => $default,
+                'hidden' => !in_array($projectType, $projectTypeOptions)
             ];
 
             if($type === 'select' && $optionsKey || $type === 'multi-select' || $type === 'radio'){

@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
         $middleware->alias([
-            'ensureUserHasRole' => \App\Http\Middleware\EnsureUserHasRole::class
+            'ensureUserHasRole' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'catiAuthMiddleware' => \App\Http\Middleware\CatiAuthMiddleware::class
         ]);
         //
     })

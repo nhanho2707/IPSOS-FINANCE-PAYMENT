@@ -1,9 +1,9 @@
 import dayjs, { Dayjs } from "dayjs"
 import SearchDatePicker from "./SearchDatePicker"
 import React, { useState } from "react"
-import { Button } from "@mui/material"
 import { DateView } from '@mui/x-date-pickers/models';
 import LoadingButton from "@mui/lab/LoadingButton";
+import SendIcon from '@mui/icons-material/Send';
 
 interface SearchDatePickerFromToProps {
     fromValue: Dayjs | null,
@@ -49,7 +49,7 @@ const SearchDatePickerFromTo: React.FC<SearchDatePickerFromToProps> = ({
             <LoadingButton
                 onClick={handleFilter}
                 size="small"
-                // endIcon={<SendIcon />}
+                startIcon={<SendIcon />}
                 loading={loadingButton}
                 loadingPosition="end"
                 variant="contained"

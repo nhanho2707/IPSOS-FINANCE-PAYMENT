@@ -294,11 +294,10 @@ const Gifts: React.FC = () => {
                 columns={columns}
                 data={offineProjectRespondents}
                 actionStatus={{
-                    import: {
-                        loading: loadingOfflineProjectRespondents,
-                        error: errorOfflineProjectRespondents,
-                        message: messageOfflineProjectRespondents
-                    }
+                    type: 'import',
+                    loading: loadingOfflineProjectRespondents,
+                    error: errorOfflineProjectRespondents,
+                    message: messageOfflineProjectRespondents
                 }}
                 page = {page}
                 rowsPerPage = {rowsPerPage}

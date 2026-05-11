@@ -1,9 +1,6 @@
 const host = "http://localhost:8000"
 
 export const ApiConfig = {
-  schema: {
-    quotationSchema: `${host}/api/quotation-template`,
-  },
   project: {
     viewProjects: `${host}/api/project-management/projects`,
     viewProject: `${host}/api/project-management/projects?platform=ifield&created_user_id=`,
@@ -23,14 +20,18 @@ export const ApiConfig = {
     removeProjectRespondent: `${host}/api/project_management/projects/{projectId}/offline/respondents/{projectRespondentId}/destroy`,
     offlineTransactionSending: `${host}/api/project-management/projects/{projectId}/offline/respondents/{projectRespondentId}/transaction`,
     verifyTransactionToken: `${host}/api/project-management/project/verify_token`,
+    
+    //Quotation API
+    getQuotationSchema: `${host}/api/project-management/projects/{projectId}/quotation-template`,
     viewQuotation: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/view`,
     viewQuotationVersions: `${host}/api/project-management/projects/{projectId}/quotation/versions`,
     addQuotation: `${host}/api/project-management/projects/{projectId}/quotation`,
     updateQuotation: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/update`,
-    destroyQuotation: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/destroy`,
-    submitQuotation: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/submit`,
-    approveQuotation: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/approve`,
-    rejectQuotation: `${host}/api/project-management/projects/{projectId}/quotation/reject`
+    destroyQuotationVersion: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/destroy`,
+    cloneQuotationVersion: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/clone`,
+    submitQuotationVersion: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/submit`,
+    approveQuotationVersion: `${host}/api/project-management/projects/{projectId}/quotation/{versionId}/approve`,
+    rejectQuotationVersion: `${host}/api/project-management/projects/{projectId}/quotation/reject`
   },
   respondent: {
     viewRespondents: `${host}/api/project-management/projects/{projectId}/respondents/show`,
@@ -57,7 +58,8 @@ export const ApiConfig = {
     checkTransaction: `${host}/api/project-management/got-it/check-transaction-refid`
   },
   functions: {
-    exportTransactions: `${host}/api/transaction-management/export`
+    exportTransactions: `${host}/api/transaction-management/export`,
+    exportTransactionsByProjecs: `${host}/api/transaction-management/projects/export`
   },
   techcombank_panel: {
     viewTechcombankPanel: `${host}/api/techcombank-panel/users`,
@@ -83,6 +85,9 @@ export const ApiConfig = {
     showBatches: `${host}/api/project-management/projects/{projectId}/mini-cati/batches/show`,
     importBatch: `${host}/api/project-management/projects/{projectId}/mini-cati/batch/import`,
     destroyBatch: `${host}/api/project-management/projects/{projectId}/mini-cati/batch/{batchId}/destroy`,
+    updateBatchStatus: `${host}/api/project-management/projects/{projectId}/mini-cati/batch/{batchId}/update-status`,
+    showCATIProjects: `${host}/api/cati-projects/show`,
+    validateEmployee: `${host}/api/cati-project/login`,
     getSuspendedList: `${host}/api/suspended`,
     filters: `${host}/api/filters`,
     next: `${host}/api/next`,

@@ -3,6 +3,7 @@ import { ColumnFormat } from "./ColumnConfig";
 export interface CATIRespondentData {
     id: string,
     respondent_id: string,
+    phone: string,
     link: string,
     comment: string,
 };
@@ -28,13 +29,13 @@ export const MiniCATICellConfig: ColumnFormat[] = [
         label: "Phone",
         name: "phone",
         type: "string",
-        flex: 1.5
+        flex: 1
     },
     {
         label: "Comment",
         name: "comment",
         type: "string",
-        flex: 1.5
+        flex: 1
     }
 ];
 

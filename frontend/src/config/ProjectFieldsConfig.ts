@@ -1,60 +1,61 @@
 import { ColumnFormat } from "./ColumnConfig";
 
-export const TableCellConfig: ColumnFormat[] = [
-  {
-    label: "", // tên cột
-    name: "", // value trong api
-    type: "image",
-    width: 10
-  },
+export const ProjectCellConfig: ColumnFormat[] = [
   {
     label: "Symphony",
     name: "symphony",
-    type: "string",
-    width: 100
+    type: "string"
   },
   {
     label: "Internal Code",
     name: "internal_code",
-    type: "string",
-    width: 100
+    type: "string"
   },
   {
     label: "Project Name",
     name: "project_name",
-    type: "string",
-    width: 100
+    type: "string"
   },
   {
     label: "Field Start",
     name: "planned_field_start",
-    type: "date",
-    width: 100
+    type: "date"
   },
   {
     label: "Field End",
     name: "planned_field_end",
-    type: "date",
-    width: 100
+    type: "date"
   },
 ];
+
+export interface ProvinceData {
+  id: string,
+  name: string,
+  sample_size_main: number,
+  price_main: number,
+  sample_size_booters: number,
+  price_boosters: number
+}
 
 export interface ProjectData {
     id?: number,
     internal_code?: string;
     project_name: string;
+    status?: string,
     symphony?: string;
     platform: string;
     teams: string[];
     project_types: string[];
-    provinces?: { id: number, name: string }[];
+    provinces?: ProvinceData[];
     planned_field_start: string;
     planned_field_end: string;
     actual_field_start?: string;
     actual_field_end?: string;
     project_objectives?: string,
     remember_token?: string,
-    remember_uuid?: string
+    remember_uuid?: string,
+    count_respondents?: number,
+    count_employees?: number,
 };
 
 export const ProjectGeneralFieldsConfig: ColumnFormat[] = [

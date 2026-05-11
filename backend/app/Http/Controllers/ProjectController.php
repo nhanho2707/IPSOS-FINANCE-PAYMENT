@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -84,8 +85,8 @@ class ProjectController extends Controller
             $perPage = $request->input('perPage', 10);
 
             $search = $request->input('searchTerm');
-            $searchFromDate = Carbon::parse($request->input('searchFromDate'));
-            $searchToDate = Carbon::parse($request->input('searchToDate'));
+            $searchFromDate = $request->input('searchFromDate') ? Carbon::parse($request->input('searchFromDate')) : null;
+            $searchToDate = $request->input('searchToDate') ? Carbon::parse($request->input('searchToDate')) : null;
 
             if(in_array(Auth::user()->userDetails->role->name, ['Admin', 'Finance'])){
                 $query = Project::with([
@@ -138,16 +139,35 @@ class ProjectController extends Controller
                 });
             }
 
-            $query->when($searchFromDate && $searchToDate, function($q) use ($searchFromDate, $searchToDate){
-                return $q->whereHas('projectDetails', function(Builder $sub) use ($searchFromDate, $searchToDate){
-                    $sub->whereBetween('planned_field_start', [
-                        $searchFromDate,
-                        $searchToDate
-                    ]);
+            if($searchFromDate && $searchToDate){
+                $query->when($searchFromDate && $searchToDate, function($q) use ($searchFromDate, $searchToDate){
+                    return $q->whereHas('projectDetails', function(Builder $sub) use ($searchFromDate, $searchToDate){
+                        $sub->whereBetween('planned_field_start', [
+                            $searchFromDate,
+                            $searchToDate
+                        ]);
+                    });
                 });
-            });
+            }
+            
+            $query->orderByRaw("
+                (
+                    SELECT 
+                        CASE project_details.status
+                            WHEN 'on going' THEN 1
+                            WHEN 'in coming' THEN 2
+                            WHEN 'planned' THEN 3
+                            WHEN 'on hold' THEN 4
+                            WHEN 'completed' THEN 5
+                            WHEN 'cancelled' THEN 6
+                        END
+                    FROM project_details
+                    WHERE project_details.project_id = projects.id
+                    LIMIT 1
+                )
+            ");
 
-            $query->orderBy('id', 'asc');
+            $query->latest();
 
             //$projects = $query->get();
             // Laravel paginator
@@ -264,6 +284,9 @@ class ProjectController extends Controller
                 DB::commit();
                 
                 Log::info('The project stored successfully.');
+
+                Cache::forget('cati_projects');
+                Cache::forget('metadata_projects');
 
                 return response()->json([
                     'message' => 'The project stored successfully.',
@@ -403,6 +426,9 @@ class ProjectController extends Controller
                     }
                 }
 
+                Cache::forget('cati.projects');
+                Cache::forget('cati.filters.all');
+
                 DB::commit();
                 
                 Log::info('The project editted successfully.');
@@ -500,6 +526,9 @@ class ProjectController extends Controller
                     'status' => $validatedRequest['status']
                 ]);
             }
+
+            Cache::forget('cati.projects');
+            Cache::forget('cati.filters.all');
 
             Log::info('The project is updated successfully.');
             return response()->json([

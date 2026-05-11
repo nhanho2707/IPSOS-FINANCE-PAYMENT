@@ -55,7 +55,8 @@ class EmployeeController extends Controller
                                     'employees.employee_id',
                                     'employees.first_name',
                                     'employees.last_name'
-                                );
+                                )
+                                ->orderBy('transaction_total', 'desc');
             
             if($search){
                 $query->where(function($q) use ($search){

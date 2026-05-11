@@ -1,30 +1,23 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Select, MenuItem, Box, Button, Card, CardContent, Typography, TextField, Menu, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, FormControl, InputLabel, Grid } from "@mui/material";
+import { Select, MenuItem, Box, Button, Card, CardContent, Typography, TextField, Menu, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, FormControl, InputLabel, Grid, Stack } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import { ApiConfig } from "../../config/ApiConfig";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { MiniCATICellConfig } from "../../config/MiniCATIFieldsConfig";
+import { FilterData, useCATIRespondents } from "../../hook/useCATIRespondents";
+
+
 
 export default function MiniCATI() {
-  const [ current, setCurrent ] = useState<any>(null);
-  
-  const [ searchParams ] = useSearchParams();
-  const employeeId = searchParams.get('employee_id');
+  const { options, currentRespondent, catiRespondents, actionState, page, rowsPerPage, searchTerm, total, setPage, setRowsPerPage, setSearchTerm, setCurrentRespondent, fetchCATISuppendedList, getCatiRespondent, updateStatus } = useCATIRespondents();
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterData>({
     filter_1: "",
     filter_2: "",
     filter_3: "",
     filter_4: ""
-  });
-
-  const [options, setOptions] = useState<any>({
-    filter_1: [],
-    filter_2: [],
-    filter_3: [],
-    filter_4: []
   });
 
   const statusOptions = [
@@ -42,197 +35,118 @@ export default function MiniCATI() {
   const columns: ColumnFormat[] = [
     ...MiniCATICellConfig,
     {
-      label: "Action",
+      label: "",
       name: "Action",
       type: "string",
       align: "center",
-      renderCell: (row: any) => {
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => setCurrent(row)}
-        >
-          Gọi lại
-        </Button>
+      renderAction: (row: any) => {
+        return (
+           <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setCurrentRespondent(row)}
+          >
+            Gọi lại
+          </Button>
+        )
       },
     }
   ];
 
-    const [status, setStatus] = useState("");
-    const [comment, setComment] = useState("");
+  const handleNext = async () => {
+    await getCatiRespondent(filters);
+  }
 
-    const [suspendedList, setSuspendedList] = useState<any[]>([]);
-
-    const getSuspendedList = async () => {
-      const res = await axios.get(ApiConfig.minicati.getSuspendedList, {
-          params: { employee_id: employeeId }
-      });
-
-      setSuspendedList(res.data);
-    };
-
-    useEffect(() => {
-        getSuspendedList();
-    }, []);
-
-  // 🔥 Load options từ API
   useEffect(() => {
-    axios.get(ApiConfig.minicati.filters).then((res) => {
-      setOptions(res.data);
-    });
-  }, []);
-
-  // 🔥 Khi đổi filter → reset sample
-  useEffect(() => {
-    setCurrent(null);
+    setCurrentRespondent(null);
   }, [filters]);
 
-  const getNext = async () => {
-    try {
-      const res = await axios.post(ApiConfig.minicati.next, {
-        user: employeeId,
-        ...filters
-      });
-      setCurrent(res.data);
-    } catch (err: any) {
-      console.error(err.response?.data);
+  const [status, setStatus] = useState("");
+  const [comment, setComment] = useState("");
+  
+  const handleSubmit = async () => {
+    if (!status || !currentRespondent) return;
+
+    let finalStatus = status;
+    let finalComment = "";
+
+    const selected = statusOptions.find((s) => s.value === status);
+
+    if (status === "Suspended") {
+        if (!comment.trim()) return alert("Vui lòng nhập ghi chú");
+        finalComment = comment;
+    } else if (status.startsWith("Reject")) {
+        finalComment = selected?.label || "";
     }
+
+    await updateStatus(Number(currentRespondent.id), status, finalComment);
+
+    // reset
+    setStatus("");
+    setComment("");
+    setCurrentRespondent(null);
+
+    await fetchCATISuppendedList();
   };
 
-    const handleSubmit = async () => {
-        if (!status || !current) return;
+  const handleChangePage = (event: any, newPage: number) => {
+    setPage(newPage)
+  }
 
-        let finalStatus = status;
-        let finalComment = "";
-
-        const selected = statusOptions.find((s) => s.value === status);
-
-        if (status === "Suspended") {
-            if (!comment.trim()) return alert("Vui lòng nhập ghi chú");
-            finalComment = comment;
-        } else if (status.startsWith("Reject")) {
-            finalComment = selected?.label || "";
-        }
-
-        await axios.post(ApiConfig.minicati.updateStatus, {
-            id: current.id,
-            status: finalStatus,
-            comment: finalComment
-        });
-
-        // reset
-        setStatus("");
-        setComment("");
-        setCurrent(null);
-
-        await getSuspendedList();
-    };
-
+  const handleChangeRowsPerPage = (event: any) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
   
   return (
     <Box p={3}>
       
       {/* ================= FILTER ================= */}
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
-          <div style={{ marginBottom: "1rem" }}>
-            <Typography variant="body2" gutterBottom>
-                Filter 1
-            </Typography>
-            <Select
-              value={filters.filter_1}
-              displayEmpty
-              fullWidth
-              onChange={(e) =>
-                setFilters({ ...filters, filter_1: e.target.value })
-              }
-            >
-              <MenuItem value="">All</MenuItem>
-              {options.filter_1.map((item: any) => (
-                <MenuItem key={item} value={item}>{item}</MenuItem>
-              ))}
-            </Select>
-          </div>
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={3}>
-          <div style={{ marginBottom: "1rem" }}>
-            <Typography variant="body2" gutterBottom>
-                Filter 2
-            </Typography>
-            <Select
-              value={filters.filter_2}
-              displayEmpty
-              fullWidth
-              onChange={(e) =>
-                setFilters({ ...filters, filter_2: e.target.value })
-              }
-            >
-              <MenuItem value="">All</MenuItem>
-              {options.filter_2.map((item: any) => (
-                <MenuItem key={item} value={item}>{item}</MenuItem>
-              ))}
-            </Select>
-          </div>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <div style={{ marginBottom: "1rem" }}>
-            <Typography variant="body2" gutterBottom>
-                Filter 3
-            </Typography>
-            <Select
-              value={filters.filter_3}
-              displayEmpty
-              fullWidth
-              onChange={(e) =>
-                setFilters({ ...filters, filter_3: e.target.value })
-              }
-            >
-              <MenuItem value="">All</MenuItem>
-              {options.filter_3.map((item: any) => (
-                <MenuItem key={item} value={item}>{item}</MenuItem>
-              ))}
-            </Select>
-          </div>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <div style={{ marginBottom: "1rem" }}>
-            <Typography variant="body2" gutterBottom>
-                Filter 4
-            </Typography>
-            <Select
-              value={filters.filter_4}
-              displayEmpty
-              fullWidth
-              onChange={(e) =>
-                setFilters({ ...filters, filter_4: e.target.value })
-              }
-            >
-              <MenuItem value="">All</MenuItem>
-              {options.filter_4.map((item: any) => (
-                <MenuItem key={item} value={item}>{item}</MenuItem>
-              ))}
-            </Select>
-          </div>
-        </Grid>
+        {Object.entries(options || {
+          filter_1: [],
+          filter_2: [],
+          filter_3: [],
+          filter_4: []
+        }).map(([key, values]) => (
+          <Grid item xs={12} sm={6} md={3} key={key}>
+            <div style={{ marginBottom: "1rem" }}>
+              <Typography variant="body2" gutterBottom>
+                  Filter {key.replace("filter_", "")}
+              </Typography>
+              <Select
+                value={filters[key as keyof typeof filters]}
+                displayEmpty
+                fullWidth
+                onChange={(e) =>
+                  setFilters({ ...filters, [key]: e.target.value })
+                }
+              >
+                <MenuItem value="">All</MenuItem>
+                  {values.map((item: string) => (
+                    <MenuItem key={item} value={item}>{item}</MenuItem>
+                  ))}
+              </Select>
+            </div>
+          </Grid>
+        ))}
       </Grid>
+
       <Box display="flex" gap={2} mb={2}>
         <Button 
-            disabled={current}
+            disabled={Boolean(currentRespondent)}
             variant="contained" 
-            onClick={getNext}
+            onClick={handleNext}
         >
             Next
         </Button>
       </Box>
 
       {/* ================= CALL SCREEN ================= */}
-      {current?.id ? (
+      {currentRespondent?.id ? (
         
         <Box>
-            <Card sx={{ maxWidth: 900, margin: "auto", mt: 3, borderRadius: 3, boxShadow: 3 }}>
+            <Card sx={{ maxWidth: 900, margin: "auto", mt: 3, mb: 3, borderRadius: 3, boxShadow: 3 }}>
                 <CardContent>
 
                     {/* 🔥 Title */}
@@ -243,11 +157,11 @@ export default function MiniCATI() {
                     {/* 🔥 Info */}
                     <Box mb={2}>
                         <Typography>
-                            <strong>ID:</strong> {current.respondent_id}
+                            <strong>ID:</strong> {currentRespondent.respondent_id}
                         </Typography>
 
                         <Typography>
-                            <strong>Phone:</strong> {current.phone}
+                            <strong>Phone:</strong> {currentRespondent.phone}
                         </Typography>
 
                         <Typography color="error">
@@ -264,8 +178,8 @@ export default function MiniCATI() {
                       }}
                     >
                       <iframe
-                        key={current.id}
-                        src={current.link}
+                        key={currentRespondent.id}
+                        src={currentRespondent.link}
                         width="100%"
                         height="600px"
                         style={{
@@ -326,76 +240,38 @@ export default function MiniCATI() {
         <p>No sample available</p>
       )}
       
-      {/* <ReusableTable
+      <ReusableTable
         title="Danh sách hẹn gọi lại"
         columns={columns}
-        data={suspendedList}
-        loading={loading}
-        error={errorAccounts}
-        message={messageAccount}
+        data={catiRespondents}
+        actionStatus={actionState}
         page = {page}
         rowsPerPage = {rowsPerPage}
         total = {total}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-      /> */}
-
-        <Box sx={{ maxWidth: 720, margin: "auto", mt: 3 }}>
-  
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-                🔁 Danh sách hẹn gọi lại
-            </Typography>
-            
-            <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-                <Table size="small">
-                
-                <TableHead>
-                    <TableRow>
-                    <TableCell><strong>ID</strong></TableCell>
-                    <TableCell><strong>Phone</strong></TableCell>
-                    <TableCell><strong>Comment</strong></TableCell>
-                    <TableCell align="center"><strong>Action</strong></TableCell>
-                    </TableRow>
-                </TableHead>
-
-                <TableBody>
-                    {suspendedList.length > 0 ? (
-                    suspendedList.map((item) => (
-                        <TableRow key={item.id}>
-                        
-                        <TableCell>{item.respondent_id}</TableCell>
-                        <TableCell>{item.phone}</TableCell>
-
-                        <TableCell>
-                            {/* <a href={item.link} target="_blank" rel="noopener noreferrer"> */}
-                            {item.comment}
-                            {/* </a> */}
-                        </TableCell>
-
-                        <TableCell align="center">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => setCurrent(item)}
-                            >
-                            Gọi lại
-                            </Button>
-                        </TableCell>
-
-                        </TableRow>
-                    ))
-                    ) : (
-                    <TableRow>
-                        <TableCell colSpan={4} align="center">
-                        Không có dữ liệu
-                        </TableCell>
-                    </TableRow>
-                    )}
-                </TableBody>
-
-                </Table>
-            </TableContainer>
-        </Box>
+        topToolbar={
+          <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
+              justifyContent="space-between"
+              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ pt: 2, pb: 2 }}
+          >
+              <TextField
+                label="Search phone"
+                variant="outlined"
+                size="small"
+                value={searchTerm}
+                onChange={(event) => {
+                    setSearchTerm(event.target.value);
+                    setPage(0);
+                }}
+                sx={{ width: "100%", maxWidth: 320 }}
+              />
+          </Stack>
+        }
+      />
     </Box>
   );
 }

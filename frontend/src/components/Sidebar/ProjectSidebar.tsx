@@ -7,6 +7,8 @@ import logo from "../../assets/img/Ipsos logo.png";
 import { LibraryBooks } from "@mui/icons-material";
 import { useVisibility } from "../../hook/useVisibility";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import { useProjects } from "../../hook/useProjects";
+import { ProjectData } from "../../config/ProjectFieldsConfig";
 
 interface ProjectSidebarProps {
     projectId: number,
@@ -17,8 +19,22 @@ interface ProjectSidebarProps {
 const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, isOpen, toggleSidebar }) => {
   const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
 
-  const storedUser = localStorage.getItem("user");
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const { getProject } = useProjects();
+
+  const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
+
+  useEffect(() => {
+    async function fetchProject(){
+        try{
+            const p = await getProject(projectId);
+            setProjectSelected(p);
+        }catch(error){
+            console.log(error);
+        }
+    }
+
+    fetchProject();
+  }, [projectId]);
 
   const { canView } = useVisibility();
 
@@ -101,19 +117,21 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, isOpen, togg
                   <span className="text nav-text">Gifts</span>
               </NavLink>
             </li>
-            <li className="nav-link">
-              <NavLink
-                  to={`/project-management/projects/${projectId}/cati-settings`}
-                  onClick={() => {
-                  if (isSmallScreen) toggleSidebar(); // chỉ đóng nếu là mobile
-                  }}
-              >
-                  <i className="icon">
-                  <LibraryBooks style={{ fontSize: "18px" }} />
-                  </i>
-                  <span className="text nav-text">CATI Settings</span>
-              </NavLink>
-            </li>
+            {projectSelected?.project_types.includes('CATI') && (
+              <li className="nav-link">
+                <NavLink
+                    to={`/project-management/projects/${projectId}/cati-settings`}
+                    onClick={() => {
+                    if (isSmallScreen) toggleSidebar(); // chỉ đóng nếu là mobile
+                    }}
+                >
+                    <i className="icon">
+                    <LibraryBooks style={{ fontSize: "18px" }} />
+                    </i>
+                    <span className="text nav-text">CATI Settings</span>
+                </NavLink>
+              </li>
+            )}
         </ul>
         <Divider style={{ margin: "18px 0" }} />
         <ul className="menu-links">

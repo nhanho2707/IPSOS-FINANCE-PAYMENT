@@ -13,6 +13,8 @@ import useDialog from "../../hook/useDialog";
 import AlertDialog from "../../components/AlertDialog/AlertDialog";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
+import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle"
 
 const CATISettings = () => {
 
@@ -26,7 +28,7 @@ const CATISettings = () => {
     
     const { getProject } = useProjects();
 
-    const { batches, loading: fetchLoading, error: fetchError, message: fetchMessage, importLoading, importError, importMessage, page, rowsPerPage, total, setPage, setRowsPerPage, fetchCATIBatches, importCATIBatch, destroyLoading, destroyError, destroyMessage, destroyBatch } = useCATIBatch(projectId);
+    const { batches, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, fetchCATIBatches, importCATIBatch, destroyBatch, updateStatus } = useCATIBatch(projectId);
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [ batchName, setBatchName ] = useState<string>("");
@@ -34,13 +36,16 @@ const CATISettings = () => {
     
     const handleRemoveClick = async (batch: CATIBatchData) => {
         await destroyBatch(batch.id);
-        await fetchCATIBatches();
+    }
+
+    const handleBlockClick = async (batch: CATIBatchData) => {
+        await updateStatus(batch.id, batch.status === 'active' ? 'blocked' : 'active');
     }
 
     const columns: ColumnFormat[] = [
         ...MiniCATIBatchCellConfig,
         {
-            label: "Actions",
+            label: "",
             name: "actions",
             type: "menu",
             align: "center",
@@ -49,19 +54,43 @@ const CATISettings = () => {
                 const disabled = row.to_used;
 
                 return (
-                    <IconButton
-                        color="error"
-                        size="small"
-                        disabled={disabled}
-                        onClick={() => openDialog({
-                            title: "Delete Batch",
-                            message: "Bạn có chắc chắn muốn delete Batch này?",
-                            showConfirmButton: true,
-                            onConfirm: () => handleRemoveClick(row)
-                        })}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
+                    <Box sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1
+                    }}>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            disabled={disabled}
+                            startIcon={ <DeleteIcon /> }
+                            onClick={() => openDialog({
+                                title: "Delete Batch",
+                                message: "Bạn có chắc chắn muốn delete batch này?",
+                                showConfirmButton: true,
+                                onConfirm: () => handleRemoveClick(row)
+                            })}
+                        >
+                            Delete
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color={ row.status === 'active' ? "secondary" : "info" }
+                            size="small"
+                            // disabled={disabled}
+                            startIcon={ row.status === 'active' ? <BlockIcon /> : <CheckCircleIcon /> }
+                            onClick={() => openDialog({
+                                title: "Block Batch",
+                                message: `ạn có chắc chắn muốn ${row.status === 'active' ? "block" : "activate" } batch này?`,
+                                showConfirmButton: true,
+                                onConfirm: () => handleBlockClick(row)
+                            })}
+                        >
+                            { row.status === 'active' ? "Blocked" : "Activate" }
+                        </Button>
+                    </Box>
+                    
                 )
             }
         }
@@ -123,8 +152,6 @@ const CATISettings = () => {
 
             setSelectedBatch(null);
             setBatchName("");
-
-            await fetchCATIBatches();
         } catch (error) {
             console.error("Import error:", error);
         } finally {
@@ -151,23 +178,7 @@ const CATISettings = () => {
                 title="Batches"
                 columns={columns}
                 data={batches}
-                actionStatus={{
-                    fetch: {
-                        loading: fetchLoading,
-                        error: fetchError,
-                        message: fetchMessage
-                    },
-                    import: {
-                        loading: importLoading,
-                        error: importError,
-                        message: importMessage
-                    },
-                    delete: {
-                        loading: destroyLoading,
-                        error: destroyError,
-                        message: destroyMessage
-                    }
-                }}
+                actionStatus={actionState}
                 page = {page}
                 rowsPerPage = {rowsPerPage}
                 total = {total}

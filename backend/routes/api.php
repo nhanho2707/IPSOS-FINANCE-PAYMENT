@@ -23,6 +23,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\CatiController;
 use App\Http\Controllers\CustomVouchersController;
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\CatiAuthMiddleware;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TradeUnionRecipientListController;
 use App\Http\Controllers\AccountDepositController;
@@ -88,7 +89,8 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::get('/project-management/projects/{projectId}/mini-cati/batches/show', [CATIController::class, 'index'])->middleware('ensureUserHasRole:Admin,Scripter,Field Manager');
     Route::post('/project-management/projects/{projectId}/mini-cati/batch/import', [ImportController::class, 'importCATIRespondents'])->middleware('ensureUserHasRole:Admin,Scripter,Field Manager');
     Route::delete('/project-management/projects/{projectId}/mini-cati/batch/{batchId}/destroy', [CATIController::class, 'destroyBatch'])->middleware('ensureUserHasRole:Admin,Scripter,Field Manager');
-    
+    Route::put('/project-management/projects/{projectId}/mini-cati/batch/{batchId}/update-status', [CATIController::Class, 'updateState'])->middleware('ensureUserHasRole:Admin,Scripter,Field Manager');
+
     //Vinnet
     Route::get('/transaction-management/vinnet/merchant/view', [VinnetController::class, 'get_merchant_info'])->middleware('ensureUserHasRole:admin,Finance');
     Route::post('/transaction-management/vinnet/change-key', [VinnetController::class, 'change_key'])->middleware('ensureUserHasRole:admin,Finance');
@@ -99,13 +101,16 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::get('/transaction-management/gotit/account/{accountType}/view', [AccountDepositController::class, 'getGotItAccount'])->middleware('ensureUserHasRole:admin,Finance');
 
     //Quotation
-    Route::get('project-management/projects/{projectId}/quotation/{versionId}/view', [QuotationController::class, 'getQuotation'])->middleware('ensureUserHasRole:Admin,Field Manager');
-    Route::get('project-management/projects/{projectId}/quotation/versions', [QuotationController::class, 'getQuotationVersions'])->middleware('ensureUserHasRole:Admin,Field Manager');
-    Route::post('project-management/projects/{projectId}/quotation', [QuotationController::class, 'store'])->middleware('ensureUserHasRole:Admin,Field Manager');
-    Route::put('project-management/projects/{projectId}/quotation/{versionId}/update', [QuotationController::class, 'update'])->middleware('ensureUserHasRole:Admin,Field Manager');
-    Route::delete('project-management/projects/{projectId}/quotation/{versionId}/destroy', [QuotationController::class, 'destroy'])->middleware('ensureUserHasRole:Admin,Field Manager');
-    Route::post('project-management/projects/{projectId}/quotation/{versionId}/approve', [QuotationController::class, 'approve'])->middleware('ensureUserHasRole:Admin,Field Manager');
-    Route::post('project-management/projects/{projectId}/quotation/reject', [QuotationController::class, 'reject'])->middleware('ensureUserHasRole:Admin,Field Manager');
+    Route::get('/project-management/projects/{projectId}/quotation-template', [QuotationTemplateController::class, 'parse'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::get('/project-management/projects/{projectId}/quotation/{versionId}/view', [QuotationController::class, 'getQuotation'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::get('/project-management/projects/{projectId}/quotation/versions', [QuotationController::class, 'getQuotationVersions'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::post('/project-management/projects/{projectId}/quotation', [QuotationController::class, 'store'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::put('/project-management/projects/{projectId}/quotation/{versionId}/update', [QuotationController::class, 'update'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::post('/project-management/projects/{projectId}/quotation/{versionId}/clone', [QuotationController::class, 'cloneVersion'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::put('/project-management/projects/{projectId}/quotation/{versionId}/submit', [QuotationController::class, 'submit'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::delete('/project-management/projects/{projectId}/quotation/{versionId}/destroy', [QuotationController::class, 'destroy'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::put('/project-management/projects/{projectId}/quotation/{versionId}/approve', [QuotationController::class, 'approve'])->middleware('ensureUserHasRole:Admin,Reseacher');
+    Route::post('/project-management/projects/{projectId}/quotation/reject', [QuotationController::class, 'reject'])->middleware('ensureUserHasRole:Admin,Reseacher');
 
     //Trade Union Recipient
     Route::get('/trade-union/recipient-lists', [TradeUnionRecipientListController::class, 'index'])->middleware('ensureUserHasRole:admin');
@@ -113,7 +118,8 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::post('/trade-union/recipient-lists/{id}/send-email', [TradeUnionRecipientListController::class, 'sendEmail'])->middleware('ensureUserHasRole:admin');
 
     //Export
-    Route::get('transaction-management/export', [ExportController::class, 'exportTransaction'])->middleware('ensureUserHasRole:admin');
+    Route::get('/transaction-management/export', [ExportController::class, 'exportTransaction'])->middleware('ensureUserHasRole:admin,Finance');
+    Route::get('/transaction-management/projects/export', [ExportController::class, 'exportTransactionByProjects'])->middleware('ensureUserHasRole:admin,Finance');
 });
 
 Route::get('/project-management/project/verify_token', [TransactionController::class, 'verify']);
@@ -146,7 +152,6 @@ Route::get('/techcombank-panel/panellist', [TechcombankPanelController::class, '
 Route::get('/techcombank-panel/surveys', [TechcombankSurveysController::class, 'index']);
 
 Route::post('/cmc-telecom/sendsms', [VinnetController::class, 'cmc_telecom_send_sms']);
-Route::get('/quotation-template', [QuotationTemplateController::class, 'parse']);
 
 Route::get('/generate-qr', [QrCodeController::class, 'generate']);
 Route::get('/test_sms', [VinnetController::class, 'test_sms']);
@@ -157,9 +162,13 @@ Route::post('/custom-voucher/assign', [CustomVouchersController::class, 'assignV
 Route::post('/custom-voucher/search-link', [CustomVouchersController::class, 'searchLink']);
 
 //Mini-CATI
-Route::post('/next', [CatiController::class, 'next']);
-Route::post('/update-status', [CatiController::class, 'updateStatus']);
-Route::get('/filters', [CatiController::class, 'filters']);
-Route::get('/suspended', [CatiController::class, 'getSuspended']);
+Route::get('/cati-projects/show', [CatiController::class, 'getCATIProjects']);
+Route::post('/cati-project/login', [CatiController::class, 'catiLogin']);
 
+Route::middleware(['catiAuthMiddleware'])->group(function() {
+    Route::post('/next', [CatiController::class, 'getCatiRespondent']);
+    Route::post('/update-status', [CatiController::class, 'updateStatus']);
+    Route::get('/filters', [CatiController::class, 'filters']);
+    Route::get('/suspended', [CatiController::class, 'getSuspended']);
+});
 

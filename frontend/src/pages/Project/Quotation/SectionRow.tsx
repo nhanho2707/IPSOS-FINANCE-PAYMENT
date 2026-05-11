@@ -2,7 +2,6 @@ import { memo, useEffect, useState } from "react";
 import { FieldSchema } from "./QuotationDynamicForm";
 import { Box, FormControl, FormControlLabel, Paper, Radio, RadioGroup, Table, TableBody, TableCell, TableContainer, TableRow } from "@mui/material";
 import RadioRow from "./RadioRow";
-import { render } from "react-dom";
 import RangeRow from "./RangeRow";
 import MultiSelectRow from "./MultiSelectRow";
 import RichTextRow from "./RichTextRow";
@@ -120,7 +119,9 @@ const SectionRow = memo(({row, isEditing, onChange}: Props) => {
             <TableContainer component={Paper} variant="outlined">
                 <Table size="small">
                     <TableBody>
-                        {fields.map((subField) => (
+                        {fields
+                            .filter((subField) => !subField.hidden)
+                            .map((subField) => (
                             renderField(subField)
                         ))}
                     </TableBody>

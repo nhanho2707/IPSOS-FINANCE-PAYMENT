@@ -9,6 +9,8 @@ class ProjectPermissions extends Model
 {
     use HasFactory;
 
+    protected $table = "project_permissions";
+
     protected $fillable = [
         'project_id',
         'user_id'
@@ -21,6 +23,6 @@ class ProjectPermissions extends Model
 
     public function user()
     {
-        return $this->belongsTo(UserDetail::class);
+        return $this->belongsTo(User::class);
     }
 }

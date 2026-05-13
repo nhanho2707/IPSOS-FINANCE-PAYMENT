@@ -78,7 +78,7 @@ class Project extends Model
 
     public function projectPermissions()
     {
-        return $this->hasMany(ProjectPermissions::class);
+        return $this->belongsToMany(User::class, 'project_permissions', 'project_id', 'user_id');
     }
 
     public function projectRespondents()

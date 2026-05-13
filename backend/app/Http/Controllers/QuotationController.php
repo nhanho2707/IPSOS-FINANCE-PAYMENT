@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Project;
 use App\Models\Quotation;
+use App\Models\Notification;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\QuotationVersionResource;
 
@@ -21,11 +22,23 @@ class QuotationController extends Controller
     {
         try
         {
+            $logged_in_user = Auth::user();
+
+            $roleName = $logged_in_user->userDetails->role->name;
+
             $project = Project::findOrFail($projectId);
 
-            $quotationVersions = $project->quotations()
+            if($roleName === 'Researcher'){
+                $quotationVersions = $project->quotations()
                                             ->orderByDesc('version')
                                             ->get();
+            } else {
+                $quotationVersions = $project->quotations()
+                                            ->whereIn('status', ['submitted','approved'])
+                                            ->orderByDesc('version')
+                                            ->get();
+            }
+            
 
             return response()->json([
                 'status_code' => 200,
@@ -327,6 +340,15 @@ class QuotationController extends Controller
 
             $project = Project::findOrFail($projectId);
 
+            $countPermissions = $project->projectPermissions()->count();
+
+            if($countPermissions === 1){
+                return response()->json([
+                    'status_code' => 422,
+                    'error' => 'Project must have at least one assigned user before submit.'
+                ], 422);
+            }
+
             $quotation = $project->quotations()->where('id', $versionId)->first();
 
             if($quotation->status !== 'draft'){
@@ -347,6 +369,20 @@ class QuotationController extends Controller
                 'status' => 'submitted',
                 'submitted_user_id' => $logged_in_user
             ]);
+
+            # Tạo Notification
+            $projectPermisstions = $project->projectPermissions;
+
+            foreach($projectPermisstions as $projectPermission){
+                Notification::create([
+                    'user_id' => $projectPermission->id,
+                    'project_id' => $project->id,
+                    'created_by' => $logged_in_user,
+                    'type' => 'quotation_submitted', 
+                    'message' => "Quotation v{$quotation->version} submitted for {$project->internal_code} - {$project->project_name}",
+                    'url' => "/project-management/projects/{$project->id}/quotation"
+                ]);
+            }
 
             return response()->json([
                 'status_code' => 200,

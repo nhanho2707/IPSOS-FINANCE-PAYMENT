@@ -59,8 +59,8 @@ class User extends Authenticatable
         return $this->hasOne(UserDetail::class);
     }
 
-    public function projects()
+    public function permissions()
     {
-        return $this->hasMany(Project::class, 'created_user_id');
+        return $this->belongsToMany(Project::class, 'project_permissions', 'project_id', 'user_id');
     }
 }

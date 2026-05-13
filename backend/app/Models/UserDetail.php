@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 
 class UserDetail extends Model
 {
@@ -47,16 +46,12 @@ class UserDetail extends Model
 
     public function hasAnyRole($roles)
     {
-        if(is_array($roles)){
-            return $this->role()->whereIn('name', (array) $roles)->exists();
-        }
-        else {
-            return $this->role()->where('name', $roles)->exists();
-        }
-    }
+        $allowedRoles = collect((array) $roles)
+            ->map(fn ($role) => strtolower(trim($role)))
+            ->all();
 
-    public function projectPermissions()
-    {
-        return $this->hasMany(ProjectPermissions::class);
+        $currentRole = strtolower(trim($this->role?->name ?? ''));
+
+        return in_array($currentRole, $allowedRoles, true);
     }
 }

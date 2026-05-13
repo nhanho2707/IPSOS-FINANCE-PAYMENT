@@ -61,6 +61,7 @@ class ProjectController extends Controller
         catch(\Exception $e)
         {
             Log::error("Project display fails. " . $e->getMessage());
+            
             return response()->json([
                 'status_code' => 500,
                 'message' => 'Project display fails. ' . $e->getMessage(),
@@ -149,7 +150,7 @@ class ProjectController extends Controller
                     });
                 });
             }
-            
+
             $query->orderByRaw("
                 (
                     SELECT 
@@ -166,7 +167,7 @@ class ProjectController extends Controller
                     LIMIT 1
                 )
             ");
-
+            
             $query->latest();
 
             //$projects = $query->get();
@@ -645,6 +646,51 @@ class ProjectController extends Controller
         }
     }
     
+    public function assignUsers(Request $request, $projectId)
+    {
+        try
+        {
+            $validated = $request->validate([
+                'user_ids' => 'required|array',
+                'user_ids.*' => 'required|integer|exists:users,id'
+            ]);
+
+            $userIds = $validated['user_ids'];
+
+            $project = Project::with([
+                'projectDetails.createdBy',
+                'projectPermissions'
+            ])->findOrFail($projectId);
+
+            $creatorId = $project->projectDetails->createdBy->id;
+
+            if(!in_array($creatorId, $userIds, true)){
+                return response()->json([
+                    'status_code' => 400,
+                    'error' => 'Project creator cannot be removed from permissions.'
+                ], 400);
+            }
+
+            $project->projectPermissions()->sync($userIds);
+
+            $project->load('projectPermissions');
+
+            return response()->json([
+                'status_code' => 200,
+                'message' => 'Users assigned successfully.',
+                'data' => new ProjectResource($project)
+            ]);
+
+        } catch(Exception $e){
+            Log::error('Assignment failed: ' . $e->getMessage());
+
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Assignment failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
     public function bulkAddEmployees(ImportEmployeesRequest $request, $projectId)
     {
         try

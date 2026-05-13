@@ -10,6 +10,7 @@ use App\Models\Department;
 use App\Models\Team;
 use App\Models\Project;
 use App\Models\Role;
+use App\Models\User;
 use App\Http\Resources\ProjectResource;
 
 class MetadataController extends Controller
@@ -43,6 +44,7 @@ class MetadataController extends Controller
             $departments = Cache::remember('metadata_deparments', 3600, fn() => Department::all(['id', 'name']));
             $roles = Cache::remember('metadata_roles', 3600, fn() => Role::all(['id', 'name', 'department_id']));
             $teams = Cache::remember('metadata_teams', 3600, fn() => Team::whereIn('department_id', [2, 3])->get(['id', 'name']));
+            $users = Cache::remember('metadata_users', 3600, fn() => User::all(['id', 'email']));
 
             return response()->json([
                 'status_code' => 200,
@@ -52,7 +54,8 @@ class MetadataController extends Controller
                     'project_types' => $projectTypes,
                     'departments' => $departments,
                     'roles' => $roles,
-                    'teams' => $teams
+                    'teams' => $teams,
+                    'users' => $users
                 ]
             ]);
         }catch(Exception $e){

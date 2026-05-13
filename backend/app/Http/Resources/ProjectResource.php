@@ -38,15 +38,23 @@ class ProjectResource extends JsonResource
             'actual_field_start' => $this->projectDetails->actual_field_start?->format('Y-m-d') ?? null,
             'actual_field_end' => $this->projectDetails->actual_field_end?->format('Y-m-d') ?? null,
             'project_objectives' => $this->projectDetails->project_objectives ?? null,
-            'created_user_id' => $this->projectDetails->createdBy->userDetails,
+            'created_user_id' => [
+                'id' => $this->projectDetails->createdBy->id,
+                'name' => $this->projectDetails->createdBy->name,
+                'email' => $this->projectDetails->createdBy->email,
+            ],
             'project_types' => $this->projectTypes->map(function($projectType){
                 return $projectType->name;
             }),
             'teams' => $this->teams->map(function($team){
                 return $team->name;
             }),
-            'permissions' => $this->projectPermissions->map(function($projectPermission){
-                return User::where('id', $projectPermission->user_id)->pluck('email')[0];
+            'permissions' => $this->projectPermissions->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ];
             }),
             'provinces' => $this->projectProvinces->map(function($item){
                 return [

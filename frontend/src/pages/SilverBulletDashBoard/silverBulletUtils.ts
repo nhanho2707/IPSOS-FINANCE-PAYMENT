@@ -4,6 +4,7 @@ export interface SilverBulletMetadata {
     brands: { brand_code: string; brand_name: string, pack_type: string, pack_size: string }[];
     pack_types: string[],
     pack_sizes: string[],
+    project_names: string[],
     min_recorded_date: Dayjs;
     max_recorded_date: Dayjs;
 }
@@ -18,6 +19,7 @@ export interface RawDataPoint {
     quantity: number;
     recorded_date: string; // YYYY-MM-DD
     time_of_day: string;
+    project_name: string;
 }
 
 export interface RawDataPointByPack {
@@ -67,11 +69,12 @@ export function parsePackSizeVolume(packSize: string): number {
     return 1;
 }
 
-export type ComparisonLevel = 'brand' | 'brand+type' | 'brand+type+size';
+export type ComparisonLevel = 'brand' | 'brand+type' | 'brand+type+size' | 'brand+size';
 
 export const COMPARISON_LEVEL_LABELS: Record<ComparisonLevel, string> = {
     'brand+type+size': 'Brand · Type · Size',
     'brand+type':      'Brand · Type',
+    'brand+size':      'Brand · Size',
     'brand':           'Brand',
 };
 
@@ -87,20 +90,23 @@ export function convertToRawDataPoint(
     for (const d of data) {
         let brand_name: string;
 
+        const includesType = comparisonLevel === 'brand+type' || comparisonLevel === 'brand+type+size';
+        const includesSize = comparisonLevel === 'brand+size' || comparisonLevel === 'brand+type+size';
+
         if (d.brand_name === focusBrand) {
             brand_name = d.brand_name;
-            if (comparisonLevel !== 'brand' && focusPackType !== 'All') {
+            if (includesType && focusPackType !== 'All') {
                 brand_name += ' - ' + d.pack_type;
             }
-            if (comparisonLevel === 'brand+type+size' && focusPackSize !== 'All') {
+            if (includesSize && focusPackSize !== 'All') {
                 brand_name += ' - ' + d.pack_size;
             }
         } else {
             brand_name = d.brand_name;
-            if (comparisonLevel !== 'brand') {
+            if (includesType) {
                 brand_name += ' - ' + d.pack_type;
             }
-            if (comparisonLevel === 'brand+type+size') {
+            if (includesSize) {
                 brand_name += ' - ' + d.pack_size;
             }
         }
@@ -186,10 +192,10 @@ export function calculateSilverBullet(
 
     let focusBrandFull = focusBrand;
 
-    if (comparisonLevel !== 'brand' && focusPackType !== 'All') {
+    if ((comparisonLevel === 'brand+type' || comparisonLevel === 'brand+type+size') && focusPackType !== 'All') {
         focusBrandFull += ' - ' + focusPackType;
     }
-    if (comparisonLevel === 'brand+type+size' && focusPackSize !== 'All') {
+    if ((comparisonLevel === 'brand+size' || comparisonLevel === 'brand+type+size') && focusPackSize !== 'All') {
         focusBrandFull += ' - ' + focusPackSize;
     }
 

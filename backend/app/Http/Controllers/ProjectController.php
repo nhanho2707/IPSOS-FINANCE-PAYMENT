@@ -936,18 +936,35 @@ class ProjectController extends Controller
     public function upsertProjectPrice(Request $request, $projectId)
     {
         try {
-            $request->validate([
-                'province_id' => 'required|integer|exists:provinces,id',
-                'price_type'  => 'required|string|in:' . implode(',', array_keys(self::PRICE_TYPE_MAP)),
-                'price'       => 'required|numeric|min:0',
-            ]);
+            $provincePrice = $request->province_price ?? null;
 
-            $col = self::PRICE_TYPE_MAP[$request->price_type];
+            $projectProvince = ProjectProvince::where('project_id', $projectId)
+                                                ->where('province_id', $provincePrice->province->id);
+
+            if(!$projectProvince){
+                $projectProvince = ProjectProvince::create([
+                    'project_id' => $projectId,
+                    'province_id' => $projectProvince->province->id,
+                    'sample_size_main' => 0,
+                    'price_main' => 0
+                ]);
+            }
+            
+            // $projectProvince->update([
+            //     'sample_size_main' => 
+            // ]); 
+
+            $cols = self::PRICE_TYPE_GROUP_MAP[$province_price->price_type];
+
+
 
             $pp = ProjectProvince::firstOrCreate(
                 ['project_id' => $projectId, 'province_id' => $request->province_id],
                 ['sample_size_main' => 0, 'price_main' => 0]
             );
+
+
+
             $pp->update([$col => $request->price]);
 
             return response()->json([

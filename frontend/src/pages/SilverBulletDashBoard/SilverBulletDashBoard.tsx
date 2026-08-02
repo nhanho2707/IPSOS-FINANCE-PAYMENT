@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
+    Autocomplete,
     Box,
     Button,
+    Checkbox,
+    Chip,
     FormControl,
     FormControlLabel,
     InputLabel,
@@ -16,8 +19,11 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    TextField,
     Typography,
 } from '@mui/material';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
@@ -277,6 +283,7 @@ const SilverBulletDashBoard = () => {
     const [ focusPackType, setFocusPackType ] = useState<string>('All');
     const [ focusPackSize, setFocusPackSize ] = useState<string>('All');
     const [ comparisonLevel, setComparisonLevel ] = useState<ComparisonLevel>('brand+type+size');
+    const [ selectedProjects, setSelectedProjects ] = useState<string[]>([]);
     const [result, setResult] = useState<SilverBulletResult | null>(null);
     const [isStale, setIsStale] = useState(false);
 
@@ -306,29 +313,40 @@ const SilverBulletDashBoard = () => {
 
     useEffect(() => {
         if (result) setIsStale(true);
-    }, [focusBrand, focusPackType, focusPackSize, comparisonLevel, p1From, p1To, p2From, p2To]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [focusBrand, focusPackType, focusPackSize, comparisonLevel, selectedProjects, p1From, p1To, p2From, p2To]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         const fetchMetadata = async () => {
             try {
-                const response = await axios.get(ApiConfig.silverBulletDashboard.getMetadata);
+                const response = await axios.get(ApiConfig.silverBulletDashboard.getMetadata, {
+                    params: {
+                        project_names: selectedProjects.length > 0 ? selectedProjects : undefined,
+                    },
+                });
                 const data: SilverBulletMetadata = response.data.data;
                 setMetadata(data);
 
                 const min = dayjs(data.min_recorded_date as unknown as string);
                 const max = dayjs(data.max_recorded_date as unknown as string);
-                
+
                 setP1From(min);
                 setP1To(max);
                 setP2From(min);
                 setP2To(max);
+
+                const availableBrandNames = new Set(data.brands.map(b => b.brand_name));
+                if (focusBrand && !availableBrandNames.has(focusBrand)) {
+                    setFocusBrand('');
+                    setFocusPackType('All');
+                    setFocusPackSize('All');
+                }
             } catch (error) {
                 console.error('Error fetching silver bullet metadata:', error);
             }
         };
 
         fetchMetadata();
-    }, []);
+    }, [selectedProjects]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleCalculate = async () => {
         if (!focusBrand) return;
@@ -344,6 +362,7 @@ const SilverBulletDashBoard = () => {
                     p1_to:   p1To.format('YYYY-MM-DD'),
                     p2_from: p2From.format('YYYY-MM-DD'),
                     p2_to:   p2To.format('YYYY-MM-DD'),
+                    project_names: selectedProjects.length > 0 ? selectedProjects : undefined,
                 },
             });
 
@@ -385,6 +404,40 @@ const SilverBulletDashBoard = () => {
                                 />
                             ))}
                         </RadioGroup>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Typography variant="body2" fontWeight={600} color="text.secondary" minWidth={100}>
+                            Project
+                        </Typography>
+                        <Autocomplete
+                            multiple
+                            size="small"
+                            disableCloseOnSelect
+                            options={metadata?.project_names ?? []}
+                            value={selectedProjects}
+                            onChange={(_, values) => setSelectedProjects(values)}
+                            renderOption={(props, option, { selected }) => (
+                                <li {...props}>
+                                    <Checkbox
+                                        icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                                        checkedIcon={<CheckBoxIcon fontSize="small" />}
+                                        checked={selected}
+                                        sx={{ mr: 1, p: 0.5 }}
+                                    />
+                                    {option}
+                                </li>
+                            )}
+                            renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                    <Chip size="small" label={option} {...getTagProps({ index })} />
+                                ))
+                            }
+                            renderInput={(params) => (
+                                <TextField {...params} placeholder={selectedProjects.length === 0 ? 'All projects' : ''} />
+                            )}
+                            sx={{ minWidth: 320, flex: 1 }}
+                        />
                     </Box>
 
                     <PeriodPicker

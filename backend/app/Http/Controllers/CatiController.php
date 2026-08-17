@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\Response;
+use Carbon\Carbon;
 use App\Models\CATIRespondent;
 use App\Models\CATIBatch;
 use App\Models\Project;
+use App\Models\ProjectDetail;
 use App\Models\Employee;
 use App\Http\Resources\CATIBatchResource;
 use App\Http\Resources\CATIRespondentResource;
@@ -372,5 +375,120 @@ class CatiController extends Controller
                 'error' => $e->getMessage()
             ], 400);
         }
+    }
+
+    public function authenticateToken(Request $request)
+    {
+        $rememberToken = $request->remember_token ?? null;
+        $employeeId = $request->employee_id ?? null;
+        $respondentName = $request->respondent_name ?? null;
+        $phoneNumber = $request->phone_number ?? null;
+        $batchName = $request->batch_name ?? null;
+        $link = $request->link ?? null;
+        $data = $request->data ?? null;
+
+        if(!$respondentName || !$phoneNumber || !$batchName || !$link){
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Respondent Name, Phone Number, Batch Name and Link should not be blank.'
+            ]);
+        }
+
+        $project = ProjectDetail::where('remember_token', $rememberToken)->first();
+
+        if(!$project){
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Dự án không tồn tại.'
+            ]);
+        }
+
+        $batch = CATIBatch::where('project_id', $project->project_id)
+                    ->where('name', $batchName)
+                    ->first();
+
+        if(!$batch){
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Batch không tồn tại. Vui lòng kiểm tra.'
+            ]);
+        }
+
+        $employee = Employee::where('employee_id', $employeeId)->first();
+
+        if(!$employee){
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Interviewer ID không tồn tại. Vui lòng kiểm tra.'
+            ]);
+        }
+
+        $existingPhoneNumber = $batch->respondents()
+            ->where('phone', $phoneNumber)
+            ->exists();
+        
+        if($existingPhoneNumber){
+            return response()->json([
+                'status_code' => 403,
+                'error' => 'Số điện thoại này đã tham gia khảo sát trước đó. Vui lòng kiểm tra.'
+            ]);
+        }
+
+        if(!$data){
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Dữ liệu truyền vào không hợp lệ.'
+            ]);
+        }
+
+        if(is_string($data)){
+            $data = json_decode($data, true);
+        }
+
+        if(!is_array($data)){
+            return response()->json([
+                'status_code' => 400,
+                'error' => 'Dữ liệu truyền vào không hợp lệ.'
+            ]);
+        }
+
+        $dataArr = [];
+
+        foreach($data as $key => $value){
+            $dataArr[] = $key . '=' . trim($value);
+        }
+
+        $dataBase64 = base64_encode(implode(';', $dataArr));
+        
+        $respondent = DB::transaction(function() use ($project, $batch, $phoneNumber, $respondentName, $link, $dataBase64) {
+            $nextNumber = (int) CATIRespondent::where('project_id', $project->project_id)
+                ->lockForUpdate()
+                ->max(DB::raw('CAST(respondent_id AS UNSIGNED)')) + 1;
+
+            $query = http_build_query([
+                'id' => $nextNumber,
+                'I.User1' => $dataBase64
+            ]);
+
+            $linkFinal = $link . '&' . http_build_query([
+                'id' => $nextNumber,
+                'I.User1' => $dataBase64
+            ]);
+            
+            return CATIRespondent::create([
+                'project_id' => $batch->project_id,
+                'batch_id' => $batch->id,
+                'respondent_id' => $nextNumber,
+                'phone' => $phoneNumber,
+                'name' => $respondentName,
+                'link' => $linkFinal,
+                'status' => 'New'
+            ]);
+        });
+
+        return response()->json([
+            'status_code' => 200,
+            'link' => $respondent->link
+        ]);
     }
 }

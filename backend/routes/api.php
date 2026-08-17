@@ -216,6 +216,8 @@ Route::middleware('catiAuthMiddleware')->group(function () {
     Route::get('/suspended', [CatiController::class, 'getSuspended']);
 });
 
+Route::post('cati/authenticate-token', [CatiController::class, 'authenticateToken']);
+
 // ══════════════════════════════════════════════════════════
 //  MISC / DEBUG
 // ══════════════════════════════════════════════════════════

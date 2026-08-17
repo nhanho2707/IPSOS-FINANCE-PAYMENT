@@ -208,7 +208,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             }, { headers });
             const saved: PriceRow = res.data.data;
             setRows(prev => {
-                const idx = prev.findIndex(r => r.province_id === saved.province_id && r.price_type === saved.price_type);
+                const idx = prev.findIndex(r => r.province?.id === saved.province?.id && r.price_type === saved.price_type);
                 if (idx >= 0) {
                     const next = [...prev];
                     next[idx] = saved;
@@ -229,8 +229,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
     const handleDelete = async (row: PriceRow) => {
         try {
             const url = ApiConfig.project.deleteProjectPrice.replace("{projectId}", projectId.toString());
-            await axios.delete(url, { headers, data: { province_id: row.province_id, price_type: row.price_type } });
-            setRows(prev => prev.filter(r => !(r.province_id === row.province_id && r.price_type === row.price_type)));
+            await axios.delete(url, { headers, data: { province_id: row.province?.id, price_type: row.price_type } });
+            setRows(prev => prev.filter(r => !(r.province?.id === row.province?.id && r.price_type === row.price_type)));
         } catch (e) {
             console.log(e);
         }

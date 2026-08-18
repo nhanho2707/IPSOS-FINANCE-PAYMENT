@@ -11,7 +11,7 @@ import { FilterData, useCATIRespondents } from "../../hook/useCATIRespondents";
 
 
 export default function MiniCATI() {
-  const { options, currentRespondent, catiRespondents, actionState, page, rowsPerPage, searchTerm, total, setPage, setRowsPerPage, setSearchTerm, setCurrentRespondent, fetchCATISuppendedList, getCatiRespondent, updateStatus } = useCATIRespondents();
+  const { options, currentRespondent, catiRespondents, actionState, page, rowsPerPage, searchTerm, total, setPage, setRowsPerPage, setSearchTerm, setCurrentRespondent, fetchCATISuppendedList, getCatiRespondent, claimRespondent, updateStatus } = useCATIRespondents();
 
   const [filters, setFilters] = useState<FilterData>({
     filter_1: "",
@@ -44,7 +44,7 @@ export default function MiniCATI() {
            <Button
             size="small"
             variant="outlined"
-            onClick={() => setCurrentRespondent(row)}
+            onClick={() => claimRespondent(row.id)}
           >
             Gọi lại
           </Button>

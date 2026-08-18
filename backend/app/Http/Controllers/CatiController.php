@@ -341,7 +341,7 @@ class CatiController extends Controller
 
             $query = CATIRespondent::with('batch')
                         ->where('status', 'Suspended')
-                        ->where('assigned_to', $employeeId)
+                        // ->where('assigned_to', $employeeId)
                         ->whereHas('batch', function($q) {
                             $q->where('status', 'active');
                         })
@@ -368,6 +368,53 @@ class CatiController extends Controller
                 ]
             ]);
 
+        } catch(\Exception $e){
+            Log::error($e->getMessage());
+            return response()->json([
+                'status_code' => 400,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function claimRespondent(Request $request, $id)
+    {
+        try
+        {
+            $auth = $request->attributes->get('auth');
+
+            $employeeId = $auth['employee_id'];
+
+            $respondent = DB::transaction(function() use ($id, $employeeId) {
+                $respondent = CATIRespondent::where('id', $id)
+                    ->where('status', 'Suspended')
+                    ->lockForUpdate()
+                    ->first();
+
+                if(!$respondent){
+                    return null;
+                }
+
+                $respondent->update([
+                    'status' => 'Calling',
+                    'assigned_to' => $employeeId,
+                    'locked_at' => now()
+                ]);
+
+                return $respondent;
+            });
+
+            if(!$respondent){
+                return response()->json([
+                    'status_code' => 409,
+                    'error' => 'Số này đã có người khác gọi. Vui lòng chọn số khác.'
+                ], 409);
+            }
+
+            return response()->json([
+                'status_code' => 200,
+                'data' => new CATIRespondentResource($respondent)
+            ]);
         } catch(\Exception $e){
             Log::error($e->getMessage());
             return response()->json([
@@ -482,7 +529,8 @@ class CatiController extends Controller
                 'phone' => $phoneNumber,
                 'name' => $respondentName,
                 'link' => $linkFinal,
-                'status' => 'New'
+                'status' => 'Suspended',
+                'comment' => 'Respondent created and suspended for survey.'
             ]);
         });
 

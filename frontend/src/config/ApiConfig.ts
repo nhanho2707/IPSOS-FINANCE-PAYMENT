@@ -113,6 +113,7 @@ export const ApiConfig = {
     showCATIProjects: `${host}/api/cati-projects/show`,
     validateEmployee: `${host}/api/cati-project/login`,
     getSuspendedList: `${host}/api/suspended`,
+    claimSuspended: `${host}/api/suspended/{id}/claim`,
     filters: `${host}/api/filters`,
     next: `${host}/api/next`,
     updateStatus: `${host}/api/update-status`,

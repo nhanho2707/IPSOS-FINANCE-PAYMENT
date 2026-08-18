@@ -214,6 +214,7 @@ Route::middleware('catiAuthMiddleware')->group(function () {
     Route::post('/update-status', [CatiController::class, 'updateStatus']);
     Route::get('/filters', [CatiController::class, 'filters']);
     Route::get('/suspended', [CatiController::class, 'getSuspended']);
+    Route::post('/suspended/{id}/claim', [CatiController::class, 'claimRespondent']);
 });
 
 Route::post('cati/authenticate-token', [CatiController::class, 'authenticateToken']);

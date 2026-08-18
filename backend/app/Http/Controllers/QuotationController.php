@@ -192,14 +192,14 @@ class QuotationController extends Controller
 
             $request->validate([
                 'data' => 'required|array',
-                'data.internal_code' => 'required|string',
-                'data.project_name' => 'required|string',
-                'data.platform' => 'required|string',
-                'data.project_objectives' => 'required|string'
+                'data.project_information.internal_code' => 'required|string',
+                'data.project_information.project_name' => 'required|string',
+                'data.fieldwork_design.platform' => 'required|string',
+                'data.target_group.project_objectives' => 'required|string'
             ]);
 
-            $newInternalCode = trim($request->data['internal_code']);
-            $newProjectName = trim(strtoupper($request->data['project_name']));
+            $newInternalCode = trim($request->data['project_information']['internal_code']);
+            $newProjectName = trim(strtoupper($request->data['project_information']['project_name']));
 
             $existingProject = Project::where('internal_code', $newInternalCode)
                                 ->where('project_name', $newProjectName)
@@ -226,17 +226,17 @@ class QuotationController extends Controller
 
             DB::transaction(function() use ($logged_in_user, $project, $quotation, $request) {
 
-                $newInternalCode = trim($request->data['internal_code']);
-                $newProjectName = trim(strtoupper($request->data['project_name']));
-                
+                $newInternalCode = trim($request->data['project_information']['internal_code']);
+                $newProjectName = trim(strtoupper($request->data['project_information']['project_name']));
+
                 $project->update([
                     'internal_code' => $newInternalCode,
                     'project_name' => $newProjectName
                 ]);
 
                 $project->projectDetails()->update([
-                    'platform' => trim($request->data['platform']),
-                    'project_objectives' => $request->data['project_objectives']
+                    'platform' => trim($request->data['fieldwork_design']['platform']),
+                    'project_objectives' => $request->data['target_group']['project_objectives']
                 ]);
 
                 $quotation->update([

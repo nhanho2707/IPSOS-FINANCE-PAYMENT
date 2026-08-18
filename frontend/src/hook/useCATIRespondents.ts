@@ -149,6 +149,41 @@ export const useCATIRespondents = () => {
         }
     };
 
+    const claimRespondent = async (id: number) => {
+        try
+        {
+            const cati_token = localStorage.getItem('cati_token');
+
+            const url = ApiConfig.minicati.claimSuspended.replace('{id}', id.toString());
+
+            const response = await axios.post(url, {}, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${cati_token}`
+                }
+            });
+
+            if(response.data.status_code === 200){
+                setCurrentRespondent(response.data.data);
+                await fetchCATISuppendedList({ silent: true });
+                return true;
+            }
+
+            return false;
+        } catch(error: any){
+            if(error.response?.status === 409){
+                alert(error.response.data.error || 'Số này đã có người khác gọi. Vui lòng chọn số khác.');
+            } else {
+                console.error(error.response?.data);
+            }
+
+            await fetchCATISuppendedList({ silent: true });
+
+            return false;
+        }
+    };
+
     const updateStatus = async (id: number, status: string, comment: string) => {
         try
         {
@@ -195,6 +230,7 @@ export const useCATIRespondents = () => {
 
         fetchCATISuppendedList,
         getCatiRespondent,
+        claimRespondent,
         updateStatus
     }
 };

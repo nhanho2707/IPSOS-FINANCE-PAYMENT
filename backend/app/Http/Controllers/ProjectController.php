@@ -466,7 +466,7 @@ class ProjectController extends Controller
                 }
 
                 Cache::forget('cati.projects');
-                Cache::forget('cati.filters.all');
+                Cache::forget("cati.filters.$projectId");
 
                 DB::commit();
                 
@@ -573,7 +573,7 @@ class ProjectController extends Controller
             }
 
             Cache::forget('cati.projects');
-            Cache::forget('cati.filters.all');
+            Cache::forget("cati.filters.$projectId");
 
             Log::info('The project is updated successfully.');
             return response()->json([

@@ -205,8 +205,6 @@ class CatiController extends Controller
             'project_id' => $projectId
         ], now()->addHours(8));
 
-        Cache::forget('cati.filters.all');
-
         return response()->json([
             'status_code' => 200,
             'token' => $token,
@@ -214,15 +212,19 @@ class CatiController extends Controller
         ]);
     }
 
-    public function filters()
+    public function filters(Request $request)
     {
         $filters = ['filter_1','filter_2','filter_3','filter_4'];
 
-        $data = Cache::remember('cati.filters.all', 3600, function() use ($filters){
+        $auth = $request->attributes->get('auth');
+        $projectId = $auth['project_id'];
+
+        $data = Cache::remember("cati.filters.$projectId", 3600, function() use ($filters, $projectId){
             $result = [];
 
             foreach($filters as $filter){
-                $result[$filter] = CATIRespondent::whereHas('batch', function($q) {
+                $result[$filter] = CATIRespondent::where('project_id', $projectId)
+                            ->whereHas('batch', function($q) {
                                 $q->where('status', 'active');
                             })
                             ->distinct()
@@ -258,6 +260,7 @@ class CatiController extends Controller
 
         $query = CATIRespondent::with('batch')
                         ->where('status', 'New')
+                        ->where('project_id', $projectId)
                         ->whereHas('batch', function($q) {
                             $q->where('status', 'active');
                         });
@@ -342,6 +345,7 @@ class CatiController extends Controller
             $query = CATIRespondent::with('batch')
                         ->where('status', 'Suspended')
                         // ->where('assigned_to', $employeeId)
+                        ->where('project_id', $projectId)
                         ->whereHas('batch', function($q) {
                             $q->where('status', 'active');
                         })

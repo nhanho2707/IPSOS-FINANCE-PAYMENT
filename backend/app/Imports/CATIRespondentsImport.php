@@ -60,6 +60,27 @@ class CATIRespondentsImport implements
         ]);
     }
 
+    public function prepareForValidation(array $row): array
+    {
+        $row = array_change_key_case($row, CASE_LOWER);
+
+        if (isset($row['phone'])) {
+            $phone = preg_replace('/\D/', '', (string) $row['phone']);
+
+            if (strlen($phone) === 9) {
+                $phone = '0' . $phone;
+            }
+
+            $row['phone'] = $phone;
+        }
+
+        if (isset($row['id'])) {
+            $row['id'] = preg_replace('/\.0+$/', '', (string) $row['id']);
+        }
+
+        return $row;
+    }
+
     public function rules(): array
     {
         return [
@@ -80,8 +101,8 @@ class CATIRespondentsImport implements
             '*.phone' => [
                 'required',
                 'string',
-                'max:10',
-                'min:10'
+                'min:10',
+                'max:11'
             ],
             '*.filter_1' => ['nullable', 'string', 'max:255'],
             '*.filter_2' => ['nullable', 'string', 'max:255'],
@@ -96,6 +117,8 @@ class CATIRespondentsImport implements
             '*.id.required' => 'Respondent ID is required',
             '*.name.required' => 'Respondent Name is required',
             '*.phone.required' => 'Phone is required',
+            '*.phone.min' => 'Phone must be a valid 10-digit number',
+            '*.phone.max' => 'Phone must be a valid 10-digit number',
             '*.link.required' => 'Link is required',
             '*.link.url' => 'Link must be a valid URL',
         ];

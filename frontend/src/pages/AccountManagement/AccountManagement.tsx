@@ -111,6 +111,7 @@ const AccountManagement = () => {
 
         if (response?.status_code === 200) {
             invalidateMetadata();
+            setFormCreateData(initialAccountData);
         }
 
         setOpenCreateDialog(false);

@@ -42,7 +42,7 @@ export function useAccounts() {
                 },
                 params: {
                     page: page + 1,
-                    perPage: rowsPerPage,
+                    per_page: rowsPerPage,
                     searchTerm: searchTerm
                 }
             });
@@ -129,7 +129,7 @@ export function useAccounts() {
 
             setActionState({
                 type: 'store',
-                loading: true,
+                loading: false,
                 error: false,
                 message: response.data.message
             });

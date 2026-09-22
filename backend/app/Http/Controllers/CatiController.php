@@ -281,7 +281,7 @@ class CatiController extends Controller
             $query->where('filter_4', $request->filter_4);
         }
 
-        $respondent = $query->lockForUpdate()->first();
+        $respondent = $query->inRandomOrder()->lockForUpdate()->first();
 
         if (!$respondent) {
             DB::commit();

@@ -12,6 +12,8 @@ import {
   CardGiftcardOutlined,
   HeadsetMicOutlined,
   SettingsOutlined,
+  ReceiptLongOutlined,
+  InsightsOutlined,
   ChevronLeft,
   ChevronRight,
 } from "@mui/icons-material";
@@ -53,6 +55,16 @@ const buildNavItems = (projectId: number): NavItem[] => [
     to: `/project-management/projects/${projectId}/gifts`,
     icon: CardGiftcardOutlined,
     // showIf: (p) => p?.has_approved_quotation ?? false,
+  },
+  {
+    label: "Transactions",
+    to: `/project-management/projects/${projectId}/transactions`,
+    icon: ReceiptLongOutlined,
+  },
+  {
+    label: "Transaction Statistics",
+    to: `/project-management/projects/${projectId}/transaction-statistics`,
+    icon: InsightsOutlined,
   },
   {
     label: "CATI Settings",

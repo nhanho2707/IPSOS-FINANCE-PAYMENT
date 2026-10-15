@@ -13,6 +13,7 @@ import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { useMetadata } from "../../hook/useMetadata";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from '@mui/icons-material/Send';
+import TransactionStatisticsPanel from "../../components/TransactionStatisticsPanel";
 
 const Transactions = () => {
     const { loading: vinnetLoading, vinnetAccount } = useVinnetAccount();
@@ -31,6 +32,8 @@ const Transactions = () => {
     const [ selectedProjects, setSelectedProjects ] = useState<ProjectData[]>([]);
 
     const [ loadingExportExcelByProjects, setLoadingExportExcelByProjects ]= useState<boolean>(false);
+
+    const [ statsProject, setStatsProject ] = useState<ProjectData | null>(null);
 
     const token = localStorage.getItem("authToken");
 
@@ -319,7 +322,33 @@ const Transactions = () => {
                 </Box>
                 
             </Grid>
-            
+
+            <Grid item xs={12}>
+                <Divider sx={{ mt: 2, mb: 2 }} />
+
+                <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+                    Thống kê thời gian phỏng vấn & nhận quà
+                </Typography>
+
+                <Autocomplete
+                    options={data.projects || []}
+                    value={statsProject}
+                    onChange={(event, newValue) => setStatsProject(newValue)}
+                    getOptionLabel={(option) => `${option.internal_code} - ${option.project_name}`}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            size="small"
+                            label="Chọn dự án"
+                            placeholder="Tất cả dự án"
+                            sx={{ maxWidth: 400 }}
+                        />
+                    )}
+                />
+
+                <TransactionStatisticsPanel projectId={statsProject?.id ?? 0} />
+            </Grid>
+
             <GenericDialog
                 open={open}
                 title="Add Deposited"

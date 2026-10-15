@@ -1,6 +1,7 @@
 // BarChart.tsx
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
+import "../../assets/css/techcombank.css";
 
 interface BarChartProps{
     legend_title?: string

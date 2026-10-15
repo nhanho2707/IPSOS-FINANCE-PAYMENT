@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 use App\Http\Requests\ProjectRespondentTokenRequest;
 use App\Http\Requests\TransactionRejectedRequest;
+use App\Http\Requests\TransactionStatisticsRequest;
 use App\Http\Resources\TransactionResource;
 use App\Models\Project;
 use App\Models\ProjectRespondent;
@@ -378,5 +380,139 @@ class TransactionController extends Controller
                 'message' => 'List of employees requested failed - ' . $e->getMessage(),
             ]);
         }
+    }
+
+    public function statistics(TransactionStatisticsRequest $request, $projectId)
+    {
+        try
+        {
+            $validated = $request->validated();
+
+            $query = DB::table('project_respondents as pr')
+                    ->leftJoin('project_vinnet_transactions as pvt', 'pr.id', '=', 'pvt.project_respondent_id')
+                    ->leftJoin('project_gotit_voucher_transactions as pgt', 'pr.id', '=', 'pgt.project_respondent_id')
+                    ->join('employees', 'employees.id', '=', 'pr.employee_id')
+                    ->whereIn('pr.channel', ['vinnet', 'gotit', 'other'])
+                    ->where(function($q) {
+                        $q->whereRaw("COALESCE(pvt.vinnet_token_message, pgt.voucher_status) IN ('Thành công', 'Voucher được cập nhật thành công.')")
+                        ->orWhereRaw("COALESCE(pvt.vinnet_token_message, pgt.voucher_status) LIKE 'Voucher được cancelled by GotIt ngày%'");
+                    });
+
+            if($projectId != 0){
+                $query->where('pr.project_id', $projectId);
+            }
+
+            if(!empty($validated['channel'])){
+                $query->where('pr.channel', $validated['channel']);
+            }
+
+            if(!empty($validated['date_from'])){
+                $query->whereDate('pr.interview_start', '>=', $validated['date_from']);
+            }
+
+            if(!empty($validated['date_to'])){
+                $query->whereDate('pr.interview_start', '<=', $validated['date_to']);
+            }
+
+            $rows = $query->select(
+                    'pr.channel',
+                    'pr.interview_start',
+                    'pr.interview_end',
+                    DB::raw('COALESCE(pvt.created_at, pgt.created_at) as gift_time'),
+                    'pr.respondent_id',
+                    'pr.respondent_phone_number',
+                    'employees.employee_id',
+                    'employees.first_name',
+                    'employees.last_name'
+                )
+                ->get();
+
+            $interviewBuckets = [];
+            $giftBuckets = [];
+            $gapBuckets = $this->emptyGapBuckets();
+            $anomalies = [];
+
+            foreach($rows as $row){
+                $interviewStart = Carbon::parse($row->interview_start);
+                $interviewHourKey = $this->hourRangeBucket($interviewStart->hour);
+                $interviewBuckets[$interviewHourKey] = ($interviewBuckets[$interviewHourKey] ?? 0) + 1;
+
+                if(!$row->gift_time){
+                    continue;
+                }
+
+                $giftTime = Carbon::parse($row->gift_time);
+                $giftHourKey = $this->hourRangeBucket($giftTime->hour);
+                $giftBuckets[$giftHourKey] = ($giftBuckets[$giftHourKey] ?? 0) + 1;
+
+                $interviewEnd = Carbon::parse($row->interview_end);
+                $gapMinutes = (int) round(($giftTime->getTimestamp() - $interviewEnd->getTimestamp()) / 60);
+
+                $gapBuckets[$this->gapBucket($gapMinutes)]++;
+
+                if($gapMinutes < 0){
+                    $anomalies[] = [
+                        'respondent_id' => $row->respondent_id,
+                        'phone' => $row->respondent_phone_number,
+                        'channel' => $row->channel,
+                        'employee_id' => $row->employee_id,
+                        'employee_name' => trim($row->first_name . ' ' . $row->last_name),
+                        'interview_end' => $row->interview_end,
+                        'gift_time' => $row->gift_time,
+                        'gap_minutes' => $gapMinutes
+                    ];
+                }
+            }
+
+            $anomaliesTotal = count($anomalies);
+
+            usort($anomalies, fn($a, $b) => $a['gap_minutes'] <=> $b['gap_minutes']);
+
+            ksort($interviewBuckets);
+            ksort($giftBuckets);
+
+            return response()->json([
+                'status_code' => 200,
+                'data' => [
+                    'total' => $rows->count(),
+                    'interview_time_buckets' => $interviewBuckets,
+                    'gift_time_buckets' => $giftBuckets,
+                    'gap_buckets' => $gapBuckets,
+                    'anomalies' => array_slice($anomalies, 0, 300),
+                    'anomalies_total' => $anomaliesTotal
+                ]
+            ]);
+        } catch(\Exception $e){
+            Log::error($e->getMessage());
+            return response()->json([
+                'status_code' => 400,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    private function emptyGapBuckets(): array
+    {
+        return [
+            '< 0 (bất thường)' => 0,
+            '0 - 30 phút' => 0,
+            '30 phút - 2 giờ' => 0,
+            '2 - 24 giờ' => 0,
+            '> 24 giờ' => 0
+        ];
+    }
+
+    private function hourRangeBucket(int $hour): string
+    {
+        return sprintf('%02d-%02d', $hour, ($hour + 1) % 24);
+    }
+
+    private function gapBucket(int $minutes): string
+    {
+        if($minutes < 0) return '< 0 (bất thường)';
+        if($minutes <= 30) return '0 - 30 phút';
+        if($minutes <= 120) return '30 phút - 2 giờ';
+        if($minutes <= 1440) return '2 - 24 giờ';
+        return '> 24 giờ';
     }
 }

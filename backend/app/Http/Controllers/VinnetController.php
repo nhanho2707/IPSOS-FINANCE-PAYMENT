@@ -105,21 +105,34 @@ class VinnetController extends Controller
 
             $token = $validatedRequest['token'] ?? null;
             $serviceType = $validatedRequest['service_type'] ?? null;
-            $serviceCode = $validatedRequest['service_code'] ?? null;
+            $requestedServiceCode = $validatedRequest['service_code'] ?? null;
             $phoneNumber = $validatedRequest['phone_number'] ?? null;
             $provider = $validatedRequest['provider'] ?? null;
             $deliveryMethod = $validatedRequest['delivery_method'] ?? null;
             $mode = $validatedRequest['mode'] ?? 'online';
 
+            // The card service code must come from the backend catalogue: clients have sent
+            // top-up codes (e.g. S0003) that Vinnet accepts but that cannot buy a card.
+            $serviceCode = $vinnetService->get_service_code($phoneNumber);
+
             Log::info('Transaction Info: ', [
                 'token' => $token,
                 'service_type' => $serviceType,
+                'requested_service_code' => $requestedServiceCode,
                 'service_code' => $serviceCode,
                 'phone_number' => $phoneNumber,
                 'provider' => $provider,
                 'delivery_method' => $deliveryMethod,
                 'mode' => $mode
             ]);
+
+            if(!$serviceCode){
+                return response()->json([
+                    'status_code' => 904,
+                    'message' => ProjectRespondent::ERROR_INVALID_RESPONDENT_PHONE_NUMBER . ' Vui lòng kiểm tra lại.',
+                    'error' => ProjectRespondent::ERROR_INVALID_RESPONDENT_PHONE_NUMBER
+                ], 409);
+            }
 
             $tokenRecord = $mode === 'offline'
                 ? $tokenService->verifyTokenOffline($token)

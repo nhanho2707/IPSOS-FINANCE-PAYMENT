@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Facades\Log;
 
@@ -74,7 +75,7 @@ class VinnetService
 
     function get_prices($serviceCode): array
     {
-        return $this->serviceItems[$serviceCode];
+        return $this->serviceItems[$serviceCode]['prices'] ?? [];
     }
 
     function get_service_items($price): array
@@ -524,7 +525,7 @@ class VinnetService
 
                     // Kiểm tra trường cần thiết
                     if (!isset($responseData['reqUuid'], $responseData['resCode'], $responseData['resMesg'], $responseData['resData'], $responseData['sign'])) {
-                        throw new \xception("Response thiếu các trường cần thiết để xác thực chữ ký");
+                        throw new \Exception("Response thiếu các trường cần thiết để xác thực chữ ký");
                     }
 
                     // Xác thực chữ ký
@@ -696,8 +697,6 @@ class VinnetService
                     throw new \Exception('Decoded services data is not an array');
                 }
 
-                Log::info('Token: ' . $decodedData['token']);
-                
                 return [
                     'reqUuid' => $uuid,
                     'token' => $decodedData['token'],
@@ -948,7 +947,13 @@ class VinnetService
                     throw new \Exception('Decoded services data is not an array');
                 }
 
-                Log::info('Pay item array: ' . print_r($decodedData, true));
+                // PIN codes are redeemable value; keep them out of the logs.
+                $loggedPayItem = $decodedData;
+                foreach ($loggedPayItem['cardItems'] ?? [] as $index => $cardItem) {
+                    $loggedPayItem['cardItems'][$index]['pinCode'] = '***';
+                }
+
+                Log::info('Pay item array: ' . print_r($loggedPayItem, true));
 
                 return [
                     'reqUuid' => $uuid,

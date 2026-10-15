@@ -343,6 +343,7 @@ class CatiController extends Controller
             $projectId = $auth['project_id'];
 
             $query = CATIRespondent::with('batch')
+                        ->where('project_id', $projectId)
                         ->where('status', 'Suspended')
                         // ->where('assigned_to', $employeeId)
                         ->where('project_id', $projectId)
@@ -504,14 +505,25 @@ class CatiController extends Controller
         }
 
         $dataArr = [];
-
+        $strComment = '';
+ 
         foreach($data as $key => $value){
             $dataArr[] = $key . '=' . trim($value);
+ 
+            if($key == '_ResName'){
+                $strComment .= trim($value);
+            }
+            if($key == '_Drink_Date'){
+                $strComment .= ' - ' . trim($value);
+            }
+            if($key == '_Drink_Time'){
+                $strComment .= ' - ' . trim($value);
+            }
         }
 
         $dataBase64 = base64_encode(implode(';', $dataArr));
         
-        $respondent = DB::transaction(function() use ($project, $batch, $phoneNumber, $respondentName, $link, $dataBase64) {
+        $respondent = DB::transaction(function() use ($project, $batch, $phoneNumber, $respondentName, $link, $dataBase64, $strComment) {
             $nextNumber = (int) CATIRespondent::where('project_id', $project->project_id)
                 ->lockForUpdate()
                 ->max(DB::raw('CAST(respondent_id AS UNSIGNED)')) + 1;
@@ -534,7 +546,7 @@ class CatiController extends Controller
                 'name' => $respondentName,
                 'link' => $linkFinal,
                 'status' => 'Suspended',
-                'comment' => 'Respondent created and suspended for survey.'
+                'comment' => $strComment
             ]);
         });
 

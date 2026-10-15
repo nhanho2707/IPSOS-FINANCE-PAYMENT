@@ -34,7 +34,10 @@ import CATISettings from "./pages/Project/CATISettings";
 import MiniCATILogin from "./pages/MiniCATI/MiniCATILogin";
 import CATIProtectedRoute from "./routes/CATIProtectedRoute";
 import Assignment from "./pages/Project/Assignment";
+import ProjectTransactions from "./pages/Project/Transactions";
+import TransactionStatistics from "./pages/Project/TransactionStatistics";
 import SilverBulletDashBoard from "./pages/SilverBulletDashBoard/SilverBulletDashBoard";
+import UMEDashboard from "./pages/dashboards/UMEDashboard";
 import ProgressReport from "./pages/Project/ProgressReport";
 import Codeframe from "./pages/Codeframe/Codeframe";
 
@@ -64,6 +67,7 @@ const App: React.FC = () => {
 
             <Route path='/progress-report' element={<DashboardProject />} />
             <Route path='/silver-bullet-dashboard' element={<SilverBulletDashBoard />} />
+            <Route path='/ume-dashboard' element={<UMEDashboard />} />
             <Route path='/progress' element={<ProgressReport />} />
 
             <Route path='/codeframe' element={<Codeframe />} />
@@ -114,6 +118,14 @@ const App: React.FC = () => {
               <Route
                 path="gifts"
                 element={<Gifts />}
+              />
+              <Route
+                path="transactions"
+                element={<ProjectTransactions />}
+              />
+              <Route
+                path="transaction-statistics"
+                element={<TransactionStatistics />}
               />
               <Route
                 path="cati-settings"

@@ -23,6 +23,7 @@ class CATIRespondent extends Model
         'filter_3',
         'filter_4',
         'status',
+        'comment',
         'assigned_to',
         'lock_at'
     ];

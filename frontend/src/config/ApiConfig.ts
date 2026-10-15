@@ -13,6 +13,7 @@ export const ApiConfig = {
     getDepartments: `${host}/api/project-management/departments`,
     getTeams: `${host}/api/project-management/{department_id}/teams`,
     viewTransactions: `${host}/api/project-management/projects/{projectId}/transactions/show`,
+    viewTransactionStatistics: `${host}/api/project-management/projects/{projectId}/transactions/statistics`,
     viewEmployees: `${host}/api/project-management/{projectId}/employees`,
     addEmployees: `${host}/api/project-management/projects/{projectId}/employees/store`,
     removeEmployee: `${host}/api/project-management/projects/{projectId}/employees/{employeeId}/destroy`,

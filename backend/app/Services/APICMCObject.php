@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class APICMCObject 
@@ -40,7 +41,7 @@ class APICMCObject
 
         $responseData = $this->post_request($url, $postData);
 
-        Log::info('SMS Response: ' . json_encode($responseData));
+        Log::info('SMS Response: ' . $this->mask_for_log(json_encode($responseData)));
 
         return $responseData['data'];
     }
@@ -61,7 +62,7 @@ class APICMCObject
                 $jsonData = json_encode($postData);
             }
             
-            Log::info("Post Data: ".$jsonData);
+            Log::info("Post Data: " . $this->mask_for_log($jsonData));
 
             // Set cURL options
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -96,7 +97,7 @@ class APICMCObject
             $bodyData = substr($response, $headerSize);
 
             Log::info("Header: " . $headerText);
-            Log::info("Body: " . $bodyData);
+            Log::info("Body: " . $this->mask_for_log($bodyData));
 
             // Parse header thành mảng
             $headers = [];
@@ -159,6 +160,14 @@ class APICMCObject
             // Optionally rethrow the exception or handle it
             throw $e;
         }
+    }
+
+    /**
+     * SMS bodies carry card PIN codes and the request carries the CMC password.
+     */
+    private function mask_for_log(string $json): string
+    {
+        return preg_replace('/"(message|pass)"\s*:\s*"(?:[^"\\\\]|\\\\.)*"/', '"$1":"***"', $json);
     }
 
     private function json_validator($data) { 

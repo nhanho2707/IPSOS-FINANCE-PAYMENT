@@ -78,6 +78,72 @@ class VinnetService
         return $this->serviceItems[$serviceCode]['prices'] ?? [];
     }
 
+    /**
+     * Fewest cards whose face values add up to $amount, largest first.
+     * Returns null when the denominations cannot make up the amount exactly.
+     */
+    public function split_amount(int $amount, array $denominations): ?array
+    {
+        $denominations = array_values(array_unique(array_filter(array_map('intval', $denominations), fn ($value) => $value > 0)));
+        rsort($denominations);
+
+        if ($amount <= 0 || empty($denominations)) {
+            return null;
+        }
+
+        $step = array_reduce($denominations, fn ($carry, $value) => $this->greatest_common_divisor($carry, $value), $amount);
+        $target = intdiv($amount, $step);
+
+        // $lastCard[$total] is the card added to reach $total with the fewest cards.
+        $cardCount = [0 => 0];
+        $lastCard = [];
+
+        for ($total = 1; $total <= $target; $total++) {
+            foreach ($denominations as $value) {
+                $previous = $total - intdiv($value, $step);
+
+                if ($previous < 0 || !isset($cardCount[$previous])) {
+                    continue;
+                }
+
+                if (!isset($cardCount[$total]) || $cardCount[$previous] + 1 < $cardCount[$total]) {
+                    $cardCount[$total] = $cardCount[$previous] + 1;
+                    $lastCard[$total] = $value;
+                }
+            }
+        }
+
+        if (!isset($cardCount[$target])) {
+            return null;
+        }
+
+        $cards = [];
+        for ($total = $target; $total > 0; $total -= intdiv($lastCard[$total], $step)) {
+            $cards[] = $lastCard[$total];
+        }
+
+        rsort($cards);
+
+        return $cards;
+    }
+
+    private function greatest_common_divisor(int $a, int $b): int
+    {
+        return $b === 0 ? $a : $this->greatest_common_divisor($b, $a % $b);
+    }
+
+    /**
+     * PIN codes are redeemable value; keep them out of the logs.
+     */
+    public function mask_pay_item(array $payItem): array
+    {
+        foreach ($payItem['cardItems'] ?? [] as $index => $cardItem) {
+            $payItem['cardItems'][$index]['pinCode'] = '***';
+        }
+
+        return $payItem;
+    }
+
     function get_service_items($price): array
     {
         $service_items = [];
@@ -947,13 +1013,7 @@ class VinnetService
                     throw new \Exception('Decoded services data is not an array');
                 }
 
-                // PIN codes are redeemable value; keep them out of the logs.
-                $loggedPayItem = $decodedData;
-                foreach ($loggedPayItem['cardItems'] ?? [] as $index => $cardItem) {
-                    $loggedPayItem['cardItems'][$index]['pinCode'] = '***';
-                }
-
-                Log::info('Pay item array: ' . print_r($loggedPayItem, true));
+                Log::info('Pay item array: ' . print_r($this->mask_pay_item($decodedData), true));
 
                 return [
                     'reqUuid' => $uuid,

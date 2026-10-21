@@ -31,32 +31,13 @@ use App\Http\Requests\UpdateProjectStatusRequest;
 use App\Http\Requests\UpdateProjectDisabledRequest;
 use App\Http\Requests\ImportEmployeesRequest;
 use App\Http\Requests\ImportProjectRespondentsRequest;
+use App\Http\Requests\UpsertProjectPriceRequest;
+use App\Http\Requests\DeleteProjectPriceRequest;
 use App\Services\ProjectRespondentTokenService;
 use Carbon\Carbon;
 
 class ProjectController extends Controller
 {
-    private const PRICE_TYPE_MAP = [
-        'main'        => 'price_main',
-        'main_1'      => 'price_main_1',
-        'main_2'      => 'price_main_2',
-        'main_3'      => 'price_main_3',
-        'main_4'      => 'price_main_4',
-        'main_5'      => 'price_main_5',
-        'booster'     => 'price_boosters',
-        'booster_1'   => 'price_boosters_1',
-        'booster_2'   => 'price_boosters_2',
-        'booster_3'   => 'price_boosters_3',
-        'booster_4'   => 'price_boosters_4',
-        'booster_5'   => 'price_boosters_5',
-        'non'         => 'price_non',
-        'non_1'       => 'price_non_1',
-        'non_2'       => 'price_non_2',
-        'non_3'       => 'price_non_3',
-        'non_4'       => 'price_non_4',
-        'non_5'       => 'price_non_5',
-    ];
-
     private const PRICE_TYPE_GROUP_MAP = [
         'main' => ['price_main','price_main_1','price_main_2','price_main_3','price_main_4','price_main_5'],
         'booster' => ['price_boosters','price_boosters_1','price_boosters_2','price_boosters_3','price_boosters_4','price_boosters_5'],
@@ -908,20 +889,9 @@ class ProjectController extends Controller
 
             $result = [];
             foreach ($rows as $row) {
-                foreach (self::PRICE_TYPE_GROUP_MAP as $type => $cols) {
+                foreach (array_keys(self::PRICE_TYPE_GROUP_MAP) as $type) {
                     if($row[self::SAMPLE_SIZE_MAP[$type]] > 0){
-                        $result[] = [
-                            'province_id'   => $row->province_id,
-                            'province_name' => $row->province->name ?? '',
-                            'price_type'    => $type,
-                            'sample_size'   => $row[self::SAMPLE_SIZE_MAP[$type]],
-                            'price'         => (float) $row[$cols[0]] ?? null,
-                            'price_1'       => (float) $row[$cols[1]] ?? null,
-                            'price_2'       => (float) $row[$cols[2]] ?? null,
-                            'price_3'       => (float) $row[$cols[3]] ?? null,
-                            'price_4'       => (float) $row[$cols[4]] ?? null,
-                            'price_5'       => (float) $row[$cols[5]] ?? null,
-                        ];
+                        $result[] = $this->formatProjectPriceRow($row, $type);
                     }
                 }
             }
@@ -933,74 +903,93 @@ class ProjectController extends Controller
         }
     }
 
-    public function upsertProjectPrice(Request $request, $projectId)
+    public function upsertProjectPrice(UpsertProjectPriceRequest $request, $projectId)
     {
         try {
-            $provincePrice = $request->province_price ?? null;
-
-            $projectProvince = ProjectProvince::where('project_id', $projectId)
-                                                ->where('province_id', $provincePrice->province->id);
-
-            if(!$projectProvince){
-                $projectProvince = ProjectProvince::create([
-                    'project_id' => $projectId,
-                    'province_id' => $projectProvince->province->id,
-                    'sample_size_main' => 0,
-                    'price_main' => 0
-                ]);
+            if(!Project::whereKey($projectId)->exists()){
+                return response()->json([
+                    'status_code' => Response::HTTP_NOT_FOUND,
+                    'message' => 'The project not found'
+                ], Response::HTTP_NOT_FOUND);
             }
-            
-            // $projectProvince->update([
-            //     'sample_size_main' => 
-            // ]); 
 
-            $cols = self::PRICE_TYPE_GROUP_MAP[$province_price->price_type];
+            $validated = $request->validated();
+            $type = $validated['price_type'];
 
+            $values = [self::SAMPLE_SIZE_MAP[$type] => $validated['sample_size']];
 
+            foreach (self::PRICE_TYPE_GROUP_MAP[$type] as $index => $column) {
+                $field = $index === 0 ? 'price' : 'price_' . $index;
+                $values[$column] = $validated[$field] ?? null;
+            }
 
-            $pp = ProjectProvince::firstOrCreate(
-                ['project_id' => $projectId, 'province_id' => $request->province_id],
+            // sample_size_main and price_main are NOT NULL, so a province added with only a
+            // booster/non price still needs zeros there.
+            $projectProvince = ProjectProvince::firstOrNew(
+                ['project_id' => $projectId, 'province_id' => $validated['province_id']],
                 ['sample_size_main' => 0, 'price_main' => 0]
             );
 
-
-
-            $pp->update([$col => $request->price]);
+            $projectProvince->fill($values)->save();
 
             return response()->json([
-                'status_code' => 200,
-                'message'     => 'Price updated successfully.',
-                'data'        => [
-                    'province_id'   => $pp->province_id,
-                    'province_name' => $pp->province->name ?? '',
-                    'price_type'    => $request->price_type,
-                    'price'         => (float) $request->price,
-                ],
+                'status_code' => Response::HTTP_OK,
+                'message' => 'Lưu đơn giá thành công.',
+                'data' => $this->formatProjectPriceRow($projectProvince->load('province'), $type),
             ]);
         } catch (\Exception $e) {
             Log::error('upsertProjectPrice failed: ' . $e->getMessage());
-            return response()->json(['status_code' => 400, 'error' => $e->getMessage()], 400);
+            return response()->json(['status_code' => 400, 'message' => $e->getMessage()], 400);
         }
     }
 
-    public function deleteProjectPrice(Request $request, $projectId)
+    public function deleteProjectPrice(DeleteProjectPriceRequest $request, $projectId)
     {
         try {
-            $request->validate([
-                'province_id' => 'required|integer',
-                'price_type'  => 'required|string|in:' . implode(',', array_keys(self::PRICE_TYPE_MAP)),
-            ]);
+            $validated = $request->validated();
+            $type = $validated['price_type'];
 
-            $col = self::PRICE_TYPE_MAP[$request->price_type];
+            // The table lists a price type only while its sample size is above 0. The first price
+            // column is reset to 0 rather than NULL because price_main is NOT NULL.
+            $values = [self::SAMPLE_SIZE_MAP[$type] => 0];
 
-            ProjectProvince::where('project_id', $projectId)
-                ->where('province_id', $request->province_id)
-                ->update([$col => null]);
+            foreach (self::PRICE_TYPE_GROUP_MAP[$type] as $index => $column) {
+                $values[$column] = $index === 0 ? 0 : null;
+            }
 
-            return response()->json(['status_code' => 200, 'message' => 'Price deleted.']);
+            $updated = ProjectProvince::where('project_id', $projectId)
+                ->where('province_id', $validated['province_id'])
+                ->update($values);
+
+            if($updated === 0){
+                return response()->json([
+                    'status_code' => Response::HTTP_NOT_FOUND,
+                    'message' => 'Không tìm thấy đơn giá cần xoá.'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json(['status_code' => Response::HTTP_OK, 'message' => 'Đã xoá đơn giá.']);
         } catch (\Exception $e) {
             Log::error('deleteProjectPrice failed: ' . $e->getMessage());
-            return response()->json(['status_code' => 400, 'error' => $e->getMessage()], 400);
+            return response()->json(['status_code' => 400, 'message' => $e->getMessage()], 400);
         }
+    }
+
+    private function formatProjectPriceRow(ProjectProvince $row, string $type): array
+    {
+        $columns = self::PRICE_TYPE_GROUP_MAP[$type];
+
+        return [
+            'province_id'   => $row->province_id,
+            'province_name' => $row->province->name ?? '',
+            'price_type'    => $type,
+            'sample_size'   => $row[self::SAMPLE_SIZE_MAP[$type]],
+            'price'         => (float) $row[$columns[0]],
+            'price_1'       => (float) $row[$columns[1]],
+            'price_2'       => (float) $row[$columns[2]],
+            'price_3'       => (float) $row[$columns[3]],
+            'price_4'       => (float) $row[$columns[4]],
+            'price_5'       => (float) $row[$columns[5]],
+        ];
     }
 }

@@ -35,6 +35,7 @@ class ProjectRespondent extends Model
     const ERROR_INVALID_INTERVIEWERURL =                  'Liên kết phỏng vấn không hợp lệ. Vui lòng sử dụng link được hệ thống cung cấp. Nếu bạn đã chỉnh sửa hoặc thay đổi thông tin trong đường link, vui lòng truy cập lại link gốc từ hệ thống.';
     const ERROR_RESPONDENT_GIFT_SYSTEM =                  'Chúng tôi gặp sự cố kỹ thuật khi gửi quà. Sau khi kiểm tra hệ thống, quà sẽ được gửi lại tới bạn.';
     const ERROR_RESPONDENT_GIFT_TEMPORARY =               'Hệ thống gặp sự cố tạm thời, vui lòng kiểm tra lại thiết bị (kết nối mạng,...) và thử thực hiện lại.';
+    const ERROR_RESPONDENT_GIFT_INSUFFICIENT_BALANCE =    'Tài khoản dịch vụ quà tặng tạm thời không đủ số dư. Vui lòng liên hệ Admin để được hỗ trợ.';
     const ERROR_MOBILE_NETWORK_NOT_SUPPORTED =            'Dịch vụ hiện không hỗ trợ đối với số điện thoại thuộc nhà mạng này.';
 
     protected $table = "project_respondents";

@@ -321,7 +321,7 @@ class VinnetController extends Controller
                 'status' => $checkedStatus
             ]);
 
-            if($checkedCode === 0 && $checkedStatus === 1){
+            if($checkedCode === VinnetService::CODE_SUCCESS && $checkedStatus === VinnetService::TRANSACTION_STATUS_SUCCESS){
                 //1: giao dịch thành công, không hoàn tiền KH
                 $vinnetTransaction->updatePaymentServiceStatus(
                     $payServiceUuid,
@@ -331,12 +331,16 @@ class VinnetController extends Controller
                 );
 
                 $newlyVerified = true;
-            } else if(($checkedCode === 0 && $checkedStatus === 3) || $checkedCode === 99){
-                //3: giao dịch thất bại được hoàn tiền KH, 99: Vinnet chưa nhận giao dịch => mua lại
+            } else if(($checkedCode === VinnetService::CODE_SUCCESS && $checkedStatus === VinnetService::TRANSACTION_STATUS_REFUNDED)
+                        || $checkedCode === VinnetService::CODE_TRANSACTION_NOT_FOUND){
+                //3: giao dịch thất bại được hoàn tiền KH, 20: Vinnet không có giao dịch gốc => mua lại
                 $reusableTransactions[] = $vinnetTransaction;
             } else {
-                //2: giao dịch đang xử lý, hoặc chưa xác định được kết quả => chờ kiểm tra lại
-                Log::error('Vinnet: transaction not settled yet [UUID: ' . $payServiceUuid . ']');
+                //2: giao dịch đang xử lý, 99: chưa xác định kết quả, mã khác => không mua thêm, chờ kiểm tra lại
+                Log::error('Vinnet: transaction not settled yet [UUID: ' . $payServiceUuid . ']', [
+                    'code' => $checkedCode,
+                    'status' => $checkedStatus
+                ]);
 
                 return $temporaryErrorResponse();
             }
@@ -412,7 +416,8 @@ class VinnetController extends Controller
                                         null,
                                         $serviceCode,
                                         $tokenData['token'],
-                                        $cardItems[$cardValue]
+                                        $cardItems[$cardValue],
+                                        VinnetService::RECIPIENT_TYPE_OTHER
                                     );
 
                 if($payItemData['code'] != 0)
@@ -423,6 +428,16 @@ class VinnetController extends Controller
                         'vinnet_token_status' => TransactionStatus::STATUS_ERROR,
                         'vinnet_token_message' => "Code " . $payItemData['code'] . ": " . $payItemData['message']
                     ]);
+
+                    if(intval($payItemData['code']) === VinnetService::CODE_INSUFFICIENT_BALANCE){
+                        $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_TEMPORARY_ERROR);
+
+                        return response()->json([
+                            'status_code' => 998,
+                            'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_INSUFFICIENT_BALANCE,
+                            'error' => ProjectRespondent::ERROR_RESPONDENT_GIFT_INSUFFICIENT_BALANCE
+                        ], 404);
+                    }
 
                     return $temporaryErrorResponse();
                 }

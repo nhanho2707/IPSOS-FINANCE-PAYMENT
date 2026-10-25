@@ -1,4 +1,4 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { AccountCellConfig, AccountData } from "../../config/AccountFieldsConfig";
 import { useAccounts } from "../../hook/useAccounts";
@@ -111,9 +111,9 @@ const AccountManagement = () => {
 
         if (response?.status_code === 200) {
             invalidateMetadata();
+            setFormCreateData(initialAccountData);
+            setOpenCreateDialog(false);
         }
-
-        setOpenCreateDialog(false);
     }
 
     const filteredRoles = useMemo(() => {
@@ -165,6 +165,9 @@ const AccountManagement = () => {
                 <DialogTitle>Create New User</DialogTitle>
                 <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>
+                    {actionState.type === 'store' && actionState.error && actionState.message && (
+                        <Alert severity="error">{actionState.message}</Alert>
+                    )}
                     <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                         <TextField
                             label="First Name"

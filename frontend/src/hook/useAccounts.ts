@@ -108,7 +108,7 @@ export function useAccounts() {
         }
     }, []);
 
-    const storeAccount = async (payload: AccountData) => {
+    const storeAccount = useCallback(async (payload: AccountData) => {
         try{
             setActionState({
                 type: 'store',
@@ -129,10 +129,12 @@ export function useAccounts() {
 
             setActionState({
                 type: 'store',
-                loading: true,
+                loading: false,
                 error: false,
                 message: response.data.message
             });
+
+            await fetchAcounts({silent: true});
 
             return response.data;
         }catch(error: any){
@@ -151,7 +153,7 @@ export function useAccounts() {
                 message: message
             }));
         };
-    }
+    }, [fetchAcounts]);
 
     useEffect(() => {
         fetchAcounts({silent: true});

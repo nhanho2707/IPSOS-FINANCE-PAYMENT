@@ -388,14 +388,44 @@ class TransactionController extends Controller
         {
             $validated = $request->validated();
 
+            // A respondent can hold several successful rows (Vinnet split cards, several GotIt vouchers),
+            // so collapse them to one gift per respondent before counting.
+            $vinnetGifts = DB::table('project_vinnet_transactions')
+                    ->select(
+                        'project_respondent_id',
+                        DB::raw('MIN(created_at) as gift_time'),
+                        DB::raw('SUM(total_amt) as amount')
+                    )
+                    ->where('vinnet_token_message', TransactionStatus::VINNET_SUCCESS)
+                    ->groupBy('project_respondent_id');
+
+            $gotitGifts = DB::table('project_gotit_voucher_transactions')
+                    ->select(
+                        'project_respondent_id',
+                        DB::raw('MIN(created_at) as gift_time'),
+                        DB::raw('SUM(voucher_value) as amount')
+                    )
+                    ->where(function($q) {
+                        $q->where('voucher_status', TransactionStatus::GOTIT_SUCCESS)
+                        ->orWhere('voucher_status', 'LIKE', 'Voucher được cancelled by GotIt ngày%');
+                    })
+                    ->groupBy('project_respondent_id');
+
+            if($projectId != 0){
+                $projectRespondentIds = DB::table('project_respondents')->select('id')->where('project_id', $projectId);
+
+                $vinnetGifts->whereIn('project_respondent_id', $projectRespondentIds);
+                $gotitGifts->whereIn('project_respondent_id', $projectRespondentIds);
+            }
+
             $query = DB::table('project_respondents as pr')
-                    ->leftJoin('project_vinnet_transactions as pvt', 'pr.id', '=', 'pvt.project_respondent_id')
-                    ->leftJoin('project_gotit_voucher_transactions as pgt', 'pr.id', '=', 'pgt.project_respondent_id')
-                    ->join('employees', 'employees.id', '=', 'pr.employee_id')
+                    ->leftJoinSub($vinnetGifts, 'vg', 'vg.project_respondent_id', '=', 'pr.id')
+                    ->leftJoinSub($gotitGifts, 'gg', 'gg.project_respondent_id', '=', 'pr.id')
+                    ->leftJoin('employees', 'employees.id', '=', 'pr.employee_id')
                     ->whereIn('pr.channel', ['vinnet', 'gotit', 'other'])
                     ->where(function($q) {
-                        $q->whereRaw("COALESCE(pvt.vinnet_token_message, pgt.voucher_status) IN ('Thành công', 'Voucher được cập nhật thành công.')")
-                        ->orWhereRaw("COALESCE(pvt.vinnet_token_message, pgt.voucher_status) LIKE 'Voucher được cancelled by GotIt ngày%'");
+                        $q->whereNotNull('vg.project_respondent_id')
+                        ->orWhereNotNull('gg.project_respondent_id');
                     });
 
             if($projectId != 0){
@@ -418,36 +448,51 @@ class TransactionController extends Controller
                     'pr.channel',
                     'pr.interview_start',
                     'pr.interview_end',
-                    DB::raw('COALESCE(pvt.created_at, pgt.created_at) as gift_time'),
+                    DB::raw('COALESCE(vg.gift_time, gg.gift_time) as gift_time'),
+                    DB::raw('COALESCE(vg.amount, 0) + COALESCE(gg.amount, 0) as amount'),
                     'pr.respondent_id',
                     'pr.respondent_phone_number',
                     'employees.employee_id',
                     'employees.first_name',
                     'employees.last_name'
                 )
-                ->get();
+                ->orderBy('pr.id')
+                ->cursor();
 
-            $interviewBuckets = [];
-            $giftBuckets = [];
+            $total = 0;
+            $totalAmount = 0;
+            $byChannel = $this->emptyChannelBuckets();
+            $interviewBuckets = $this->emptyHourBuckets();
+            $giftBuckets = $this->emptyHourBuckets();
             $gapBuckets = $this->emptyGapBuckets();
+            $gaps = [];
+            $gapUnknown = 0;
             $anomalies = [];
 
             foreach($rows as $row){
-                $interviewStart = Carbon::parse($row->interview_start);
-                $interviewHourKey = $this->hourRangeBucket($interviewStart->hour);
-                $interviewBuckets[$interviewHourKey] = ($interviewBuckets[$interviewHourKey] ?? 0) + 1;
+                $amount = (float) $row->amount;
 
-                if(!$row->gift_time){
-                    continue;
+                $total++;
+                $totalAmount += $amount;
+                $byChannel[$row->channel]['count']++;
+                $byChannel[$row->channel]['amount'] += $amount;
+
+                if($row->interview_start){
+                    $interviewBuckets[$this->hourRangeBucket(Carbon::parse($row->interview_start)->hour)]++;
                 }
 
                 $giftTime = Carbon::parse($row->gift_time);
-                $giftHourKey = $this->hourRangeBucket($giftTime->hour);
-                $giftBuckets[$giftHourKey] = ($giftBuckets[$giftHourKey] ?? 0) + 1;
+                $giftBuckets[$this->hourRangeBucket($giftTime->hour)]++;
+
+                if(!$row->interview_end){
+                    $gapUnknown++;
+                    continue;
+                }
 
                 $interviewEnd = Carbon::parse($row->interview_end);
                 $gapMinutes = (int) round(($giftTime->getTimestamp() - $interviewEnd->getTimestamp()) / 60);
 
+                $gaps[] = $gapMinutes;
                 $gapBuckets[$this->gapBucket($gapMinutes)]++;
 
                 if($gapMinutes < 0){
@@ -459,6 +504,7 @@ class TransactionController extends Controller
                         'employee_name' => trim($row->first_name . ' ' . $row->last_name),
                         'interview_end' => $row->interview_end,
                         'gift_time' => $row->gift_time,
+                        'amount' => $amount,
                         'gap_minutes' => $gapMinutes
                     ];
                 }
@@ -468,16 +514,18 @@ class TransactionController extends Controller
 
             usort($anomalies, fn($a, $b) => $a['gap_minutes'] <=> $b['gap_minutes']);
 
-            ksort($interviewBuckets);
-            ksort($giftBuckets);
-
             return response()->json([
                 'status_code' => 200,
+                'message' => 'Successful request.',
                 'data' => [
-                    'total' => $rows->count(),
+                    'total' => $total,
+                    'total_amount' => $totalAmount,
+                    'by_channel' => $byChannel,
                     'interview_time_buckets' => $interviewBuckets,
                     'gift_time_buckets' => $giftBuckets,
                     'gap_buckets' => $gapBuckets,
+                    'gap_median_minutes' => $this->median($gaps),
+                    'gap_unknown' => $gapUnknown,
                     'anomalies' => array_slice($anomalies, 0, 300),
                     'anomalies_total' => $anomaliesTotal
                 ]
@@ -489,6 +537,41 @@ class TransactionController extends Controller
                 'error' => $e->getMessage()
             ], 400);
         }
+    }
+
+    private function emptyChannelBuckets(): array
+    {
+        return [
+            'vinnet' => ['count' => 0, 'amount' => 0],
+            'gotit' => ['count' => 0, 'amount' => 0],
+            'other' => ['count' => 0, 'amount' => 0]
+        ];
+    }
+
+    private function emptyHourBuckets(): array
+    {
+        $buckets = [];
+
+        for($hour = 0; $hour < 24; $hour++){
+            $buckets[$this->hourRangeBucket($hour)] = 0;
+        }
+
+        return $buckets;
+    }
+
+    private function median(array $values): ?int
+    {
+        $count = count($values);
+
+        if($count === 0){
+            return null;
+        }
+
+        sort($values);
+
+        $middle = intdiv($count, 2);
+
+        return $count % 2 ? $values[$middle] : (int) round(($values[$middle - 1] + $values[$middle]) / 2);
     }
 
     private function emptyGapBuckets(): array

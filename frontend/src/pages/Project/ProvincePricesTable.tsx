@@ -1,10 +1,11 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { Autocomplete, Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField } from "@mui/material";
+import { Alert, Autocomplete, Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
-import ReusableTable from "../../components/Table/ReusableTable";
+import ReusableTable, { ActionState } from "../../components/Table/ReusableTable";
+import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { ApiConfig } from "../../config/ApiConfig";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -14,10 +15,23 @@ interface Province {
     name: string;
 }
 
-interface PriceRow {
+interface PriceForm {
     province: Province | null;
     price_type: string,
     sample_size: number
+    price: number;
+    price_1: number;
+    price_2: number;
+    price_3: number;
+    price_4: number;
+    price_5: number;
+}
+
+interface PriceRow {
+    province_id: number;
+    province_name: string;
+    price_type: string;
+    sample_size: number;
     price: number;
     price_1: number;
     price_2: number;
@@ -30,12 +44,6 @@ const SAMPLE_TYPES = [
     'main', 'booster', 'non'
 ];
 
-const PRICE_TYPES = [
-    "main", "main_1", "main_2", "main_3", "main_4", "main_5",
-    "booster", "booster_1", "booster_2", "booster_3", "booster_4", "booster_5",
-    "non", "non_1", "non_2", "non_3", "non_4", "non_5",
-];
-
 type Props = {
     projectId: number;
     canEdit: boolean;
@@ -46,7 +54,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const initialProvincePriceData: PriceRow = {
+    const initialProvincePriceData: PriceForm = {
         province: null,
         price_type: "",
         sample_size: 0,
@@ -58,12 +66,17 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
         price_5: 0
     };
 
-    const [ provincePriceData, setProvincePriceData ] = useState<PriceRow>(initialProvincePriceData);
+    const [ provincePriceData, setProvincePriceData ] = useState<PriceForm>(initialProvincePriceData);
 
-    const [draftProvince, setDraftProvince] = useState<Province | null>(null);
-    const [draftType, setDraftType] = useState<string | null>(null);
-    const [draftPrice, setDraftPrice] = useState("");
     const [adding, setAdding] = useState(false);
+    const [formError, setFormError] = useState("");
+    const [rowToDelete, setRowToDelete] = useState<PriceRow | null>(null);
+    const [actionState, setActionState] = useState<ActionState>({
+        type: 'idle',
+        loading: false,
+        error: false,
+        message: ""
+    });
 
     const [ openCreateProvincePriceDialog, setOpenCreateProvincePriceDialog ] = useState<boolean>(false);
 
@@ -144,18 +157,18 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             align: "center" as const,
             width: 60,
             renderAction: (row: PriceRow) => (
-                <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
+                <IconButton size="small" color="error" onClick={() => setRowToDelete(row)}>
                     <DeleteIcon fontSize="small" />
                 </IconButton>
             ),
         }] : []),
     ];
 
-    const PRICE_CHAIN: (keyof PriceRow)[] = ["sample_size", "price", "price_1", "price_2", "price_3", "price_4", "price_5"];
+    const PRICE_CHAIN: (keyof PriceForm)[] = ["sample_size", "price", "price_1", "price_2", "price_3", "price_4", "price_5"];
 
-    const handleProvincePriceDataChange = (field: keyof PriceRow, value: any) => {
+    const handleProvincePriceDataChange = (field: keyof PriceForm, value: any) => {
         setProvincePriceData((prev) => {
-            const next: PriceRow = { ...prev, [field]: value };
+            const next: PriceForm = { ...prev, [field]: value };
 
             if(field === 'province' || field === 'price_type'){
                 if(!(next['province'] && next['price_type'])){
@@ -193,46 +206,61 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
 
     const handleCloseCreateProvincePriceDialog = () => {
         setProvincePriceData(initialProvincePriceData);
+        setFormError("");
         setOpenCreateProvincePriceDialog(false);
     }
 
+    const getErrorMessage = (error: unknown): string => {
+        if (axios.isAxiosError(error)) {
+            return error.response?.data?.message ?? error.message;
+        }
+
+        return "Có lỗi xảy ra, vui lòng thử lại.";
+    }
+
     const handleAddProvincePrice = async () => {
-        
         setAdding(true);
-        
+        setFormError("");
+
         try {
             const url = ApiConfig.project.upsertProjectPrice.replace("{projectId}", projectId.toString());
-            
+
             const res = await axios.put(url, {
-                province_price: provincePriceData
+                province_id: provincePriceData.province?.id,
+                price_type: provincePriceData.price_type,
+                sample_size: Number(provincePriceData.sample_size),
+                price: Number(provincePriceData.price),
+                price_1: Number(provincePriceData.price_1),
+                price_2: Number(provincePriceData.price_2),
+                price_3: Number(provincePriceData.price_3),
+                price_4: Number(provincePriceData.price_4),
+                price_5: Number(provincePriceData.price_5),
             }, { headers });
-            const saved: PriceRow = res.data.data;
-            setRows(prev => {
-                const idx = prev.findIndex(r => r.province?.id === saved.province?.id && r.price_type === saved.price_type);
-                if (idx >= 0) {
-                    const next = [...prev];
-                    next[idx] = saved;
-                    return next;
-                }
-                return [...prev, saved];
-            });
-            setDraftProvince(null);
-            setDraftType(null);
-            setDraftPrice("");
+
+            handleCloseCreateProvincePriceDialog();
+            setActionState({ type: 'add', loading: false, error: false, message: res.data.message });
+            await fetchPrices();
         } catch (e) {
-            console.log(e);
+            setFormError(getErrorMessage(e));
         } finally {
             setAdding(false);
         }
     };
 
-    const handleDelete = async (row: PriceRow) => {
+    const handleConfirmDelete = async () => {
+        if (!rowToDelete) return;
+
+        const row = rowToDelete;
+        setRowToDelete(null);
+
         try {
             const url = ApiConfig.project.deleteProjectPrice.replace("{projectId}", projectId.toString());
-            await axios.delete(url, { headers, data: { province_id: row.province?.id, price_type: row.price_type } });
-            setRows(prev => prev.filter(r => !(r.province?.id === row.province?.id && r.price_type === row.price_type)));
+            const res = await axios.delete(url, { headers, data: { province_id: row.province_id, price_type: row.price_type } });
+
+            setActionState({ type: 'delete', loading: false, error: false, message: res.data.message });
+            await fetchPrices();
         } catch (e) {
-            console.log(e);
+            setActionState({ type: 'delete', loading: false, error: true, message: getErrorMessage(e) });
         }
     };
 
@@ -242,7 +270,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 title="Đơn giá theo tỉnh thành"
                 columns={columns}
                 data={rows}
-                actionStatus={{ type: loading ? "fetch" : "idle", loading, error: false, message: "" }}
+                actionStatus={{ ...actionState, loading }}
                 topToolbar={canEdit ? (
                     <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
                         <Button
@@ -259,6 +287,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 <DialogTitle>Thêm đơn giá theo tỉnh thành</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={{mt: 1}}>
+                        {formError && <Alert severity="error">{formError}</Alert>}
                         <Autocomplete
                             size="small"
                             options={provinces}
@@ -355,7 +384,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                     <LoadingButton
                         onClick={handleAddProvincePrice}
                         size="small"
-                        loading={loading}
+                        loading={adding}
                         loadingPosition="end"
                         variant="contained"
                         disabled={!isCreateValid}
@@ -365,6 +394,14 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                     </LoadingButton>
                 </DialogActions>
             </Dialog>
+
+            <ConfirmDialog
+                open={rowToDelete !== null}
+                onClose={() => setRowToDelete(null)}
+                onConfirm={handleConfirmDelete}
+                title="Xoá đơn giá"
+                message={rowToDelete ? `Bạn có chắc chắn muốn xoá đơn giá "${rowToDelete.price_type}" của ${rowToDelete.province_name}?` : ""}
+            />
         </Box>  
     );
 };

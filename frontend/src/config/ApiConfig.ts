@@ -49,6 +49,7 @@ export const ApiConfig = {
     getProjectPrices: `${host}/api/project-management/projects/{projectId}/provinces/prices`,
     upsertProjectPrice: `${host}/api/project-management/projects/{projectId}/provinces/prices`,
     deleteProjectPrice: `${host}/api/project-management/projects/{projectId}/provinces/prices`,
+    importProjectPrices: `${host}/api/project-management/projects/{projectId}/provinces/prices/import`,
   },
   administrative: {
     getProvinces: `${host}/api/administrative-divisions/old/provinces`,

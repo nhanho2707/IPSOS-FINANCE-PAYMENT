@@ -1,8 +1,11 @@
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { Alert, Autocomplete, Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { Button } from "@mui/material";
 import ReusableTable, { ActionState } from "../../components/Table/ReusableTable";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
@@ -40,9 +43,44 @@ interface PriceRow {
     price_5: number;
 }
 
+type PriceImportItem = Omit<PriceRow, "province_name">;
+
 const SAMPLE_TYPES = [
     'main', 'booster', 'non'
 ];
+
+const PRICE_FIELDS = ["price", "price_1", "price_2", "price_3", "price_4", "price_5"] as const;
+
+type PriceField = typeof PRICE_FIELDS[number];
+
+const EXCEL_PROVINCE = "Tỉnh thành";
+const EXCEL_PRICE_TYPE = "Loại Đơn giá";
+const EXCEL_SAMPLE_SIZE = "Sample Size";
+const EXCEL_PRICE_HEADERS: Record<PriceField, string> = {
+    price: "Đơn giá quà 1",
+    price_1: "Đơn giá quà 2",
+    price_2: "Đơn giá quà 3",
+    price_3: "Đơn giá quà 4",
+    price_4: "Đơn giá quà 5",
+    price_5: "Đơn giá quà 6",
+};
+const EXCEL_HEADERS = [EXCEL_PROVINCE, EXCEL_PRICE_TYPE, EXCEL_SAMPLE_SIZE, ...PRICE_FIELDS.map((f) => EXCEL_PRICE_HEADERS[f])];
+const EXCEL_REQUIRED_HEADERS = [EXCEL_PROVINCE, EXCEL_PRICE_TYPE, EXCEL_SAMPLE_SIZE, EXCEL_PRICE_HEADERS.price];
+
+const normalizeProvinceName = (name: string) => name.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
+
+// Cells may hold numbers or text such as "50.000" / "50,000"; VND amounts have no decimals,
+// so separators are dropped. Returns null when the cell is not a non-negative amount.
+const parseAmount = (value: unknown): number | null => {
+    if (typeof value === "number") {
+        return Number.isFinite(value) && value >= 0 ? value : null;
+    }
+
+    const text = String(value ?? "").replace(/[\s.,]/g, "");
+    if (text === "") return 0;
+
+    return /^\d+$/.test(text) ? Number(text) : null;
+};
 
 type Props = {
     projectId: number;
@@ -79,6 +117,10 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
     });
 
     const [ openCreateProvincePriceDialog, setOpenCreateProvincePriceDialog ] = useState<boolean>(false);
+
+    const [importing, setImporting] = useState(false);
+    const [importErrors, setImportErrors] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const token = localStorage.getItem("authToken");
     const headers = { Authorization: `Bearer ${token}` };
@@ -247,6 +289,147 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
         }
     };
 
+    const handleExport = () => {
+        const sheetRows = rows.map((row) => [
+            row.province_name,
+            row.price_type,
+            row.sample_size,
+            ...PRICE_FIELDS.map((f) => row[f]),
+        ]);
+
+        const worksheet = XLSX.utils.aoa_to_sheet([EXCEL_HEADERS, ...sheetRows]);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Province Prices");
+        XLSX.writeFile(workbook, `province_prices_${projectId}.xlsx`);
+    };
+
+    const parseImportRows = (sheetRows: unknown[][]): { items: PriceImportItem[]; errors: string[] } => {
+        const [headerRow = [], ...dataRows] = sheetRows;
+        const headers = headerRow.map((h) => String(h).trim());
+
+        const missingHeaders = EXCEL_REQUIRED_HEADERS.filter((h) => !headers.includes(h));
+        if (missingHeaders.length > 0) {
+            return { items: [], errors: [`File thiếu cột bắt buộc: ${missingHeaders.join(", ")}`] };
+        }
+
+        const provinceByName = new Map(provinces.map((p) => [normalizeProvinceName(p.name), p]));
+        const seenRows = new Map<string, number>();
+        const items: PriceImportItem[] = [];
+        const errors: string[] = [];
+
+        dataRows.forEach((cells, index) => {
+            const excelRow = index + 2;
+            const cell = (header: string) => {
+                const columnIndex = headers.indexOf(header);
+                return columnIndex >= 0 ? cells[columnIndex] : "";
+            };
+
+            if (cells.every((c) => String(c ?? "").trim() === "")) return;
+
+            const rowErrors: string[] = [];
+
+            const provinceName = String(cell(EXCEL_PROVINCE) ?? "").trim();
+            const province = provinceByName.get(normalizeProvinceName(provinceName));
+            if (!province) {
+                rowErrors.push(provinceName ? `không tìm thấy tỉnh thành "${provinceName}"` : "thiếu tỉnh thành");
+            }
+
+            const priceType = String(cell(EXCEL_PRICE_TYPE) ?? "").trim().toLowerCase();
+            if (!SAMPLE_TYPES.includes(priceType)) {
+                rowErrors.push(`loại đơn giá phải là ${SAMPLE_TYPES.join(", ")}`);
+            }
+
+            const sampleSize = parseAmount(cell(EXCEL_SAMPLE_SIZE));
+            if (sampleSize === null || !Number.isInteger(sampleSize) || sampleSize <= 0) {
+                rowErrors.push("sample size phải là số nguyên lớn hơn 0");
+            }
+
+            const prices = {} as Record<PriceField, number>;
+            PRICE_FIELDS.forEach((field, fieldIndex) => {
+                const amount = parseAmount(cell(EXCEL_PRICE_HEADERS[field]));
+
+                if (amount === null) {
+                    rowErrors.push(`${EXCEL_PRICE_HEADERS[field]} không hợp lệ`);
+                    prices[field] = 0;
+                    return;
+                }
+
+                prices[field] = amount;
+
+                if (field === "price" && amount === 0) {
+                    rowErrors.push(`${EXCEL_PRICE_HEADERS.price} phải lớn hơn 0`);
+                }
+
+                const previousField = PRICE_FIELDS[fieldIndex - 1];
+                if (previousField && amount > 0 && prices[previousField] === 0) {
+                    rowErrors.push(`phải nhập ${EXCEL_PRICE_HEADERS[previousField]} trước ${EXCEL_PRICE_HEADERS[field]}`);
+                }
+            });
+
+            if (province && SAMPLE_TYPES.includes(priceType)) {
+                const key = `${province.id}|${priceType}`;
+                const firstRow = seenRows.get(key);
+
+                if (firstRow !== undefined) {
+                    rowErrors.push(`trùng tỉnh thành và loại đơn giá với dòng ${firstRow}`);
+                } else {
+                    seenRows.set(key, excelRow);
+                }
+            }
+
+            if (rowErrors.length > 0 || !province || sampleSize === null) {
+                errors.push(`Dòng ${excelRow}: ${rowErrors.join("; ")}`);
+                return;
+            }
+
+            items.push({
+                province_id: province.id,
+                price_type: priceType,
+                sample_size: sampleSize,
+                ...prices,
+            });
+        });
+
+        if (items.length === 0 && errors.length === 0) {
+            errors.push("File không có dữ liệu.");
+        }
+
+        return { items, errors };
+    };
+
+    const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setImporting(true);
+
+        try {
+            const workbook = XLSX.read(await file.arrayBuffer());
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const sheetRows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "", blankrows: false });
+
+            const { items, errors } = parseImportRows(sheetRows);
+            if (errors.length > 0) {
+                setImportErrors(errors);
+                return;
+            }
+
+            const url = ApiConfig.project.importProjectPrices.replace("{projectId}", projectId.toString());
+            const res = await axios.post(url, { prices: items }, { headers });
+
+            setActionState({ type: 'import', loading: false, error: false, message: res.data.message });
+            await fetchPrices();
+        } catch (e) {
+            const validationErrors: Record<string, string[]> | undefined =
+                axios.isAxiosError(e) ? e.response?.data?.errors : undefined;
+
+            setImportErrors(validationErrors ? Object.values(validationErrors).flat() : [getErrorMessage(e)]);
+        } finally {
+            setImporting(false);
+            event.target.value = "";
+        }
+    };
+
     const handleConfirmDelete = async () => {
         if (!rowToDelete) return;
 
@@ -271,17 +454,43 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 columns={columns}
                 data={rows}
                 actionStatus={{ ...actionState, loading }}
-                topToolbar={canEdit ? (
+                topToolbar={
                     <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+                        {canEdit && (
+                            <Button
+                                className="btn"
+                                startIcon={<AddIcon />}
+                                onClick={() => setOpenCreateProvincePriceDialog(true)}
+                            >
+                                {adding ? "Saving..." : "Add"}
+                            </Button>
+                        )}
+                        {canEdit && (
+                            <Button
+                                className="btn"
+                                startIcon={<FileUploadIcon />}
+                                disabled={importing}
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                {importing ? "Importing..." : "Import"}
+                            </Button>
+                        )}
                         <Button
                             className="btn"
-                            startIcon={<AddIcon />}
-                            onClick={() => setOpenCreateProvincePriceDialog(true)}
+                            startIcon={<FileDownloadIcon />}
+                            onClick={handleExport}
                         >
-                            {adding ? "Saving..." : "Add"}
+                            Export
                         </Button>
+                        <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            ref={fileInputRef}
+                            style={{ display: "none" }}
+                            onChange={handleImportFile}
+                        />
                     </Box>
-                ) : undefined}
+                }
             />
             <Dialog open={openCreateProvincePriceDialog} onClose={handleCloseCreateProvincePriceDialog} maxWidth="sm">
                 <DialogTitle>Thêm đơn giá theo tỉnh thành</DialogTitle>
@@ -392,6 +601,23 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         >
                             <span>CREATE</span>
                     </LoadingButton>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={importErrors.length > 0} onClose={() => setImportErrors([])} fullWidth maxWidth="sm">
+                <DialogTitle>Import đơn giá thất bại</DialogTitle>
+                <DialogContent>
+                    <Alert severity="error" sx={{ mb: 1 }}>
+                        Chưa có đơn giá nào được lưu. Vui lòng sửa file rồi import lại.
+                    </Alert>
+                    <Box component="ul" sx={{ pl: 3, m: 0 }}>
+                        {importErrors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                        ))}
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setImportErrors([])}>Close</Button>
                 </DialogActions>
             </Dialog>
 

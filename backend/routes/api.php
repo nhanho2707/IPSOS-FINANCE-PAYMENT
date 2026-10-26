@@ -93,6 +93,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('ensureUserHasRole:Admin,Scripter');
         Route::delete('/projects/{projectId}/provinces/prices', [ProjectController::class, 'deleteProjectPrice'])
             ->middleware('ensureUserHasRole:Admin,Scripter');
+        Route::post('/projects/{projectId}/provinces/prices/import', [ProjectController::class, 'importProjectPrices'])
+            ->middleware('ensureUserHasRole:Admin,Scripter');
 
         Route::middleware('ensureUserHasRole:Admin')->group(function () {
             Route::put('/projects/{projectId}/update', [ProjectController::class, 'update']);

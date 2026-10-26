@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\ProjectController;
 use App\Http\Requests\DeleteProjectPriceRequest;
+use App\Http\Requests\ImportProjectPricesRequest;
 use App\Http\Requests\UpsertProjectPriceRequest;
 use App\Models\ProjectProvince;
 use Illuminate\Database\Schema\Blueprint;
@@ -202,6 +203,70 @@ class ProjectPricesTest extends TestCase
         $this->assertSame(0, ProjectProvince::count());
     }
 
+    public function test_import_upserts_every_row_and_keeps_prices_not_in_the_file(): void
+    {
+        $this->upsert(['province_id' => self::HA_NOI, 'price_type' => 'non', 'sample_size' => 3, 'price' => 30000]);
+        $this->upsert(['province_id' => self::HO_CHI_MINH, 'price_type' => 'main', 'sample_size' => 10, 'price' => 50000]);
+
+        $response = $this->import([
+            ['province_id' => self::HO_CHI_MINH, 'price_type' => 'main', 'sample_size' => 20, 'price' => 60000, 'price_1' => 70000],
+            ['province_id' => self::HO_CHI_MINH, 'price_type' => 'booster', 'sample_size' => 5, 'price' => 80000],
+            ['province_id' => self::HA_NOI, 'price_type' => 'main', 'sample_size' => 8, 'price' => 40000],
+        ]);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(2, ProjectProvince::count());
+        $this->assertEquals([
+            [self::HA_NOI, 'main', 8, 40000, 0],
+            [self::HA_NOI, 'non', 3, 30000, 0],
+            [self::HO_CHI_MINH, 'main', 20, 60000, 70000],
+            [self::HO_CHI_MINH, 'booster', 5, 80000, 0],
+        ], array_map(
+            fn ($row) => [$row['province_id'], $row['price_type'], $row['sample_size'], $row['price'], $row['price_1']],
+            $this->listPrices()
+        ));
+    }
+
+    public function test_import_into_a_missing_project_returns_not_found(): void
+    {
+        $response = $this->import([
+            ['province_id' => self::HO_CHI_MINH, 'price_type' => 'main', 'sample_size' => 10, 'price' => 50000],
+        ], 999);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame(0, ProjectProvince::count());
+    }
+
+    public function test_import_rejects_invalid_input(): void
+    {
+        $valid = ['province_id' => self::HO_CHI_MINH, 'price_type' => 'main', 'sample_size' => 10, 'price' => 50000];
+
+        foreach ([
+            'no rows' => [],
+            'not a list' => 'abc',
+            'unknown province' => [array_merge($valid, ['province_id' => 12345])],
+            'zero first price' => [array_merge($valid, ['price' => 0])],
+            'same province and type twice' => [$valid, array_merge($valid, ['sample_size' => 20])],
+        ] as $case => $prices) {
+            try {
+                $this->validated(ImportProjectPricesRequest::class, ['prices' => $prices], 'POST');
+                $this->fail("Expected a validation error for: {$case}");
+            } catch (ValidationException $e) {
+                $this->addToAssertionCount(1);
+            }
+        }
+
+        $this->assertSame(0, ProjectProvince::count());
+    }
+
+    private function import(array $prices, int $projectId = self::PROJECT_ID)
+    {
+        return (new ProjectController())->importProjectPrices(
+            $this->validated(ImportProjectPricesRequest::class, ['prices' => $prices], 'POST'),
+            $projectId
+        );
+    }
+
     private function upsert(array $data, int $projectId = self::PROJECT_ID)
     {
         return (new ProjectController())->upsertProjectPrice($this->validated(UpsertProjectPriceRequest::class, $data), $projectId);
@@ -220,9 +285,9 @@ class ProjectPricesTest extends TestCase
     /**
      * @param class-string<FormRequest> $requestClass
      */
-    private function validated(string $requestClass, array $data): FormRequest
+    private function validated(string $requestClass, array $data, string $method = 'PUT'): FormRequest
     {
-        $request = $requestClass::create('/', 'PUT', $data);
+        $request = $requestClass::create('/', $method, $data);
         $request->setContainer($this->app)->setRedirector($this->app['redirect']);
         $request->validateResolved();
 

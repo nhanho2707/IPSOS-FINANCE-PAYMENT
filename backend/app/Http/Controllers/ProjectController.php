@@ -32,6 +32,7 @@ use App\Http\Requests\UpdateProjectDisabledRequest;
 use App\Http\Requests\ImportEmployeesRequest;
 use App\Http\Requests\ImportProjectRespondentsRequest;
 use App\Http\Requests\UpsertProjectPriceRequest;
+use App\Http\Requests\ImportProjectPricesRequest;
 use App\Http\Requests\DeleteProjectPriceRequest;
 use App\Services\ProjectRespondentTokenService;
 use Carbon\Carbon;
@@ -914,31 +915,43 @@ class ProjectController extends Controller
             }
 
             $validated = $request->validated();
-            $type = $validated['price_type'];
-
-            $values = [self::SAMPLE_SIZE_MAP[$type] => $validated['sample_size']];
-
-            foreach (self::PRICE_TYPE_GROUP_MAP[$type] as $index => $column) {
-                $field = $index === 0 ? 'price' : 'price_' . $index;
-                $values[$column] = $validated[$field] ?? null;
-            }
-
-            // sample_size_main and price_main are NOT NULL, so a province added with only a
-            // booster/non price still needs zeros there.
-            $projectProvince = ProjectProvince::firstOrNew(
-                ['project_id' => $projectId, 'province_id' => $validated['province_id']],
-                ['sample_size_main' => 0, 'price_main' => 0]
-            );
-
-            $projectProvince->fill($values)->save();
+            $projectProvince = $this->saveProjectPrice($projectId, $validated);
 
             return response()->json([
                 'status_code' => Response::HTTP_OK,
                 'message' => 'Lưu đơn giá thành công.',
-                'data' => $this->formatProjectPriceRow($projectProvince->load('province'), $type),
+                'data' => $this->formatProjectPriceRow($projectProvince->load('province'), $validated['price_type']),
             ]);
         } catch (\Exception $e) {
             Log::error('upsertProjectPrice failed: ' . $e->getMessage());
+            return response()->json(['status_code' => 400, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function importProjectPrices(ImportProjectPricesRequest $request, $projectId)
+    {
+        try {
+            if(!Project::whereKey($projectId)->exists()){
+                return response()->json([
+                    'status_code' => Response::HTTP_NOT_FOUND,
+                    'message' => 'The project not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $prices = $request->validated()['prices'];
+
+            DB::transaction(function () use ($prices, $projectId) {
+                foreach ($prices as $price) {
+                    $this->saveProjectPrice($projectId, $price);
+                }
+            });
+
+            return response()->json([
+                'status_code' => Response::HTTP_OK,
+                'message' => 'Đã import ' . count($prices) . ' đơn giá.',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('importProjectPrices failed: ' . $e->getMessage());
             return response()->json(['status_code' => 400, 'message' => $e->getMessage()], 400);
         }
     }
@@ -973,6 +986,29 @@ class ProjectController extends Controller
             Log::error('deleteProjectPrice failed: ' . $e->getMessage());
             return response()->json(['status_code' => 400, 'message' => $e->getMessage()], 400);
         }
+    }
+
+    private function saveProjectPrice($projectId, array $price): ProjectProvince
+    {
+        $type = $price['price_type'];
+
+        $values = [self::SAMPLE_SIZE_MAP[$type] => $price['sample_size']];
+
+        foreach (self::PRICE_TYPE_GROUP_MAP[$type] as $index => $column) {
+            $field = $index === 0 ? 'price' : 'price_' . $index;
+            $values[$column] = $price[$field] ?? null;
+        }
+
+        // sample_size_main and price_main are NOT NULL, so a province added with only a
+        // booster/non price still needs zeros there.
+        $projectProvince = ProjectProvince::firstOrNew(
+            ['project_id' => $projectId, 'province_id' => $price['province_id']],
+            ['sample_size_main' => 0, 'price_main' => 0]
+        );
+
+        $projectProvince->fill($values)->save();
+
+        return $projectProvince;
     }
 
     private function formatProjectPriceRow(ProjectProvince $row, string $type): array

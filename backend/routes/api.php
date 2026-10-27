@@ -34,7 +34,7 @@ use App\Http\Controllers\SilverBulletController;
 //  PUBLIC ROUTES
 // ══════════════════════════════════════════════════════════
 
-Route::post('/login', [LoginController::class, 'login'])->name('index');
+Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,1')->name('index');
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
     Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
@@ -70,6 +70,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users', [UserController::class, 'store']);
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::put('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
+        Route::put('/users/{id}/status', [UserController::class, 'updateStatus']);
+        Route::get('/users/{id}/audit-logs', [UserController::class, 'auditLogs']);
 
         Route::prefix('trade-union/recipient-lists')->group(function () {
             Route::get('/', [TradeUnionRecipientListController::class, 'index']);

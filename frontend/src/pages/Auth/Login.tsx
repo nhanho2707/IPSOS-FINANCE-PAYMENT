@@ -19,15 +19,17 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ApiConfig } from "../../config/ApiConfig";
 
 const Login = () => {
-  const [statusMessage, setStatusMessage] = useState("");
+  const location = useLocation();
+  const [statusMessage, setStatusMessage] = useState(
+    location.state?.sessionExpired ? "Your session has expired. Please log in again." : ""
+  );
   const [showPassword, setShowPassword] = useState(false);
   //const [login, setLogin] = useState<boolean | null>(null);
-  const [isError, setIsError] = useState<boolean | null>(null);
+  const [isError, setIsError] = useState<boolean | null>(location.state?.sessionExpired ? true : null);
   const handleClickShowPassword = () => setShowPassword(!showPassword);
 
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [inforLogin, setInforLogin] = useState({
     email: "",

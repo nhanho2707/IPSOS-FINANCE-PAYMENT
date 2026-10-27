@@ -4,8 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Models\Role;
-use App\Models\Department;
 
 class UserResource extends JsonResource
 {
@@ -16,19 +14,24 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $details = $this->userDetails;
+
         return [
             'id'            => $this->id,
             'name'          => $this->name,
             'email'         => $this->email,
-            'first_name'    => $this->userDetails->first_name,
-            'last_name'     => $this->userDetails->last_name,
-            'date_of_birth' => $this->userDetails->date_of_birth,
-            'address'       => $this->userDetails->address,
-            'role'          => $this->userDetails->role->name,
-            'role_id'       => $this->userDetails->role_id,
-            'department'           => $this->userDetails->department->name,
-            'department_id'        => $this->userDetails->department_id,
+            'first_name'    => $details?->first_name,
+            'last_name'     => $details?->last_name,
+            'date_of_birth' => $details?->date_of_birth,
+            'address'       => $details?->address,
+            'role'          => $details?->role?->name,
+            'role_id'       => $details?->role_id,
+            'department'           => $details?->department?->name,
+            'department_id'        => $details?->department_id,
             'must_change_password' => (bool) $this->must_change_password,
+            'is_active'            => (bool) $this->is_active,
+            'last_login_at'        => $this->last_login_at?->toIso8601String(),
+            'created_at'           => $this->created_at?->toIso8601String(),
         ];
     }
 }

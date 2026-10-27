@@ -105,6 +105,8 @@ export const ApiConfig = {
     storeAccount: `${host}/api/users`,
     updateAccount: `${host}/api/users/{userId}`,
     resetAccountPassword: `${host}/api/users/{userId}/reset-password`,
+    updateAccountStatus: `${host}/api/users/{userId}/status`,
+    viewAccountAuditLogs: `${host}/api/users/{userId}/audit-logs`,
     viewNotifications: `${host}/api/notifications`,
     countUnRead: `${host}/api/notifications/unread-count`
   },

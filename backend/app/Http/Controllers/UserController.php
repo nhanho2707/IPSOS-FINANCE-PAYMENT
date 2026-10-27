@@ -5,31 +5,55 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Symfony\Component\HttpFoundation\Response;
 use App\Models\User;
+use App\Models\Role;
+use App\Models\Department;
+use App\Models\AccountAuditLog;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\AccountAuditLogResource;
+use App\Http\Requests\UserIndexRequest;
+use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\UpdateUserStatusRequest;
 use App\Http\Requests\ResetUserPasswordRequest;
+use App\Http\Requests\AuditLogIndexRequest;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(UserIndexRequest $request)
     {
         try
         {
-            $perPage = $request->query('per_page', 10);
-            $searchTerm = $request->query('searchTerm');
+            $validated = $request->validated();
+            $perPage = $validated['per_page'] ?? 10;
+            $searchTerm = $validated['searchTerm'] ?? null;
 
-            $query = User::with('userDetails');
+            $query = User::with(['userDetails.role', 'userDetails.department'])->latest('id');
 
             if($searchTerm){
                 $query->where(function($q) use ($searchTerm){
-                    $q->where('email', 'LIKE', "%{$searchTerm}%");
+                    $q->where('email', 'LIKE', "%{$searchTerm}%")
+                        ->orWhere('name', 'LIKE', "%{$searchTerm}%")
+                        ->orWhereHas('userDetails', function($d) use ($searchTerm){
+                            $d->where('first_name', 'LIKE', "%{$searchTerm}%")
+                                ->orWhere('last_name', 'LIKE', "%{$searchTerm}%");
+                        });
                 });
-            }            
+            }
+
+            if(!empty($validated['role_id'])){
+                $query->whereHas('userDetails', fn ($d) => $d->where('role_id', $validated['role_id']));
+            }
+
+            if(!empty($validated['department_id'])){
+                $query->whereHas('userDetails', fn ($d) => $d->where('department_id', $validated['department_id']));
+            }
+
+            if(!empty($validated['status'])){
+                $query->where('is_active', $validated['status'] === 'active');
+            }
 
             $users = $query->paginate($perPage);
 
@@ -54,21 +78,13 @@ class UserController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         DB::beginTransaction();
 
         try
         {
-            $validated = $request->validate([
-                'name' => "required|string|max:255",
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|min:6|confirmed',
-                'role' => 'required|exists:roles,id',
-                'department' => 'required|exists:departments,id',
-                'first_name' => 'required|string|max:255',
-                'last_name' => 'required|string|max:255'
-            ]);
+            $validated = $request->validated();
 
             $user = User::create([
                 'name' => $validated['name'],
@@ -84,13 +100,20 @@ class UserController extends Controller
                 'department_id' => $validated['department'],
             ]);
 
+            AccountAuditLog::record($request->user(), $user, AccountAuditLog::ACTION_CREATED, [
+                'email'      => $user->email,
+                'role'       => Role::find($validated['role'])?->name,
+                'department' => Department::find($validated['department'])?->name,
+            ]);
+
             DB::commit();
 
             Cache::forget('metadata_users');
 
             return response()->json([
                 'status_code' => 200,
-                'message' => 'User created successfully'
+                'message' => 'User created successfully',
+                'data' => new UserResource($user->load('userDetails.role', 'userDetails.department')),
             ]);
         } catch(\Exception $e)
         {
@@ -110,17 +133,101 @@ class UserController extends Controller
         {
             $validated = $request->validated();
 
-            $user = User::findOrFail($id);
+            $user = User::with('userDetails.role', 'userDetails.department')->findOrFail($id);
+            $newRole = Role::findOrFail($validated['role']);
+
+            if ($user->isAdmin() && strtolower($newRole->name) !== 'admin') {
+                if ($user->id === $request->user()->id) {
+                    return $this->refuse('You cannot remove the Admin role from your own account.');
+                }
+
+                if ($user->is_active && User::activeAdmins()->count() <= 1) {
+                    return $this->refuse('Cannot remove the Admin role from the last active Admin.');
+                }
+            }
+
+            $before = [
+                'role'       => $user->userDetails?->role?->name,
+                'department' => $user->userDetails?->department?->name,
+            ];
 
             $user->userDetails()->update([
                 'role_id'       => $validated['role'],
                 'department_id' => $validated['department'],
             ]);
 
+            $user = $user->fresh(['userDetails.role', 'userDetails.department']);
+
+            $after = [
+                'role'       => $user->userDetails?->role?->name,
+                'department' => $user->userDetails?->department?->name,
+            ];
+
+            $changes = [];
+            foreach ($after as $field => $value) {
+                if ($before[$field] !== $value) {
+                    $changes[$field] = ['from' => $before[$field], 'to' => $value];
+                }
+            }
+
+            if ($changes) {
+                AccountAuditLog::record($request->user(), $user, AccountAuditLog::ACTION_UPDATED, $changes);
+            }
+
             return response()->json([
                 'status_code' => 200,
                 'message'     => 'User updated successfully',
-                'data'        => new UserResource($user->fresh('userDetails')),
+                'data'        => new UserResource($user),
+            ]);
+        } catch(\Exception $e)
+        {
+            Log::error($e->getMessage());
+            return response()->json([
+                'status_code' => 400,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function updateStatus(UpdateUserStatusRequest $request, $id)
+    {
+        try
+        {
+            $isActive = $request->boolean('is_active');
+
+            $user = User::with('userDetails.role', 'userDetails.department')->findOrFail($id);
+
+            if (!$isActive) {
+                if ($user->id === $request->user()->id) {
+                    return $this->refuse('You cannot deactivate your own account.');
+                }
+
+                if ($user->is_active && $user->isAdmin() && User::activeAdmins()->count() <= 1) {
+                    return $this->refuse('Cannot deactivate the last active Admin.');
+                }
+            }
+
+            if ($user->is_active !== $isActive) {
+                $user->is_active = $isActive;
+                $user->save();
+
+                if (!$isActive) {
+                    $user->tokens()->delete();
+                }
+
+                AccountAuditLog::record(
+                    $request->user(),
+                    $user,
+                    $isActive ? AccountAuditLog::ACTION_ACTIVATED : AccountAuditLog::ACTION_DEACTIVATED
+                );
+
+                Cache::forget('metadata_users');
+            }
+
+            return response()->json([
+                'status_code' => 200,
+                'message'     => $isActive ? 'User activated successfully' : 'User deactivated successfully',
+                'data'        => new UserResource($user),
             ]);
         } catch(\Exception $e)
         {
@@ -147,9 +254,43 @@ class UserController extends Controller
 
             $user->tokens()->delete();
 
+            AccountAuditLog::record($request->user(), $user, AccountAuditLog::ACTION_PASSWORD_RESET);
+
             return response()->json([
                 'status_code' => 200,
                 'message'     => 'Password reset successfully',
+            ]);
+        } catch(\Exception $e)
+        {
+            Log::error($e->getMessage());
+            return response()->json([
+                'status_code' => 400,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function auditLogs(AuditLogIndexRequest $request, $id)
+    {
+        try
+        {
+            $user = User::findOrFail($id);
+
+            $logs = $user->auditLogs()
+                ->with('actor')
+                ->latest('id')
+                ->paginate($request->validated()['per_page'] ?? 10);
+
+            return response()->json([
+                'status_code' => 200,
+                'message' => 'Successfully',
+                'data' => AccountAuditLogResource::collection($logs),
+                'meta' => [
+                    'current_page' => $logs->currentPage(),
+                    'per_page' => $logs->perPage(),
+                    'total' => $logs->total(),
+                    'last_page' => $logs->lastPage(),
+                ]
             ]);
         } catch(\Exception $e)
         {
@@ -176,5 +317,13 @@ class UserController extends Controller
             'status_code' => 200,
             'message'     => 'Password set successfully',
         ]);
+    }
+
+    private function refuse(string $message)
+    {
+        return response()->json([
+            'status_code' => 422,
+            'message'     => $message,
+        ], 422);
     }
 }

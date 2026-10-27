@@ -20,7 +20,42 @@ export interface AccountData {
     department_id?: number,
     password?: string,
     password_confirmation?: string,
+    must_change_password?: boolean,
+    is_active?: boolean,
+    last_login_at?: string | null,
+    created_at?: string | null,
 }
+
+export type AccountStatusFilter = "" | "active" | "inactive";
+
+export interface AccountFilters {
+    role_id: number | "",
+    department_id: number | "",
+    status: AccountStatusFilter,
+}
+
+export type AccountAuditAction = "created" | "updated" | "password_reset" | "activated" | "deactivated";
+
+export interface AccountAuditChange {
+    from: string | null,
+    to: string | null,
+}
+
+export interface AccountAuditLog {
+    id: number,
+    action: AccountAuditAction,
+    actor: string | null,
+    changes: Record<string, AccountAuditChange | string | null> | null,
+    created_at: string | null,
+}
+
+export const AccountAuditActionLabels: Record<AccountAuditAction, string> = {
+    created: "Account created",
+    updated: "Role / department changed",
+    password_reset: "Password reset by admin",
+    activated: "Account activated",
+    deactivated: "Account deactivated",
+};
 
 export interface ResetPasswordPayload {
     password: string,
@@ -47,7 +82,7 @@ export const AccountCellConfig: ColumnFormat[] = [
         flex: 1,
     },
     {
-        label: "Deparment",
+        label: "Department",
         name: "department",
         type: "string",
         flex: 1,

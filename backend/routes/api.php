@@ -27,7 +27,7 @@ use App\Http\Controllers\AccountDepositController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperationsController;
-use App\Http\COntrollers\OperationsTemplateController;
+use App\Http\Controllers\OperationsTemplateController;
 use App\Http\Controllers\SilverBulletController;
 
 // ══════════════════════════════════════════════════════════

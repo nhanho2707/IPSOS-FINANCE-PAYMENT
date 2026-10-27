@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AccountData } from "../config/AccountFieldsConfig";
+import { AccountData, ResetPasswordPayload } from "../config/AccountFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { ActionState } from "../components/Table/ReusableTable";
@@ -108,6 +108,35 @@ export function useAccounts() {
         }
     }, []);
 
+    const resetAccountPassword = useCallback(async (id: number, payload: ResetPasswordPayload) => {
+        try {
+            setActionState({ type: 'update', loading: true, error: false, message: "" });
+
+            const token = localStorage.getItem('authToken');
+            const url = ApiConfig.account.resetAccountPassword.replace('{userId}', id.toString());
+
+            const response = await axios.put(url, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            setActionState({ type: 'update', loading: false, error: false, message: response.data.message });
+
+            return response.data;
+        } catch (error: any) {
+            let message = 'Failed to reset password.';
+
+            if (axios.isAxiosError(error)) {
+                message = error.response?.data.message || error.response?.data.error || error.message;
+            }
+
+            setActionState(prev => ({ ...prev, loading: false, error: true, message }));
+            throw error;
+        }
+    }, []);
+
     const storeAccount = async (payload: AccountData) => {
         try{
             setActionState({
@@ -171,6 +200,7 @@ export function useAccounts() {
         
         fetchAcounts,
         storeAccount,
-        updateAccount
+        updateAccount,
+        resetAccountPassword
     }
 }

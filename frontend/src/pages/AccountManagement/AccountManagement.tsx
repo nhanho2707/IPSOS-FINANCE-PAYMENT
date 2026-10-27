@@ -1,21 +1,26 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { AccountCellConfig, AccountData } from "../../config/AccountFieldsConfig";
+import { AccountCellConfig, AccountData, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
 import { useAccounts } from "../../hook/useAccounts";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { useMetadata } from "../../hook/useMetadata";
 import { useMemo, useState } from "react";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { EditOutlined } from "@mui/icons-material";
+import { EditOutlined, LockResetOutlined } from "@mui/icons-material";
 
 const AccountManagement = () => {
     const { data, invalidate: invalidateMetadata } = useMetadata();
-    const { accounts, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, actionState, storeAccount, updateAccount } = useAccounts();
+    const { accounts, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, actionState, storeAccount, updateAccount, resetAccountPassword } = useAccounts();
     
     const [ openCreateDialog, setOpenCreateDialog ] = useState<boolean>(false);
     const [ openEditDialog, setOpenEditDialog ] = useState<boolean>(false);
     const [ editTarget, setEditTarget ] = useState<AccountData | null>(null);
     const [ formEditData, setFormEditData ] = useState<{ role: number; department: number }>({ role: 0, department: 0 });
+
+    const initialResetPasswordData: ResetPasswordPayload = { password: "", password_confirmation: "" };
+    const [ openResetPasswordDialog, setOpenResetPasswordDialog ] = useState<boolean>(false);
+    const [ resetPasswordTarget, setResetPasswordTarget ] = useState<AccountData | null>(null);
+    const [ formResetPasswordData, setFormResetPasswordData ] = useState<ResetPasswordPayload>(initialResetPasswordData);
 
     const initialAccountData: AccountData = {
         name: "",
@@ -31,6 +36,14 @@ const AccountManagement = () => {
     const [ formCreateData, setFormCreateData ] = useState<AccountData>(initialAccountData);
     const [ isCreateDisabled, setIsCreateDisabled ] = useState<boolean>(false);
 
+    const actionButtonSx = {
+        backgroundColor: '#f6f6f6',
+        borderRadius: '8px',
+        border: '1px solid #e8e8e8',
+        '&:hover': { backgroundColor: '#e0e0e0' },
+        padding: '5px',
+    };
+
     const columns: ColumnFormat[] = [
         ...AccountCellConfig,
         {
@@ -38,21 +51,28 @@ const AccountManagement = () => {
             name: "action",
             type: "menu",
             align: "center",
-            width: 60,
+            width: 100,
             renderCell: (row: AccountData) => (
-                <IconButton
-                    size="small"
-                    onClick={() => handleOpenEditDialog(row)}
-                    sx={{
-                        backgroundColor: '#f6f6f6',
-                        borderRadius: '8px',
-                        border: '1px solid #e8e8e8',
-                        '&:hover': { backgroundColor: '#e0e0e0' },
-                        padding: '5px',
-                    }}
-                >
-                    <EditOutlined fontSize="small" />
-                </IconButton>
+                <Stack direction="row" spacing={1} justifyContent="center">
+                    <Tooltip title="Edit Role & Department">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleOpenEditDialog(row)}
+                            sx={actionButtonSx}
+                        >
+                            <EditOutlined fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Reset Password">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleOpenResetPasswordDialog(row)}
+                            sx={actionButtonSx}
+                        >
+                            <LockResetOutlined fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </Stack>
             )
         }
     ];
@@ -100,6 +120,34 @@ const AccountManagement = () => {
         await updateAccount(editTarget.id, formEditData);
         setOpenEditDialog(false);
     };
+
+    const handleOpenResetPasswordDialog = (account: AccountData) => {
+        setResetPasswordTarget(account);
+        setFormResetPasswordData(initialResetPasswordData);
+        setOpenResetPasswordDialog(true);
+    };
+
+    const handleCloseResetPasswordDialog = () => {
+        setOpenResetPasswordDialog(false);
+        setResetPasswordTarget(null);
+        setFormResetPasswordData(initialResetPasswordData);
+    };
+
+    const handleResetPassword = async () => {
+        if (!resetPasswordTarget?.id) return;
+        try {
+            await resetAccountPassword(resetPasswordTarget.id, formResetPasswordData);
+            handleCloseResetPasswordDialog();
+        } catch {
+            // error message is already surfaced through actionState
+        }
+    };
+
+    const isResetPasswordTooShort = formResetPasswordData.password.length > 0 && formResetPasswordData.password.length < 6;
+    const isResetPasswordMismatch = formResetPasswordData.password_confirmation.length > 0
+        && formResetPasswordData.password !== formResetPasswordData.password_confirmation;
+    const isResetPasswordInvalid = formResetPasswordData.password.length < 6
+        || formResetPasswordData.password !== formResetPasswordData.password_confirmation;
 
     const filteredEditRoles = useMemo(() => {
         if (!formEditData.department) return [];
@@ -318,6 +366,50 @@ const AccountManagement = () => {
                         disabled={!formEditData.role || !formEditData.department}
                     >
                         Save
+                    </LoadingButton>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={openResetPasswordDialog} onClose={handleCloseResetPasswordDialog} fullWidth maxWidth="xs">
+                <DialogTitle>Reset Password</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>
+                        Set a temporary password for <strong>{resetPasswordTarget?.email}</strong>.
+                        The user will be signed out and must choose a new password on next login.
+                    </DialogContentText>
+                    <Stack spacing={2}>
+                        <TextField
+                            label="New Password"
+                            type="password"
+                            value={formResetPasswordData.password}
+                            onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
+                            error={isResetPasswordTooShort}
+                            helperText={isResetPasswordTooShort ? "Password must be at least 6 characters" : ""}
+                            autoComplete="new-password"
+                            fullWidth
+                            required
+                        />
+                        <TextField
+                            label="Confirm New Password"
+                            type="password"
+                            value={formResetPasswordData.password_confirmation}
+                            onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password_confirmation: e.target.value }))}
+                            error={isResetPasswordMismatch}
+                            helperText={isResetPasswordMismatch ? "Passwords do not match" : ""}
+                            autoComplete="new-password"
+                            fullWidth
+                            required
+                        />
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseResetPasswordDialog}>Cancel</Button>
+                    <LoadingButton
+                        onClick={handleResetPassword}
+                        loading={actionState.loading}
+                        variant="contained"
+                        disabled={isResetPasswordInvalid}
+                    >
+                        Reset
                     </LoadingButton>
                 </DialogActions>
             </Dialog>

@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Models\User;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\ResetUserPasswordRequest;
 
 class UserController extends Controller
 {
@@ -120,6 +121,35 @@ class UserController extends Controller
                 'status_code' => 200,
                 'message'     => 'User updated successfully',
                 'data'        => new UserResource($user->fresh('userDetails')),
+            ]);
+        } catch(\Exception $e)
+        {
+            Log::error($e->getMessage());
+            return response()->json([
+                'status_code' => 400,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function resetPassword(ResetUserPasswordRequest $request, $id)
+    {
+        try
+        {
+            $validated = $request->validated();
+
+            $user = User::findOrFail($id);
+
+            $user->password = Hash::make($validated['password']);
+            // Admin-set passwords are temporary: the user must choose their own on next login.
+            $user->must_change_password = true;
+            $user->save();
+
+            $user->tokens()->delete();
+
+            return response()->json([
+                'status_code' => 200,
+                'message'     => 'Password reset successfully',
             ]);
         } catch(\Exception $e)
         {

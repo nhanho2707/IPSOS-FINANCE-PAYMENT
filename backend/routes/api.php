@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/show', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
         Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::put('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
 
         Route::prefix('trade-union/recipient-lists')->group(function () {
             Route::get('/', [TradeUnionRecipientListController::class, 'index']);

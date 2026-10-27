@@ -35,8 +35,10 @@ use App\Http\Controllers\SilverBulletController;
 // ══════════════════════════════════════════════════════════
 
 Route::post('/login', [LoginController::class, 'login'])->name('index');
-Route::post('/forgot-password', [ForgotPasswordController::class, 'resetPassword']);
-Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+});
 
 Route::prefix('administrative-divisions')->group(function () {
     Route::get('/old/provinces', [AdministrativeDivisionsController::class, 'get_old_provinces']);

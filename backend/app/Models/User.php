@@ -51,7 +51,10 @@ class User extends Authenticatable
 
     public function sendPasswordResetNotification($token)
     {
-        $url = 'http://localhost:3000/confirm-password?token=' . $token . '&email=' . $this->email;
+        $url = rtrim(config('app.frontend_url'), '/') . '/confirm-password?' . http_build_query([
+            'token' => $token,
+            'email' => $this->email,
+        ]);
 
         $this->notify(new ResetPasswordNotification($url));
     }

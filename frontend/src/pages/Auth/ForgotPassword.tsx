@@ -6,49 +6,30 @@ import {
   Box,
   FormControl,
   Typography,
-  InputAdornment,
-  IconButton,
   Alert,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import LockResetIcon from "@mui/icons-material/LockReset";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import SendIcon from "@mui/icons-material/Send";
 import { useNavigate } from "react-router-dom";
 import { ApiConfig } from "../../config/ApiConfig";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
 
-  const handleReset = async () => {
-    if (password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
-    }
-
+  const handleSendLink = async () => {
     setLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
 
     try {
-      await axios.post(ApiConfig.account.forgotPassword, {
-        email,
-        password,
-        password_confirmation: confirmPassword,
-      });
+      const response = await axios.post(ApiConfig.account.forgotPassword, { email });
 
-      setSuccessMessage("Password reset successfully. You can now log in.");
+      setSuccessMessage(response.data.message);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errors = error.response?.data?.errors;
@@ -90,7 +71,7 @@ const ForgotPassword = () => {
           Reset Password
         </Typography>
         <Typography variant="body2" textAlign="center" color="text.secondary">
-          Enter your email and choose a new password.
+          Enter your email and we will send you a link to reset your password.
         </Typography>
 
         {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
@@ -107,42 +88,15 @@ const ForgotPassword = () => {
           />
         </FormControl>
 
-        <FormControl fullWidth>
-          <TextField
-            label="New Password"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword((v) => !v)}>
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </FormControl>
-
-        <FormControl fullWidth>
-          <TextField
-            label="Confirm Password"
-            type={showPassword ? "text" : "password"}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </FormControl>
-
         <LoadingButton
           fullWidth
-          onClick={handleReset}
-          endIcon={<LockResetIcon />}
+          onClick={handleSendLink}
+          endIcon={<SendIcon />}
           loading={loading}
           variant="contained"
-          disabled={!!successMessage}
+          disabled={!email || !!successMessage}
         >
-          RESET PASSWORD
+          SEND RESET LINK
         </LoadingButton>
 
         <Typography

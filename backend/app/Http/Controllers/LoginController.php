@@ -51,7 +51,7 @@ class LoginController extends Controller
             throw new \Exception('Error in Login 1');
         }
 
-        if (!$user->is_active) {
+        if ($user->is_active === false) {
             return response()->json([
                 'status_code' => Response::HTTP_UNAUTHORIZED, //401
                 'message' => 'Your account has been deactivated. Please contact an administrator.',

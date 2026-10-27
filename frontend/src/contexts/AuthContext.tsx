@@ -39,6 +39,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const interceptorId = axios.interceptors.response.use(
             (response) => response,
             (error) => {
+                const storedToken = localStorage.getItem('authToken');
+                const sentToken = axios.isAxiosError(error) ? String(error.config?.headers?.Authorization ?? '') : '';
+
+                // Only the app's own login token: CATI endpoints use a separate token and must not log the user out.
+                if (axios.isAxiosError(error) && error.response?.status === 401 && storedToken && sentToken === `Bearer ${storedToken}`) {
+                    setToken(null);
+                    setUser(null);
+
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+
+                    navigate('/login', {
+                        state: {
+                            from: { pathname: window.location.pathname, search: window.location.search },
+                            sessionExpired: true,
+                        },
+                        replace: true,
+                    });
+                }
+
                 if (axios.isAxiosError(error) && error.response?.status === 403) {
                     const method = error.config?.method?.toUpperCase() ?? '';
                     const url = error.config?.url ?? '';

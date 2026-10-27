@@ -23,6 +23,8 @@ class User extends Authenticatable
         'email',
         'password',
         'must_change_password',
+        'is_active',
+        'last_login_at',
     ];
 
     /**
@@ -46,14 +48,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
     public function sendPasswordResetNotification($token)
     {
-        $url = 'http://localhost:3000/confirm-password?token=' . $token . '&email=' . $this->email;
+        $url = rtrim(config('app.frontend_url'), '/') . '/confirm-password?' . http_build_query([
+            'token' => $token,
+            'email' => $this->email,
+        ]);
 
         $this->notify(new ResetPasswordNotification($url));
+    }
+
+    public function isAdmin(): bool
+    {
+        return (bool) $this->userDetails?->hasAnyRole(['Admin']);
+    }
+
+    public function scopeActiveAdmins($query)
+    {
+        return $query->where('is_active', true)
+            ->whereHas('userDetails.role', fn ($q) => $q->whereRaw('LOWER(name) = ?', ['admin']));
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AccountAuditLog::class, 'target_user_id');
     }
 
     public function userDetails()

@@ -51,6 +51,15 @@ class LoginController extends Controller
             throw new \Exception('Error in Login 1');
         }
 
+        if (!$user->is_active) {
+            return response()->json([
+                'status_code' => Response::HTTP_UNAUTHORIZED, //401
+                'message' => 'Your account has been deactivated. Please contact an administrator.',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user->forceFill(['last_login_at' => now()])->save();
+
         // Generate a token for the authenticated user
         $tokenResult = $user->createToken($user->name)->plainTextToken;
         

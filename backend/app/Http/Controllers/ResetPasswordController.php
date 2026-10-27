@@ -3,31 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Validation\Rules\Password as RulesPassword;
-use Illuminate\Validation\ValidationException;
+use App\Http\Requests\ResetPasswordRequest;
 
 class ResetPasswordController extends Controller
 {
-    public function reset(Request $request)
+    public function reset(ResetPasswordRequest $request)
     {
-        $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => ['required', 'confirmed', RulesPassword::defaults()],
-        ]);
-
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            
+
             function ($user) use ($request) {
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'must_change_password' => false,
                 ])->save();
 
                 $user->tokens()->delete();
@@ -37,13 +30,15 @@ class ResetPasswordController extends Controller
         );
 
         if ($status == Password::PASSWORD_RESET) {
-            return response([
-                'message'=> 'Password reset successfully'
+            return response()->json([
+                'status_code' => 200,
+                'message'     => 'Password reset successfully',
             ]);
         }
 
-        return response([
-            'message'=> __($status)
-        ], 500);
+        return response()->json([
+            'status_code' => 422,
+            'message'     => __($status),
+        ], 422);
     }
 }

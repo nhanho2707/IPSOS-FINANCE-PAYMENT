@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { useProjects } from "../../hook/useProjects";
-import { OfflineGiftSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData } from "../../config/OfflineProjectRespondentFieldsConfig";
+import { OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData } from "../../config/OfflineProjectRespondentFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import SearchTextBox from "../../components/SearchTextBox";
 import ReusableTable from "../../components/Table/ReusableTable";
 import * as XLSX from "xlsx";
 import AlertDialog from "../../components/AlertDialog/AlertDialog";
 import useDialog from "../../hook/useDialog";
-import { useOfflineProjectRespondents } from "../../hook/useOfflineProjectRespondents";
+import { MAX_CONSECUTIVE_GIFT_FAILURES, useOfflineProjectRespondents } from "../../hook/useOfflineProjectRespondents";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LoadingButton from '@mui/lab/LoadingButton';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
@@ -163,13 +163,14 @@ const Gifts: React.FC = () => {
         }
     }
 
-    const showBulkSendSummary = (results: OfflineGiftSendResult[], total: number) => {
+    const showBulkSendSummary = ({ results, stoppedOnFailures }: OfflineGiftBulkSendResult, total: number) => {
         const failures = results.filter(r => !r.success);
         const successCount = results.length - failures.length;
 
         const lines = [
             `Thành công: ${successCount}/${total}`,
             `Thất bại: ${failures.length}`,
+            ...(stoppedOnFailures ? [`⚠️ Tự động dừng sau ${MAX_CONSECUTIVE_GIFT_FAILURES} lỗi liên tiếp. Vui lòng kiểm tra lỗi (ví dụ số dư tài khoản) trước khi gửi tiếp.`] : []),
             ...(results.length < total ? [`Đã dừng: ${total - results.length} đáp viên chưa được gửi.`] : []),
             ...(failures.length > 0 ? ["", "Danh sách lỗi:"] : []),
             ...failures.slice(0, MAX_FAILURES_SHOWN).map(f => `❌ ${f.row.respondent_id} (${f.row.phone_number}): ${f.message}`),
@@ -190,7 +191,7 @@ const Gifts: React.FC = () => {
 
         try
         {
-            const results = await bulkOfflineTransactionSending(
+            const bulkResult = await bulkOfflineTransactionSending(
                 rows,
                 (done, result) => setBulkProgress(prev => prev && ({
                     ...prev,
@@ -202,7 +203,7 @@ const Gifts: React.FC = () => {
             );
 
             setSelectedRows({});
-            showBulkSendSummary(results, rows.length);
+            showBulkSendSummary(bulkResult, rows.length);
         } catch(error){
             console.error('Failed to send gifts', error);
         } finally {

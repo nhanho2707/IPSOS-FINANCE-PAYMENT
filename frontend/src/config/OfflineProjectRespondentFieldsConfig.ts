@@ -92,3 +92,8 @@ export interface OfflineGiftSendResult {
     success: boolean,
     message: string
 };
+
+export interface OfflineGiftBulkSendResult {
+    results: OfflineGiftSendResult[],
+    stoppedOnFailures: boolean
+};

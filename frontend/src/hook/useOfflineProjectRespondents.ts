@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { OfflineGiftSendResult, OfflineProjectRespondentData } from "../config/OfflineProjectRespondentFieldsConfig";
+import { OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData } from "../config/OfflineProjectRespondentFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
@@ -14,6 +14,10 @@ interface ImportErrorDetail {
 const GIFT_SUCCESS_STATUS_CODES = [900, 996];
 
 const PENDING_FETCH_PAGE_SIZE = 200;
+
+// Failing respondents are moved out of "pending" and cannot be resent from the page, so a
+// systemic failure (e.g. provider balance exhausted) must stop the run instead of burning the list.
+export const MAX_CONSECUTIVE_GIFT_FAILURES = 5;
 
 export function useOfflineProjectRespondents(projectId: number) {
     
@@ -238,8 +242,10 @@ export function useOfflineProjectRespondents(projectId: number) {
         rows: OfflineProjectRespondentData[],
         onProgress: (done: number, result: OfflineGiftSendResult) => void,
         shouldStop: () => boolean
-    ): Promise<OfflineGiftSendResult[]> => {
+    ): Promise<OfflineGiftBulkSendResult> => {
         const results: OfflineGiftSendResult[] = [];
+        let consecutiveFailures = 0;
+        let stoppedOnFailures = false;
 
         setError(false);
         setMessage("");
@@ -251,6 +257,13 @@ export function useOfflineProjectRespondents(projectId: number) {
 
             results.push(result);
             onProgress(results.length, result);
+
+            consecutiveFailures = result.success ? 0 : consecutiveFailures + 1;
+
+            if (consecutiveFailures >= MAX_CONSECUTIVE_GIFT_FAILURES) {
+                stoppedOnFailures = true;
+                break;
+            }
         }
 
         await fetchProjectRespondents(page, rowsPerPage, searchTerm);
@@ -260,7 +273,7 @@ export function useOfflineProjectRespondents(projectId: number) {
         setError(successCount < results.length);
         setMessage(`Đã tặng quà thành công ${successCount}/${results.length} đáp viên.`);
 
-        return results;
+        return { results, stoppedOnFailures };
     }, [sendOfflineTransaction, fetchProjectRespondents, page, rowsPerPage, searchTerm]);
 
     useEffect(() => {

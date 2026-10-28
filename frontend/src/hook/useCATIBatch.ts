@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { CATIBatchData } from "../config/MiniCATIFieldsConfig";
+import { CATIBatchData, CATIImportResult, CATIRespondentImportRow } from "../config/MiniCATIFieldsConfig";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
 import { ActionState, ActionType } from "../components/Table/ReusableTable";
+
+const IMPORT_CHUNK_SIZE = 500;
 
 export const useCATIBatch = (projectId: number) => {
 
@@ -72,47 +74,75 @@ export const useCATIBatch = (projectId: number) => {
         }
     }, [page, rowsPerPage, searchTerm])
 
-    const importCATIBatch = async (file: any, batchName: string) => {
-        try
-        {
-            setActionState({
-                type: 'import',
-                loading: true,
-                error: false,
-                message: ""
-            });
+    const importCATIBatch = async (rows: CATIRespondentImportRow[], batchName: string): Promise<CATIImportResult> => {
+        const result: CATIImportResult = {
+            total: rows.length,
+            imported: 0,
+            skipped: [],
+            error: null
+        };
 
-            const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('authToken');
 
-            const url = `${ApiConfig.minicati.importBatch.replace("{projectId}", projectId.toString())}`;
+        const url = `${ApiConfig.minicati.importBatch.replace("{projectId}", projectId.toString())}`;
 
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("batch_name", batchName)
+        let processed = 0;
 
-            const response = await axios.post(url, formData, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-            });
+        setActionState({
+            type: 'import',
+            loading: true,
+            error: false,
+            message: `Importing 0/${rows.length} rows...`
+        });
 
-            setActionState({
-                type: 'import',
-                loading: false,
-                error: false,
-                message: response.data.message
-            });
+        // Large files are sent in chunks so a single request never hits the server time or size limits.
+        for (let start = 0; start < rows.length; start += IMPORT_CHUNK_SIZE) {
+            const chunk = rows.slice(start, start + IMPORT_CHUNK_SIZE);
 
-            await fetchCATIBatches({silent: true});
-        } catch(error: any){
-            setActionState({
-                type: 'import',
-                loading: false,
-                error: true,
-                message: error.response.data.message || 'Failed to import CATI Batch!'
-            });
+            try
+            {
+                const response = await axios.post(url, {
+                    batch_name: batchName,
+                    respondents: chunk
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+
+                result.imported += response.data.data.imported_count;
+                result.skipped.push(...response.data.data.skipped);
+            } catch(error){
+                result.error = axios.isAxiosError(error)
+                    ? (error.response?.data?.message ?? error.message)
+                    : 'Failed to import CATI Batch!';
+                break;
+            }
+
+            processed += chunk.length;
+
+            setActionState((prev) => ({
+                ...prev,
+                message: `Importing ${processed}/${rows.length} rows...`
+            }));
         }
+
+        const summary = `Imported ${result.imported}/${result.total} respondents.`
+            + (result.skipped.length > 0 ? ` Skipped ${result.skipped.length} rows.` : '');
+
+        setActionState({
+            type: 'import',
+            loading: false,
+            error: result.error !== null,
+            message: result.error !== null
+                ? `${summary} Import stopped at row ${rows[processed]?.row ?? '-'}: ${result.error}`
+                : summary
+        });
+
+        await fetchCATIBatches({silent: true});
+
+        return result;
     };
 
     const destroyBatch = async (batchId: number) => {

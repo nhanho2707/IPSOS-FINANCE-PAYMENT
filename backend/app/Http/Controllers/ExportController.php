@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransactionsExport;
 use App\Exports\TransactionsByProjectsExport;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +23,7 @@ class ExportController extends Controller
 
         $logged_in_user = Auth::user()->username;
 
-        ini_set('memory_limit', '512M');
+        $this->prepareLongRunningExport();
 
         $excelName = 'transaction_'
                         . Carbon::parse($fromDate)->format('Ymd')
@@ -45,8 +44,14 @@ class ExportController extends Controller
 
         $logged_in_user = Auth::user()->username;
 
-        ini_set('memory_limit', '512M');
+        $this->prepareLongRunningExport();
 
         return (new TransactionsByProjectsExport($projectIds, $logged_in_user, $vinnetService))->download('transactions.xlsx');
+    }
+
+    private function prepareLongRunningExport(): void
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M');
     }
 }

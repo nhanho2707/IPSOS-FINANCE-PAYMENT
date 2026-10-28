@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { OfflineProjectRespondentData } from "../config/OfflineProjectRespondentFieldsConfig";
+import { OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData } from "../config/OfflineProjectRespondentFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
@@ -9,6 +9,15 @@ interface ImportErrorDetail {
     type: string,
     respondent_id: string
 }
+
+// 900: gift sent, 996: test environment (marked as received without calling the provider).
+const GIFT_SUCCESS_STATUS_CODES = [900, 996];
+
+const PENDING_FETCH_PAGE_SIZE = 200;
+
+// Failing respondents are moved out of "pending" and cannot be resent from the page, so a
+// systemic failure (e.g. provider balance exhausted) must stop the run instead of burning the list.
+export const MAX_CONSECUTIVE_GIFT_FAILURES = 5;
 
 export function useOfflineProjectRespondents(projectId: number) {
     
@@ -144,18 +153,13 @@ export function useOfflineProjectRespondents(projectId: number) {
 
     }, [fetchProjectRespondents, page, rowsPerPage, searchTerm]);
     
-    const offlineTransactionSending = useCallback(async (project_id: number, data: OfflineProjectRespondentData) => {
+    const sendOfflineTransaction = useCallback(async (data: OfflineProjectRespondentData): Promise<OfflineGiftSendResult> => {
+        const token = localStorage.getItem("authToken");
+
+        const url = data.channel === "vinnet" ? `${ApiConfig.vinnet.performTransaction}` : `${ApiConfig.gotit.performTransaction}`;
+
         try
         {
-            setLoading(false);
-            setError(false);
-            setMessage("");
-
-            const token = localStorage.getItem("authToken");
-
-            // const url = `${ApiConfig.project.offlineTransactionSending.replace("{projectId}", project_id.toString()).replace("{projectRespondentId}", data.id.toString())}`;
-            const url = data.channel === "vinnet" ? `${ApiConfig.vinnet.performTransaction}` : `${ApiConfig.gotit.performTransaction}`;
-
             const response = await axios.post(url, {
                     token: data.token,
                     service_type: "voucher",
@@ -171,21 +175,106 @@ export function useOfflineProjectRespondents(projectId: number) {
                     }
                 });
 
-            await fetchProjectRespondents(page, rowsPerPage, searchTerm);
-
-            setMessage(response.data.message);
-        } catch(error: any){
-            setError(true);
-
-            if (axios.isAxiosError(error)) {
-                setMessage(error.response?.data.message);
-            } else {
-                setMessage(error.message);
-            }
-        }finally{
-            setLoading(false);
+            // GotIt reports some failures with HTTP 200, so the business status code decides.
+            return {
+                row: data,
+                success: GIFT_SUCCESS_STATUS_CODES.includes(Number(response.data.status_code)),
+                message: response.data.message ?? ""
+            };
+        } catch(error){
+            return {
+                row: data,
+                success: false,
+                message: axios.isAxiosError(error)
+                    ? (error.response?.data?.message ?? error.message)
+                    : String(error)
+            };
         }
-    }, [fetchProjectRespondents, page, rowsPerPage, searchTerm]);
+    }, []);
+
+    const offlineTransactionSending = useCallback(async (project_id: number, data: OfflineProjectRespondentData) => {
+        setLoading(false);
+        setError(false);
+        setMessage("");
+
+        const result = await sendOfflineTransaction(data);
+
+        await fetchProjectRespondents(page, rowsPerPage, searchTerm);
+
+        setError(!result.success);
+        setMessage(result.message);
+    }, [sendOfflineTransaction, fetchProjectRespondents, page, rowsPerPage, searchTerm]);
+
+    const fetchAllPendingProjectRespondents = useCallback(async (): Promise<OfflineProjectRespondentData[]> => {
+        const token = localStorage.getItem('authToken');
+
+        const url = `${ApiConfig.project.viewOfflineProjectRespondents.replace("{projectId}", projectId.toString())}`;
+
+        const rows: OfflineProjectRespondentData[] = [];
+
+        let currentPage = 1;
+        let lastPage = 1;
+
+        do {
+            const response = await axios.get(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                params: {
+                    page: currentPage,
+                    perPage: PENDING_FETCH_PAGE_SIZE,
+                    status: 'pending'
+                }
+            });
+
+            rows.push(...response.data.data);
+            lastPage = response.data.meta.last_page;
+            currentPage++;
+        } while (currentPage <= lastPage);
+
+        return rows;
+    }, [projectId]);
+
+    // Gifts are sent one at a time: each call buys real vouchers, and the backend locks per
+    // respondent, so parallel calls would only add load on the providers.
+    const bulkOfflineTransactionSending = useCallback(async (
+        rows: OfflineProjectRespondentData[],
+        onProgress: (done: number, result: OfflineGiftSendResult) => void,
+        shouldStop: () => boolean
+    ): Promise<OfflineGiftBulkSendResult> => {
+        const results: OfflineGiftSendResult[] = [];
+        let consecutiveFailures = 0;
+        let stoppedOnFailures = false;
+
+        setError(false);
+        setMessage("");
+
+        for (const row of rows) {
+            if (shouldStop()) break;
+
+            const result = await sendOfflineTransaction(row);
+
+            results.push(result);
+            onProgress(results.length, result);
+
+            consecutiveFailures = result.success ? 0 : consecutiveFailures + 1;
+
+            if (consecutiveFailures >= MAX_CONSECUTIVE_GIFT_FAILURES) {
+                stoppedOnFailures = true;
+                break;
+            }
+        }
+
+        await fetchProjectRespondents(page, rowsPerPage, searchTerm);
+
+        const successCount = results.filter(r => r.success).length;
+
+        setError(successCount < results.length);
+        setMessage(`Đã tặng quà thành công ${successCount}/${results.length} đáp viên.`);
+
+        return { results, stoppedOnFailures };
+    }, [sendOfflineTransaction, fetchProjectRespondents, page, rowsPerPage, searchTerm]);
 
     useEffect(() => {
         fetchProjectRespondents(page, rowsPerPage, searchTerm);
@@ -197,6 +286,8 @@ export function useOfflineProjectRespondents(projectId: number) {
         error,
         message,
         offlineTransactionSending,
+        bulkOfflineTransactionSending,
+        fetchAllPendingProjectRespondents,
         importOfflineProjectRespondents,
         removeProjectRespondent,
         page,

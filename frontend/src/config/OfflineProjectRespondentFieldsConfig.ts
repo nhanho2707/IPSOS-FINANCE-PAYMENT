@@ -86,3 +86,14 @@ export const OfflineProjectRespondentCellConfig: ColumnFormat[] = [
         flex: 1.5
     }
 ];
+
+export interface OfflineGiftSendResult {
+    row: OfflineProjectRespondentData,
+    success: boolean,
+    message: string
+};
+
+export interface OfflineGiftBulkSendResult {
+    results: OfflineGiftSendResult[],
+    stoppedOnFailures: boolean
+};

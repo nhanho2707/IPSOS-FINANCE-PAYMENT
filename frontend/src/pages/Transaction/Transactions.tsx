@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, Checkbox, Dialog, DialogTitle, Divider, Grid, Table, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Box, Button, Checkbox, Dialog, DialogTitle, Divider, Grid, Table, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { useVinnetAccount } from "../../hook/useVinnetAccount";
 import numeral from "numeral";
 import GenericDialog from "../../components/Dialogs/GenericDialog";
@@ -31,7 +31,7 @@ const Transactions = () => {
 
     const [ selectedProjects, setSelectedProjects ] = useState<ProjectData[]>([]);
 
-    const [ loadingExportExcelByProjects, setLoadingExportExcelByProjects ]= useState<boolean>(false);
+    const [ exportError, setExportError ] = useState<string>("");
 
     const [ statsProject, setStatsProject ] = useState<ProjectData | null>(null);
 
@@ -44,9 +44,38 @@ const Transactions = () => {
         setOpen(false);
     }
 
+    const saveBlob = (data: Blob, fileName: string) => {
+        const url = window.URL.createObjectURL(new Blob([data]));
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.setAttribute("download", fileName);
+
+        document.body.appendChild(link);
+        link.click();
+
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    }
+
+    // With responseType 'blob' the server's JSON error arrives as a Blob and has to be read back as text.
+    const getExportErrorMessage = async (error: unknown): Promise<string> => {
+        if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+            try {
+                const body = JSON.parse(await error.response.data.text());
+                return body.message || error.message;
+            } catch {
+                return error.message;
+            }
+        }
+
+        return error instanceof Error ? error.message : String(error);
+    }
+
     const handleExport = async (from: Dayjs | null, to: Dayjs | null) => {
         try{
             setLoadingExport(true);
+            setExportError("");
 
             if(!from || !to) return;
 
@@ -64,18 +93,10 @@ const Transactions = () => {
                 }
             });
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-
-            link.href = url;
-            link.setAttribute("download", "gotit_transactions.xlsx");
-
-            document.body.appendChild(link);
-            link.click();
-
-            link.remove();
+            saveBlob(response.data, "gotit_transactions.xlsx");
         }catch(error){
             console.log("Export failed", error);
+            setExportError(`Export thất bại: ${await getExportErrorMessage(error)}`);
         } finally{
             setLoadingExport(false);
         }
@@ -85,6 +106,7 @@ const Transactions = () => {
         try
         {
             setLoadingExportByProjects(true);
+            setExportError("");
 
             const project_ids = selectedProjects.map((p) => p.id);
 
@@ -98,20 +120,10 @@ const Transactions = () => {
                 }
             });
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-
-            link.href = url;
-            link.setAttribute("download", "transactions.xlsx");
-
-            document.body.appendChild(link);
-            link.click();
-
-            link.remove();
-
-
+            saveBlob(response.data, "transactions.xlsx");
         }catch(error){
             console.log("Export failed", error);
+            setExportError(`Export thất bại: ${await getExportErrorMessage(error)}`);
         } finally{
             setLoadingExportByProjects(false);
         }
@@ -253,6 +265,13 @@ const Transactions = () => {
                     </Box>
                 </Box>
             </Grid>
+            {exportError && (
+                <Grid item xs={12}>
+                    <Alert severity="error" onClose={() => setExportError("")}>
+                        {exportError}
+                    </Alert>
+                </Grid>
+            )}
             <Grid item xs={12}>
                 <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
                     Chọn ngày để xuất transactions (Ví dụ: 01/01/2026 - 01/31/2026)
@@ -310,7 +329,7 @@ const Transactions = () => {
                             onClick={handleExportExcelByProjects}
                             size="small"
                             startIcon ={<SendIcon />}
-                            loading={loadingExportExcelByProjects}
+                            loading={loadingExportByProjects}
                             loadingPosition="end"
                             variant="contained"
                             disabled={selectedProjects.length == 0}

@@ -16,12 +16,13 @@ use App\Models\Province;
 use App\Models\Employee;
 use App\Models\ProjectRespondent;
 use App\Http\Requests\ImportProjectRespondentsRequest;
+use App\Http\Requests\ProjectRespondentIndexRequest;
 use App\Http\Resources\ProjectRespondentResource;
 use App\Services\ProjectRespondentTokenService;
 
 class ProjectRespondentController extends Controller
 {
-    public function show(Request $request, $projectId)
+    public function show(ProjectRespondentIndexRequest $request, $projectId)
     {
         try
         {
@@ -54,8 +55,12 @@ class ProjectRespondentController extends Controller
             $query = $project->projectRespondents()
                                             ->with('province:id,name')
                                             ->with('employee:id,employee_id');
+
+            if($request->input('status') === 'pending'){
+                $query->where('status', ProjectRespondent::STATUS_RESPONDENT_PENDING);
+            }
             
-            $projectRespondents = $query->paginate($perPage);
+            $projectRespondents = $query->orderBy('id')->paginate($perPage);
 
             return response()->json([
                 'status_code' => 400,

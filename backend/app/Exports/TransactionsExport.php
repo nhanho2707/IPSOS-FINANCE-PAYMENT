@@ -2,20 +2,12 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\Exportable;
 use App\Services\VinnetService;
 
-class TransactionsExport implements FromQuery, WithHeadings, WithChunkReading, WithMapping
+class TransactionsExport extends StreamedXlsxExport
 {
-    use Exportable;
-
     protected $fromDate;
     protected $toDate;
     protected $userName;
@@ -29,10 +21,7 @@ class TransactionsExport implements FromQuery, WithHeadings, WithChunkReading, W
         $this->vinnetService = $vinnetService;
     }
 
-    /**
-    * @return \Illuminate\Support\Collection
-    */
-    public function query()
+    public function query(): Builder
     {
         return DB::table('project_respondents as pr')
                     ->leftJoin('project_vinnet_transactions as pvt', function($join) {
@@ -89,11 +78,6 @@ class TransactionsExport implements FromQuery, WithHeadings, WithChunkReading, W
                     ]);
     }
 
-    public function chunkSize(): int
-    {
-        return 1000;
-    }
-
     public function map($row): array
     {
         return [
@@ -103,7 +87,7 @@ class TransactionsExport implements FromQuery, WithHeadings, WithChunkReading, W
             $row->transaction_id,
             $row->transaction_id,
             $row->transaction_id,
-            $row->channel == 'gotit' ? $this->vinnetService->getProviceByPhoneNumber($row->phone_number) : $this->vinnetService->getProviceByServiceCode($row->service_code),
+            $row->channel == 'gotit' ? $this->vinnetService->getProviceByPhoneNumber((string) $row->phone_number) : $this->vinnetService->getProviceByServiceCode((string) $row->service_code),
             optional($row->created_at) ? date('d/m/Y H:i:s', strtotime($row->created_at)) : '',
             $row->channel == 'gotit' ? "DAYONE" : "VINNET",
             $this->maskPhone($row->phone_number),
@@ -168,10 +152,5 @@ class TransactionsExport implements FromQuery, WithHeadings, WithChunkReading, W
             'INTERVIEW_START',
             'INTERVIEW_END'
         ];
-    }
-
-    private function maskPhone($phone)
-    {
-        return substr($phone, 0, 3) . str_repeat('*', strlen($phone) - 6) . substr($phone, - 3);
     }
 }

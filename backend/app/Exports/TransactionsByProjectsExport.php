@@ -2,20 +2,12 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\Exportable;
 use App\Services\VinnetService;
 
-class TransactionsByProjectsExport implements FromQuery, WithHeadings, WithChunkReading, WithMapping
+class TransactionsByProjectsExport extends StreamedXlsxExport
 {
-    use Exportable;
-
     protected $projectIds;
     protected $userName;
     protected $vinnetService;
@@ -27,7 +19,7 @@ class TransactionsByProjectsExport implements FromQuery, WithHeadings, WithChunk
         $this->vinnetService = $vinnetService;
     }
 
-    public function query()
+    public function query(): Builder
     {
         $vinnetTransactions = DB::table('project_vinnet_transactions')
                                     ->select(
@@ -115,11 +107,6 @@ class TransactionsByProjectsExport implements FromQuery, WithHeadings, WithChunk
                     ]);
     }
 
-    public function chunkSize(): int
-    {
-        return 1000;
-    }
-
     public function map($row): array
     {
         return [
@@ -170,11 +157,6 @@ class TransactionsByProjectsExport implements FromQuery, WithHeadings, WithChunk
             'Status',
             'Invoice Comment'
         ];
-    }
-
-    private function maskPhone($phone)
-    {
-        return substr($phone, 0, 3) . str_repeat('*', strlen($phone) - 6) . substr($phone, - 3);
     }
 }
 

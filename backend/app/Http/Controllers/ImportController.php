@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CATIBatch;
-use App\Imports\CATIRespondentsImport;
+use App\Models\Project;
+use App\Http\Requests\ImportCATIRespondentsRequest;
+use App\Services\CATIRespondentImportService;
 
 class ImportController extends Controller
 {
@@ -68,49 +70,32 @@ class ImportController extends Controller
         }
     }
 
-    public function importCATIRespondents(Request $request, $projectId)
+    public function importCATIRespondents(ImportCATIRespondentsRequest $request, $projectId, CATIRespondentImportService $importService)
     {
-        $validated = $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240', //10MB
-            'batch_name' => 'required|string'
-        ]);
+        $validated = $request->validated();
 
-        $batchName = trim($validated['batch_name']) ?? null;
-
-        $logged_in_user = Auth::user()->id;
-
-        $batch = CATIBatch::firstOrCreate([
-            'project_id' => $projectId,
-            'name' => $batchName,
-            'status' => 'active',
-            'created_user_id' => $logged_in_user
-        ]);
+        $project = Project::findOrFail($projectId);
 
         try 
         {
-            $import = new CATIRespondentsImport($batch->project_id, $batch->id);
-
-            Excel::import($import, $request->file('file'));
-
-            // \Log::info('Failures: ', $import->failures()->toArray());
-            // \Log::info('Errors: ', $import->errors()->toArray());
-
-            $totalRecords = $batch->respondents()->count();
-
-            $batch->update([
-                'total_records' => $totalRecords
+            $batch = CATIBatch::firstOrCreate([
+                'project_id' => $project->id,
+                'name' => trim($validated['batch_name'])
+            ], [
+                'status' => 'active',
+                'created_user_id' => Auth::user()->id
             ]);
 
-            if ($import->failures()->isNotEmpty() || $import->errors()->isNotEmpty()) {
-                return response()->json([
-                    'message' => 'Import completed with validation errors',
-                    'failures' => $import->failures(),
-                    'errors' => $import->errors()
-                ], 422);
-            }
+            $result = $importService->import($batch, $validated['respondents']);
 
             return response()->json([
-                'message' => 'Respondents imported successfully'
+                'status_code' => 200,
+                'message' => 'Imported ' . $result['imported_count'] . ' respondents.',
+                'data' => [
+                    'batch_id' => $batch->id,
+                    'imported_count' => $result['imported_count'],
+                    'skipped' => $result['skipped']
+                ]
             ], 200);
 
         } catch (\Throwable $e) {
@@ -120,6 +105,7 @@ class ImportController extends Controller
             ]);
 
             return response()->json([
+                'status_code' => 500,
                 'message' => 'Failed to import CATI respondents'
             ], 500);
         }

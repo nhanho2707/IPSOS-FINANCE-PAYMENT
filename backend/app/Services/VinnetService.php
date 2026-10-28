@@ -8,6 +8,20 @@ use Illuminate\Support\Facades\Log;
 
 class VinnetService
 {
+    // Vinnet resCode values (API v2.0, section 5).
+    const CODE_SUCCESS = 0;
+    const CODE_INSUFFICIENT_BALANCE = 19;
+    const CODE_TRANSACTION_NOT_FOUND = 20;
+    const CODE_RESULT_UNKNOWN = 99;
+
+    // checktransaction status values (API v2.0, section 4.9.5).
+    const TRANSACTION_STATUS_SUCCESS = 1;
+    const TRANSACTION_STATUS_PROCESSING = 2;
+    const TRANSACTION_STATUS_REFUNDED = 3;
+
+    // payservice recipientType: TT/TS are for top-up only, every other service sends NT (section 4.8.4).
+    const RECIPIENT_TYPE_OTHER = 'NT';
+
     public $proviceItems = [
         "Viettel" => [
             "providerCode" => "VTT",
@@ -940,7 +954,7 @@ class VinnetService
      * @return json
      *  
      */
-    public function pay_service($uuid, $phone_number, $service_code, $token, $service_item)
+    public function pay_service($uuid, $phone_number, $service_code, $token, $service_item, $recipient_type = self::RECIPIENT_TYPE_OTHER)
     {
         try 
         {
@@ -954,7 +968,7 @@ class VinnetService
             $dataRequest = [
                 'serviceCode' => $service_code, 
                 'recipient' => $phone_number,
-                'recipientType' => 'TT',
+                'recipientType' => $recipient_type,
                 'serviceItem' => $service_item,
                 'quantity' => 1
             ];

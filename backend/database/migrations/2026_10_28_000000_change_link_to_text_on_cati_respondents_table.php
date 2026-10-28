@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // On SQLite a column change rebuilds the table from its existing columns, so a missing
+        // table produces "create table ... ()" and aborts the whole migrate run.
+        if (!Schema::hasTable('cati_respondents')) {
+            return;
+        }
+
         Schema::table('cati_respondents', function (Blueprint $table) {
             $table->text('link')->nullable()->change();
         });
@@ -21,6 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('cati_respondents')) {
+            return;
+        }
+
         Schema::table('cati_respondents', function (Blueprint $table) {
             $table->string('link')->nullable()->change();
         });

@@ -18,6 +18,45 @@ export interface CATIBatchData {
     created_user_name: string
 };
 
+export type CATIRespondentSheetCell = string | number | boolean;
+
+export interface CATIRespondentSheetRow {
+    ID: CATIRespondentSheetCell,
+    Phone: CATIRespondentSheetCell,
+    Name: CATIRespondentSheetCell,
+    Link: CATIRespondentSheetCell,
+    Filter_1: CATIRespondentSheetCell,
+    Filter_2: CATIRespondentSheetCell,
+    Filter_3: CATIRespondentSheetCell,
+    Filter_4: CATIRespondentSheetCell,
+    __rowNum__?: number
+};
+
+export interface CATIRespondentImportRow {
+    row: number,
+    respondent_id: string,
+    phone: string,
+    name: string,
+    link: string,
+    filter_1: string,
+    filter_2: string,
+    filter_3: string,
+    filter_4: string
+};
+
+export interface CATIImportSkippedRow {
+    row: number,
+    respondent_id: string | null,
+    reason: string
+};
+
+export interface CATIImportResult {
+    total: number,
+    imported: number,
+    skipped: CATIImportSkippedRow[],
+    error: string | null
+};
+
 export const MiniCATICellConfig: ColumnFormat[] = [
     {
         label: "ID",

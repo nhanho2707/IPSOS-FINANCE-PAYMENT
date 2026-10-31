@@ -64,6 +64,17 @@ export interface ProjectData {
     has_approved_quotation?: boolean,
 };
 
+export interface CloneProjectPayload {
+    project_name: string;
+    planned_field_start: string;
+    planned_field_end: string;
+    include_prices: boolean;
+    include_quotation: boolean;
+    include_permissions: boolean;
+};
+
+export const CLONE_PROJECT_ROLES = ['Admin', 'Researcher', 'Scripter'];
+
 export const ProjectGeneralFieldsConfig: ColumnFormat[] = [
   {
     label: "Project Name",

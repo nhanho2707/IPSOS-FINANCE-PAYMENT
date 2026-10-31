@@ -16,6 +16,7 @@ class ProjectDetail extends Model
     protected $fillable = [
         'symphony', 
         'job_number', 
+        'project_objectives',
         'status', 
         'created_user_id', 
         'platform', 

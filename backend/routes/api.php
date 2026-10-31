@@ -114,6 +114,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/projects/{projectId}/offline/respondents/{projectRespondentId}/transaction', [GotItController::class, 'perform_offline_transaction']);
         });
 
+        Route::post('/projects/{projectId}/clone', [ProjectController::class, 'cloneProject'])
+            ->middleware('ensureUserHasRole:Admin,Researcher,Scripter');
+
         Route::put('/projects/{projectId}/assign-users', [ProjectController::class, 'assignUsers'])
             ->middleware('ensureUserHasRole:Admin,Researcher,Scripter,Field Manager');
 

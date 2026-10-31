@@ -5,6 +5,11 @@ namespace Tests\Feature;
 use App\Constants\TransactionStatus;
 use App\Http\Controllers\TransactionController;
 use App\Http\Requests\TransactionStatisticsRequest;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\UserDetail;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Routing\Route;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -21,6 +26,8 @@ class TransactionStatisticsTest extends TestCase
         config([
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => ':memory:',
+            // Fixtures write interview and transaction times on the same clock; the UTC case is tested on its own.
+            'app.timezone' => 'Asia/Ho_Chi_Minh',
         ]);
         DB::purge('sqlite');
 
@@ -41,6 +48,13 @@ class TransactionStatisticsTest extends TestCase
             $table->string('respondent_phone_number')->nullable();
             $table->datetime('interview_start')->nullable();
             $table->datetime('interview_end')->nullable();
+            $table->string('environment')->default('live');
+        });
+
+        Schema::create('project_respondent_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('project_respondent_id')->unique();
+            $table->string('batch_id')->nullable();
         });
 
         Schema::create('project_vinnet_transactions', function (Blueprint $table) {
@@ -75,7 +89,7 @@ class TransactionStatisticsTest extends TestCase
         $this->assertSame(1, $data['by_channel']['vinnet']['count']);
         $this->assertSame(1, $data['interview_time_buckets']['09-10']);
         $this->assertSame(1, $data['gift_time_buckets']['09-10']);
-        $this->assertSame(1, $data['gap_buckets']['0 - 30 phút']);
+        $this->assertSame(1, $data['gap_buckets']['≤ 30 phút']);
         $this->assertSame(10, $data['gap_median_minutes']);
         $this->assertSame(0, $data['anomalies_total']);
     }
@@ -108,7 +122,84 @@ class TransactionStatisticsTest extends TestCase
         $this->assertSame(1, $data['anomalies_total']);
         $this->assertSame(-20, $data['anomalies'][0]['gap_minutes']);
         $this->assertSame('Nguyen An', $data['anomalies'][0]['employee_name']);
-        $this->assertSame(1, $data['gap_buckets']['< 0 (bất thường)']);
+        $this->assertSame(1, $data['gap_buckets']['Trước khi PV xong > 5 phút (bất thường)']);
+    }
+
+    public function test_a_small_negative_gap_from_clock_drift_is_not_an_anomaly(): void
+    {
+        $withinTolerance = $this->createRespondent('vinnet', '2026-10-01 14:00:00', '2026-10-01 14:30:00');
+        $this->createVinnet($withinTolerance, '2026-10-01 14:25:00', 100000);
+
+        $beyondTolerance = $this->createRespondent('vinnet', '2026-10-01 14:00:00', '2026-10-01 14:30:00');
+        $this->createVinnet($beyondTolerance, '2026-10-01 14:24:00', 100000);
+
+        $data = $this->statistics();
+
+        $this->assertSame(5, $data['anomaly_tolerance_minutes']);
+        $this->assertSame(1, $data['anomalies_total']);
+        $this->assertSame(-6, $data['anomalies'][0]['gap_minutes']);
+        $this->assertSame(1, $data['gap_buckets']['≤ 30 phút']);
+    }
+
+    public function test_utc_transaction_times_are_compared_against_vietnam_interview_times(): void
+    {
+        config(['app.timezone' => 'UTC']);
+
+        $respondent = $this->createRespondent('gotit', '2026-10-01 14:00:00', '2026-10-01 14:30:00');
+        $this->createGotIt($respondent, '2026-10-01 07:40:00', 200000);
+
+        $data = $this->statistics();
+
+        $this->assertSame(0, $data['anomalies_total']);
+        $this->assertSame(10, $data['gap_median_minutes']);
+        $this->assertSame(1, $data['interview_time_buckets']['14-15']);
+        $this->assertSame(1, $data['gift_time_buckets']['14-15']);
+    }
+
+    public function test_anomaly_times_are_returned_in_vietnam_time(): void
+    {
+        config(['app.timezone' => 'UTC']);
+
+        $respondent = $this->createRespondent('gotit', '2026-10-01 14:00:00', '2026-10-01 14:30:00');
+        $this->createGotIt($respondent, '2026-10-01 07:10:00', 200000);
+
+        $anomaly = $this->statistics()['anomalies'][0];
+
+        $this->assertSame('2026-10-01 14:30:00', $anomaly['interview_end']);
+        $this->assertSame('2026-10-01 14:10:00', $anomaly['gift_time']);
+        $this->assertSame(-20, $anomaly['gap_minutes']);
+    }
+
+    public function test_test_environment_respondents_are_not_counted(): void
+    {
+        $respondent = $this->createRespondent('vinnet', '2026-10-01 09:10:00', '2026-10-01 09:40:00');
+        DB::table('project_respondents')->where('id', $respondent)->update(['environment' => 'test']);
+        $this->createVinnet($respondent, '2026-10-01 09:50:00', 100000);
+
+        $this->assertSame(0, $this->statistics()['total']);
+    }
+
+    public function test_offline_respondents_count_as_gifts_but_not_in_interview_timing(): void
+    {
+        // Offline import stamps both interview times with the import time, long before the gift is sent.
+        $respondent = $this->createRespondent('vinnet', '2026-10-01 08:00:00', '2026-10-01 08:00:00');
+        DB::table('project_respondent_tokens')->insert(['project_respondent_id' => $respondent, 'batch_id' => 'IMPORT_01102026080000']);
+        $this->createVinnet($respondent, '2026-10-03 15:20:00', 100000);
+
+        $online = $this->createRespondent('vinnet', '2026-10-01 09:10:00', '2026-10-01 09:40:00');
+        DB::table('project_respondent_tokens')->insert(['project_respondent_id' => $online, 'batch_id' => null]);
+        $this->createVinnet($online, '2026-10-01 09:50:00', 100000);
+
+        $data = $this->statistics();
+
+        $this->assertSame(2, $data['total']);
+        $this->assertSame(1, $data['gap_offline']);
+        $this->assertSame(0, $data['gap_unknown']);
+        $this->assertSame(1, array_sum($data['interview_time_buckets']));
+        $this->assertSame(0, $data['interview_time_buckets']['08-09']);
+        $this->assertSame(1, $data['gift_time_buckets']['15-16']);
+        $this->assertSame(1, array_sum($data['gap_buckets']));
+        $this->assertSame(10, $data['gap_median_minutes']);
     }
 
     public function test_a_missing_interview_end_is_left_out_of_the_gap_instead_of_flagged(): void
@@ -136,10 +227,43 @@ class TransactionStatisticsTest extends TestCase
         $this->assertSame(1, $this->statistics(['date_from' => '2026-10-02', 'date_to' => '2026-10-31'])['total']);
     }
 
-    private function statistics(array $query = [], int $projectId = 1): array
+    public function test_only_admin_and_finance_can_see_all_projects(): void
     {
-        $request = TransactionStatisticsRequest::create('/statistics', 'GET', $query);
+        $this->assertSame(0, $this->statistics([], 0, 'Finance')['total']);
+        $this->assertSame(0, $this->statistics([], 1, 'Scripter')['total']);
+
+        $this->expectException(AuthorizationException::class);
+        $this->statistics([], 0, 'Scripter');
+    }
+
+    public function test_date_to_includes_the_whole_last_day(): void
+    {
+        $this->createVinnet($this->createRespondent('vinnet', '2026-10-31 23:30:00', '2026-10-31 23:50:00'), '2026-10-31 23:55:00', 100000);
+        $this->createVinnet($this->createRespondent('vinnet', '2026-11-01 00:10:00', '2026-11-01 00:40:00'), '2026-11-01 00:45:00', 100000);
+
+        $this->assertSame(1, $this->statistics(['date_from' => '2026-10-31', 'date_to' => '2026-10-31'])['total']);
+    }
+
+    public function test_a_respondent_paid_by_both_providers_uses_the_earlier_gift(): void
+    {
+        $respondent = $this->createRespondent('vinnet', '2026-10-01 09:00:00', '2026-10-01 09:30:00');
+        $this->createVinnet($respondent, '2026-10-01 11:00:00', 100000);
+        $this->createGotIt($respondent, '2026-10-01 09:40:00', 50000);
+
+        $data = $this->statistics();
+
+        $this->assertSame(1, $data['total']);
+        $this->assertEquals(150000, $data['total_amount']);
+        $this->assertSame(10, $data['gap_median_minutes']);
+        $this->assertSame(1, $data['gift_time_buckets']['09-10']);
+    }
+
+    private function statistics(array $query = [], int $projectId = 1, string $role = 'Admin'): array
+    {
+        $request = TransactionStatisticsRequest::create("/projects/{$projectId}/transactions/statistics", 'GET', $query);
         $request->setContainer($this->app)->setRedirector($this->app['redirect']);
+        $request->setRouteResolver(fn() => (new Route('GET', 'projects/{projectId}/transactions/statistics', []))->bind($request));
+        $request->setUserResolver(fn() => $this->userWithRole($role));
         $request->validateResolved();
 
         $response = (new TransactionController())->statistics($request, $projectId);
@@ -147,6 +271,17 @@ class TransactionStatisticsTest extends TestCase
         $this->assertSame(200, $response->getStatusCode(), json_encode($response->getData(true)));
 
         return $response->getData(true)['data'];
+    }
+
+    private function userWithRole(string $role): User
+    {
+        $details = new UserDetail();
+        $details->setRelation('role', new Role(['name' => $role]));
+
+        $user = new User();
+        $user->setRelation('userDetails', $details);
+
+        return $user;
     }
 
     private function createRespondent(string $channel, ?string $start, ?string $end, int $projectId = 1): int

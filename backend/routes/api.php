@@ -88,7 +88,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/projects/store', [ProjectController::class, 'store']);
         Route::put('/projects/{projectId}/status', [ProjectController::class, 'updateStatus']);
         Route::get('/projects/{projectId}/transactions/show', [TransactionController::class, 'show']);
-        Route::get('/projects/{projectId}/transactions/statistics', [TransactionController::class, 'statistics']);
+        Route::get('/projects/{projectId}/transactions/statistics', [TransactionController::class, 'statistics'])
+            ->middleware('ensureUserHasRole:Admin,Finance,Scripter');
         
         Route::put('/projects/{projectId}/update-info', [ProjectController::class, 'updateProjectInfo'])
             ->middleware('ensureUserHasRole:Admin,Scripter');

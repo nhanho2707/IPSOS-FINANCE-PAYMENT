@@ -2,16 +2,29 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TransactionStatisticsRequest extends FormRequest
 {
+    private const ALL_PROJECTS_ROLES = ['Admin', 'Finance'];
+
     /**
-     * Determine if the user is authorized to make this request.
+     * Project id 0 means every project, and the anomaly list carries respondent phone numbers,
+     * so only roles that already see all transactions may ask for it.
      */
     public function authorize(): bool
     {
-        return true;
+        if((int) $this->route('projectId') !== 0){
+            return true;
+        }
+
+        return (bool) $this->user()?->userDetails?->hasAnyRole(self::ALL_PROJECTS_ROLES);
+    }
+
+    protected function failedAuthorization(): void
+    {
+        throw new AuthorizationException('Chỉ Admin hoặc Finance được xem thống kê của tất cả dự án.');
     }
 
     /**

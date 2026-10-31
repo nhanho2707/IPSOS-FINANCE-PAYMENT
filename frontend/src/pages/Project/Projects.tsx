@@ -3,7 +3,7 @@ import ReusableTable from "../../components/Table/ReusableTable";
 import { useProjects } from "../../hook/useProjects";
 import { useMetadata } from "../../hook/useMetadata";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
+import { CLONE_PROJECT_ROLES, ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
 import { StatusDropdown } from "../../components/Table/StatusDropdown";
 import useDialog from "../../hook/useDialog";
 import AlertDialog from "../../components/AlertDialog/AlertDialog";
@@ -11,9 +11,11 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SearchDatePickerFromTo from "../../components/SearchDatePickerFromTo";
 import SearchTextBox from "../../components/SearchTextBox";
 import ModalAddProject from "../../components/Modals/Project/ModalAddProject";
+import ModalCloneProject from "../../components/Modals/Project/ModalCloneProject";
 import { Dayjs } from "dayjs";
 import { formatClass } from "../../utils/format";
 import { useAuth } from "../../contexts/AuthContext";
@@ -22,12 +24,14 @@ const Projects = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
+  const canClone = CLONE_PROJECT_ROLES.includes(user?.role ?? '');
 
   const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled } = useProjects();
   const { data } = useMetadata();
   const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
   
   const [ updatingId, setUpdatingId ] = useState<number | null>(null);
+  const [ cloneTarget, setCloneTarget ] = useState<ProjectData | null>(null);
 
   // Define allowed transitions for each status
   const statusTransitions: { [key: string] : string[] } = {
@@ -135,9 +139,30 @@ const Projects = () => {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center"
+              justifyContent: "center",
+              gap: 1
             }}
           >
+            {canClone && (
+              <Tooltip title="Clone dự án">
+                <IconButton
+                  aria-label="clone"
+                  onClick={() => setCloneTarget(row)}
+                  sx={{
+                    backgroundColor: 'var(--body-color)',
+                    borderRadius: '8px',
+                    border: '1px solid',
+                    borderColor: 'rgba(0,0,0,0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 157, 156, 0.08)',
+                    },
+                    padding: '5px',
+                  }}
+                >
+                  <ContentCopyIcon sx={{ fontSize: '0.875rem' }} />
+                </IconButton>
+              </Tooltip>
+            )}
             <IconButton
               aria-label="actions"
               onClick={() =>
@@ -343,6 +368,13 @@ const Projects = () => {
         onClose={handleCloseModal}
         metadata={data}
       />
+
+      {cloneTarget && (
+        <ModalCloneProject
+          project={cloneTarget}
+          onClose={() => setCloneTarget(null)}
+        />
+      )}
     </>
   );
 };

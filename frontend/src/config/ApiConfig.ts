@@ -8,6 +8,7 @@ export const ApiConfig = {
     updateDisabledProject: `${host}/api/project-management/projects/{projectId}/disabled`,
     updateProjectInfo: `${host}/api/project-management/projects/{projectId}/update-info`,
     addProject: `${host}/api/project-management/projects/store`,
+    cloneProject: `${host}/api/project-management/projects/{projectId}/clone`,
     assignUsers: `${host}/api/project-management/projects/{projectId}/assign-users`,
     getProjectTypes: `${host}/api/project-management/project-types`,
     getDepartments: `${host}/api/project-management/departments`,

@@ -36,6 +36,22 @@ class Project extends Model
     const ERROR_PROJECT_DETAILS_NOT_CONFIGURED =   'Dự án chưa được cấu hình chi tiết';
     const ERROR_INTERVIEWER_ID_NOT_REGISTERED =    'Mã số PVV không có trong danh sách đăng ký của dự án này.';
 
+    public static function createWithInternalCode(string $projectName): self
+    {
+        // The real code is derived from the auto-increment id, so it can only be set after the insert.
+        $project = self::create([
+            'internal_code' => 'TMP-' . Str::uuid(),
+            'project_name' => $projectName,
+            'disabled' => false
+        ]);
+
+        $project->update([
+            'internal_code' => date('Y') . '-' . str_pad($project->id, 4, '0', STR_PAD_LEFT)
+        ]);
+
+        return $project;
+    }
+
     public function projectDetails()
     {
         return $this->hasOne(ProjectDetail::class);

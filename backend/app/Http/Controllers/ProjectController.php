@@ -26,6 +26,7 @@ use App\Models\ProjectRespondent;
 use App\Models\ProjectProvince;
 use App\Http\Requests\StoreProjectVinnetTokenRequest;
 use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\CloneProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Requests\UpdateProjectStatusRequest;
 use App\Http\Requests\UpdateProjectDisabledRequest;
@@ -35,6 +36,7 @@ use App\Http\Requests\UpsertProjectPriceRequest;
 use App\Http\Requests\ImportProjectPricesRequest;
 use App\Http\Requests\DeleteProjectPriceRequest;
 use App\Services\ProjectRespondentTokenService;
+use App\Services\ProjectCloneService;
 use Carbon\Carbon;
 
 class ProjectController extends Controller
@@ -231,7 +233,7 @@ class ProjectController extends Controller
 
             if ($validator->fails()) {
                 Log::error($validator->errors());
-                return response->json([
+                return response()->json([
                     'message' => $validator->errors()->first(),
                 ], 422); // Unprocessable Entity
             }
@@ -244,21 +246,9 @@ class ProjectController extends Controller
 
                 $user = Auth::user();
 
-                $tempInternalCode = 'TMP-' . Str::uuid();
+                $project = Project::createWithInternalCode($validatedRequest['project_name']);
 
-                $project = Project::create([
-                    'internal_code' => $tempInternalCode,
-                    'project_name' => $validatedRequest['project_name'],
-                    'disabled' => false
-                ]);
-
-                $year = date('Y');
-
-                $internalCode = $year . '-' . str_pad($project->id, 4, '0', STR_PAD_LEFT);
-
-                $project->update([
-                    'internal_code' => $internalCode
-                ]);
+                $internalCode = $project->internal_code;
 
                 $project->projectDetails()->create([
                     'created_user_id' => $user->id,
@@ -342,6 +332,56 @@ class ProjectController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function cloneProject(CloneProjectRequest $request, $projectId, ProjectCloneService $cloneService): JsonResponse
+    {
+        $source = Project::with('projectDetails')->find($projectId);
+
+        if (!$source) {
+            return response()->json([
+                'status_code' => Response::HTTP_NOT_FOUND,
+                'message' => 'The project not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$source->projectDetails) {
+            return response()->json([
+                'status_code' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                'message' => Project::ERROR_PROJECT_DETAILS_NOT_CONFIGURED
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user = Auth::user();
+
+        if ($user->userDetails?->role?->name !== 'Admin'
+            && !$source->projectPermissions()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'status_code' => Response::HTTP_FORBIDDEN,
+                'message' => 'You do not have permission to clone this project.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $project = $cloneService->cloneProject($source, $user, $request->validated());
+        } catch (\Exception $e) {
+            Log::error('Project clone fails: ' . $e->getMessage());
+
+            return response()->json([
+                'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'message' => 'Database error occurred while cloning project.',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        Cache::forget('cati_projects');
+        Cache::forget('metadata_projects');
+
+        return response()->json([
+            'status_code' => Response::HTTP_CREATED,
+            'message' => 'The project cloned successfully.',
+            'data' => new ProjectResource($project)
+        ], Response::HTTP_CREATED);
     }
 
     public function update(UpdateProjectRequest $request, $projectId): JsonResponse

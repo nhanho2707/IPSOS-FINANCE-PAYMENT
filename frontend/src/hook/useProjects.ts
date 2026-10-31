@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
-import { ProjectData } from "../config/ProjectFieldsConfig";
+import { CloneProjectPayload, ProjectData } from "../config/ProjectFieldsConfig";
 import dayjs, { Dayjs } from "dayjs";
 import { ActionState } from "../components/Table/ReusableTable";
 
@@ -118,6 +118,33 @@ export function useProjects() {
         }
     }, [fetchProjects]);
     
+    const cloneProject = useCallback(async (id: number, payload: CloneProjectPayload): Promise<ProjectData> => {
+        setActionState({ type: 'add', loading: true, error: false, message: '' });
+        try {
+            const token = localStorage.getItem("authToken");
+
+            const url = ApiConfig.project.cloneProject.replace('{projectId}', id.toString());
+
+            const response = await axios.post(url, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            setActionState({ type: 'add', loading: false, error: false, message: response.data.message });
+            await fetchProjects({ silent: true });
+            return response.data.data;
+        } catch (error) {
+            let message = 'Failed to clone project';
+            if (axios.isAxiosError(error)) {
+                message = error.response?.data.message ?? error.message;
+            }
+            setActionState({ type: 'add', loading: false, error: true, message });
+            throw error;
+        }
+    }, [fetchProjects]);
+
     const updateProjectStatus = useCallback(async ( id: number, status: string) => {
 
         const token = localStorage.getItem("authToken");
@@ -259,6 +286,7 @@ export function useProjects() {
         fetchProjects,
         getProject,
         addProject,
+        cloneProject,
         updateProjectStatus,
         updateDisabled,
         assignUsers,

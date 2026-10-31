@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { ActionState } from "../components/Table/ReusableTable";
@@ -52,7 +52,14 @@ export function useTransactionStatistics(projectId: number) {
     const [ dateFrom, setDateFrom ] = useState<string | null>(null);
     const [ dateTo, setDateTo ] = useState<string | null>(null);
 
+    // Filters can change faster than the query answers; a late response for old filters must not overwrite the current one.
+    const requestRef = useRef<AbortController | null>(null);
+
     const fetchStatistics = useCallback(async () => {
+        requestRef.current?.abort();
+        const controller = new AbortController();
+        requestRef.current = controller;
+
         try {
             setActionState({ type: 'fetch', loading: true, error: false, message: "" });
 
@@ -69,12 +76,15 @@ export function useTransactionStatistics(projectId: number) {
                     channel: channel || undefined,
                     date_from: dateFrom || undefined,
                     date_to: dateTo || undefined
-                }
+                },
+                signal: controller.signal
             });
 
             setStatistics(response.data.data);
             setActionState((prev) => ({ ...prev, loading: false }));
         } catch (error: unknown) {
+            if (axios.isCancel(error)) return;
+
             let message = 'Failed to fetch transaction statistics.';
 
             if (axios.isAxiosError(error)) {
@@ -89,6 +99,8 @@ export function useTransactionStatistics(projectId: number) {
     useEffect(() => {
         fetchStatistics();
     }, [fetchStatistics]);
+
+    useEffect(() => () => requestRef.current?.abort(), []);
 
     return {
         statistics,

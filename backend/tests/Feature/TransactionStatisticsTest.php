@@ -5,6 +5,11 @@ namespace Tests\Feature;
 use App\Constants\TransactionStatus;
 use App\Http\Controllers\TransactionController;
 use App\Http\Requests\TransactionStatisticsRequest;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\UserDetail;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Routing\Route;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -222,10 +227,43 @@ class TransactionStatisticsTest extends TestCase
         $this->assertSame(1, $this->statistics(['date_from' => '2026-10-02', 'date_to' => '2026-10-31'])['total']);
     }
 
-    private function statistics(array $query = [], int $projectId = 1): array
+    public function test_only_admin_and_finance_can_see_all_projects(): void
     {
-        $request = TransactionStatisticsRequest::create('/statistics', 'GET', $query);
+        $this->assertSame(0, $this->statistics([], 0, 'Finance')['total']);
+        $this->assertSame(0, $this->statistics([], 1, 'Scripter')['total']);
+
+        $this->expectException(AuthorizationException::class);
+        $this->statistics([], 0, 'Scripter');
+    }
+
+    public function test_date_to_includes_the_whole_last_day(): void
+    {
+        $this->createVinnet($this->createRespondent('vinnet', '2026-10-31 23:30:00', '2026-10-31 23:50:00'), '2026-10-31 23:55:00', 100000);
+        $this->createVinnet($this->createRespondent('vinnet', '2026-11-01 00:10:00', '2026-11-01 00:40:00'), '2026-11-01 00:45:00', 100000);
+
+        $this->assertSame(1, $this->statistics(['date_from' => '2026-10-31', 'date_to' => '2026-10-31'])['total']);
+    }
+
+    public function test_a_respondent_paid_by_both_providers_uses_the_earlier_gift(): void
+    {
+        $respondent = $this->createRespondent('vinnet', '2026-10-01 09:00:00', '2026-10-01 09:30:00');
+        $this->createVinnet($respondent, '2026-10-01 11:00:00', 100000);
+        $this->createGotIt($respondent, '2026-10-01 09:40:00', 50000);
+
+        $data = $this->statistics();
+
+        $this->assertSame(1, $data['total']);
+        $this->assertEquals(150000, $data['total_amount']);
+        $this->assertSame(10, $data['gap_median_minutes']);
+        $this->assertSame(1, $data['gift_time_buckets']['09-10']);
+    }
+
+    private function statistics(array $query = [], int $projectId = 1, string $role = 'Admin'): array
+    {
+        $request = TransactionStatisticsRequest::create("/projects/{$projectId}/transactions/statistics", 'GET', $query);
         $request->setContainer($this->app)->setRedirector($this->app['redirect']);
+        $request->setRouteResolver(fn() => (new Route('GET', 'projects/{projectId}/transactions/statistics', []))->bind($request));
+        $request->setUserResolver(fn() => $this->userWithRole($role));
         $request->validateResolved();
 
         $response = (new TransactionController())->statistics($request, $projectId);
@@ -233,6 +271,17 @@ class TransactionStatisticsTest extends TestCase
         $this->assertSame(200, $response->getStatusCode(), json_encode($response->getData(true)));
 
         return $response->getData(true)['data'];
+    }
+
+    private function userWithRole(string $role): User
+    {
+        $details = new UserDetail();
+        $details->setRelation('role', new Role(['name' => $role]));
+
+        $user = new User();
+        $user->setRelation('userDetails', $details);
+
+        return $user;
     }
 
     private function createRespondent(string $channel, ?string $start, ?string $end, int $projectId = 1): int

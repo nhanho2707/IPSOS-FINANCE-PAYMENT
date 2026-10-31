@@ -112,6 +112,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
   const toleranceText = statistics ? ` > ${statistics.anomaly_tolerance_minutes} phút` : "";
   // The backend owns the bucket labels (they embed the tolerance), and sends them in display order.
   const gapOrder = Object.keys(statistics?.gap_buckets ?? {});
+  const measuredTotal = total - gapUnknown - gapOffline;
   const gapExcludedCaption = [
     gapUnknown > 0 ? `${gapUnknown} ca thiếu thời gian kết thúc PV` : null,
     gapOffline > 0 ? `${gapOffline} ca offline (không có giờ PV thực tế)` : null
@@ -191,6 +192,10 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           ))}
         </TextField>
 
+        <Typography variant="body2" color="text.secondary">
+          Ngày phỏng vấn:
+        </Typography>
+
         <SearchDatePickerFromTo
           key={datePickerKey}
           fromValue={dateFrom ? dayjs(dateFrom) : null}
@@ -240,7 +245,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
             label={`Số ca bất thường (nhận quà trước khi PV xong${toleranceText})`}
             value={anomaliesTotal}
             color={anomaliesTotal > 0 ? "error" : "inherit"}
-            caption={total > 0 ? `${numeral(anomaliesTotal / total).format("0.[0]%")} tổng số đáp viên` : undefined}
+            caption={measuredTotal > 0 ? `${numeral(anomaliesTotal / measuredTotal).format("0.[0]%")} số ca đo được thời gian` : undefined}
           />
         </Grid>
       </Grid>

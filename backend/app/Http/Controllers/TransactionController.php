@@ -444,19 +444,21 @@ class TransactionController extends Controller
                 $query->where('pr.channel', $validated['channel']);
             }
 
+            // A plain range instead of whereDate() keeps an index on interview_start usable.
             if(!empty($validated['date_from'])){
-                $query->whereDate('pr.interview_start', '>=', $validated['date_from']);
+                $query->where('pr.interview_start', '>=', Carbon::parse($validated['date_from'])->startOfDay()->toDateTimeString());
             }
 
             if(!empty($validated['date_to'])){
-                $query->whereDate('pr.interview_start', '<=', $validated['date_to']);
+                $query->where('pr.interview_start', '<', Carbon::parse($validated['date_to'])->addDay()->startOfDay()->toDateTimeString());
             }
 
             $rows = $query->select(
                     'pr.channel',
                     'pr.interview_start',
                     'pr.interview_end',
-                    DB::raw('COALESCE(vg.gift_time, gg.gift_time) as gift_time'),
+                    'vg.gift_time as vinnet_gift_time',
+                    'gg.gift_time as gotit_gift_time',
                     DB::raw('COALESCE(vg.amount, 0) + COALESCE(gg.amount, 0) as amount'),
                     'pr.respondent_id',
                     'pr.respondent_phone_number',
@@ -488,7 +490,9 @@ class TransactionController extends Controller
                 $byChannel[$row->channel]['count']++;
                 $byChannel[$row->channel]['amount'] += $amount;
 
-                $giftTime = Carbon::parse($row->gift_time, $appTimezone)->setTimezone(self::SURVEY_TIMEZONE);
+                // A respondent paid through both providers received the gift at the earlier of the two; LEAST() would return NULL when one side is missing.
+                $firstGiftTime = min(array_filter([$row->vinnet_gift_time, $row->gotit_gift_time]));
+                $giftTime = Carbon::parse($firstGiftTime, $appTimezone)->setTimezone(self::SURVEY_TIMEZONE);
                 $giftBuckets[$this->hourRangeBucket($giftTime->hour)]++;
 
                 // Offline imports stamp interview_start/end with the import time, so they say nothing about the interview.

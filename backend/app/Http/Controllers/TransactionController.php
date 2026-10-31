@@ -26,6 +26,12 @@ use App\Services\InterviewURL;
 
 class TransactionController extends Controller
 {
+    // Interview times arrive from the survey link as Vietnam wall-clock time, while created_at is written in the app timezone.
+    private const SURVEY_TIMEZONE = 'Asia/Ho_Chi_Minh';
+
+    // Tablet and server clocks drift by a few minutes, so smaller negative gaps are not worth checking.
+    private const ANOMALY_TOLERANCE_MINUTES = 5;
+
     public function verify(Request $request, ProjectRespondentTokenService $tokenService)
     {
         try{
@@ -422,6 +428,8 @@ class TransactionController extends Controller
                     ->leftJoinSub($vinnetGifts, 'vg', 'vg.project_respondent_id', '=', 'pr.id')
                     ->leftJoinSub($gotitGifts, 'gg', 'gg.project_respondent_id', '=', 'pr.id')
                     ->leftJoin('employees', 'employees.id', '=', 'pr.employee_id')
+                    ->leftJoin('project_respondent_tokens as prt', 'prt.project_respondent_id', '=', 'pr.id')
+                    ->where('pr.environment', 'live')
                     ->whereIn('pr.channel', ['vinnet', 'gotit', 'other'])
                     ->where(function($q) {
                         $q->whereNotNull('vg.project_respondent_id')
@@ -454,7 +462,8 @@ class TransactionController extends Controller
                     'pr.respondent_phone_number',
                     'employees.employee_id',
                     'employees.first_name',
-                    'employees.last_name'
+                    'employees.last_name',
+                    'prt.batch_id'
                 )
                 ->orderBy('pr.id')
                 ->cursor();
@@ -467,7 +476,9 @@ class TransactionController extends Controller
             $gapBuckets = $this->emptyGapBuckets();
             $gaps = [];
             $gapUnknown = 0;
+            $gapOffline = 0;
             $anomalies = [];
+            $appTimezone = config('app.timezone');
 
             foreach($rows as $row){
                 $amount = (float) $row->amount;
@@ -477,33 +488,39 @@ class TransactionController extends Controller
                 $byChannel[$row->channel]['count']++;
                 $byChannel[$row->channel]['amount'] += $amount;
 
-                if($row->interview_start){
-                    $interviewBuckets[$this->hourRangeBucket(Carbon::parse($row->interview_start)->hour)]++;
+                $giftTime = Carbon::parse($row->gift_time, $appTimezone)->setTimezone(self::SURVEY_TIMEZONE);
+                $giftBuckets[$this->hourRangeBucket($giftTime->hour)]++;
+
+                // Offline imports stamp interview_start/end with the import time, so they say nothing about the interview.
+                if(!empty($row->batch_id)){
+                    $gapOffline++;
+                    continue;
                 }
 
-                $giftTime = Carbon::parse($row->gift_time);
-                $giftBuckets[$this->hourRangeBucket($giftTime->hour)]++;
+                if($row->interview_start){
+                    $interviewBuckets[$this->hourRangeBucket(Carbon::parse($row->interview_start, self::SURVEY_TIMEZONE)->hour)]++;
+                }
 
                 if(!$row->interview_end){
                     $gapUnknown++;
                     continue;
                 }
 
-                $interviewEnd = Carbon::parse($row->interview_end);
+                $interviewEnd = Carbon::parse($row->interview_end, self::SURVEY_TIMEZONE);
                 $gapMinutes = (int) round(($giftTime->getTimestamp() - $interviewEnd->getTimestamp()) / 60);
 
                 $gaps[] = $gapMinutes;
                 $gapBuckets[$this->gapBucket($gapMinutes)]++;
 
-                if($gapMinutes < 0){
+                if($this->isAnomaly($gapMinutes)){
                     $anomalies[] = [
                         'respondent_id' => $row->respondent_id,
                         'phone' => $row->respondent_phone_number,
                         'channel' => $row->channel,
                         'employee_id' => $row->employee_id,
                         'employee_name' => trim($row->first_name . ' ' . $row->last_name),
-                        'interview_end' => $row->interview_end,
-                        'gift_time' => $row->gift_time,
+                        'interview_end' => $interviewEnd->format('Y-m-d H:i:s'),
+                        'gift_time' => $giftTime->format('Y-m-d H:i:s'),
                         'amount' => $amount,
                         'gap_minutes' => $gapMinutes
                     ];
@@ -526,6 +543,8 @@ class TransactionController extends Controller
                     'gap_buckets' => $gapBuckets,
                     'gap_median_minutes' => $this->median($gaps),
                     'gap_unknown' => $gapUnknown,
+                    'gap_offline' => $gapOffline,
+                    'anomaly_tolerance_minutes' => self::ANOMALY_TOLERANCE_MINUTES,
                     'anomalies' => array_slice($anomalies, 0, 300),
                     'anomalies_total' => $anomaliesTotal
                 ]
@@ -577,12 +596,22 @@ class TransactionController extends Controller
     private function emptyGapBuckets(): array
     {
         return [
-            '< 0 (bất thường)' => 0,
-            '0 - 30 phút' => 0,
+            $this->anomalyBucket() => 0,
+            '≤ 30 phút' => 0,
             '30 phút - 2 giờ' => 0,
             '2 - 24 giờ' => 0,
             '> 24 giờ' => 0
         ];
+    }
+
+    private function anomalyBucket(): string
+    {
+        return sprintf('Trước khi PV xong > %d phút (bất thường)', self::ANOMALY_TOLERANCE_MINUTES);
+    }
+
+    private function isAnomaly(int $gapMinutes): bool
+    {
+        return $gapMinutes < -self::ANOMALY_TOLERANCE_MINUTES;
     }
 
     private function hourRangeBucket(int $hour): string
@@ -592,8 +621,8 @@ class TransactionController extends Controller
 
     private function gapBucket(int $minutes): string
     {
-        if($minutes < 0) return '< 0 (bất thường)';
-        if($minutes <= 30) return '0 - 30 phút';
+        if($this->isAnomaly($minutes)) return $this->anomalyBucket();
+        if($minutes <= 30) return '≤ 30 phút';
         if($minutes <= 120) return '30 phút - 2 giờ';
         if($minutes <= 1440) return '2 - 24 giờ';
         return '> 24 giờ';

@@ -9,8 +9,6 @@ import SearchDatePickerFromTo from "./SearchDatePickerFromTo";
 import ReusableTable from "./Table/ReusableTable";
 import { ColumnFormat } from "../config/ColumnConfig";
 
-const GAP_ORDER = ["< 0 (bất thường)", "0 - 30 phút", "30 phút - 2 giờ", "2 - 24 giờ", "> 24 giờ"];
-
 const CHANNEL_LABELS: Record<TransactionChannel, string> = {
   vinnet: "Vinnet",
   gotit: "GotIt",
@@ -110,6 +108,14 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
   const anomalies = statistics?.anomalies ?? [];
   const anomaliesTotal = statistics?.anomalies_total ?? 0;
   const gapUnknown = statistics?.gap_unknown ?? 0;
+  const gapOffline = statistics?.gap_offline ?? 0;
+  const toleranceText = statistics ? ` > ${statistics.anomaly_tolerance_minutes} phút` : "";
+  // The backend owns the bucket labels (they embed the tolerance), and sends them in display order.
+  const gapOrder = Object.keys(statistics?.gap_buckets ?? {});
+  const gapExcludedCaption = [
+    gapUnknown > 0 ? `${gapUnknown} ca thiếu thời gian kết thúc PV` : null,
+    gapOffline > 0 ? `${gapOffline} ca offline (không có giờ PV thực tế)` : null
+  ].filter(Boolean).join(", ");
   const pagedAnomalies = anomalies.slice(
     anomalyPage * anomalyRowsPerPage,
     anomalyPage * anomalyRowsPerPage + anomalyRowsPerPage
@@ -226,12 +232,12 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           <StatCard
             label="Thời gian trung vị: kết thúc PV → nhận quà"
             value={formatMinutes(statistics?.gap_median_minutes)}
-            caption={gapUnknown > 0 ? `${gapUnknown} ca thiếu thời gian kết thúc PV, không tính` : undefined}
+            caption={gapExcludedCaption ? `Không tính: ${gapExcludedCaption}` : undefined}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            label="Số ca bất thường (nhận quà trước khi PV xong)"
+            label={`Số ca bất thường (nhận quà trước khi PV xong${toleranceText})`}
             value={anomaliesTotal}
             color={anomaliesTotal > 0 ? "error" : "inherit"}
             caption={total > 0 ? `${numeral(anomaliesTotal / total).format("0.[0]%")} tổng số đáp viên` : undefined}
@@ -242,14 +248,14 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12}>
           <HourlyHistogramChart
-            title="Khung giờ bắt đầu phỏng vấn"
+            title="Khung giờ bắt đầu phỏng vấn (giờ VN)"
             data={toHistogramData(statistics?.interview_time_buckets)}
             valueLabel="Số cuộc phỏng vấn"
           />
         </Grid>
         <Grid item xs={12}>
           <HourlyHistogramChart
-            title="Khung giờ nhận quà"
+            title="Khung giờ nhận quà (giờ VN)"
             data={toHistogramData(statistics?.gift_time_buckets)}
             valueLabel="Số lượt nhận quà"
           />
@@ -257,9 +263,9 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
         <Grid item xs={12}>
           <BarChartWidget
             title="Khoảng cách: kết thúc PV → nhận quà"
-            data={toChartData(statistics?.gap_buckets, GAP_ORDER)}
+            data={toChartData(statistics?.gap_buckets, gapOrder)}
             sorted={false}
-            sortedList={GAP_ORDER}
+            sortedList={gapOrder}
           />
         </Grid>
       </Grid>
@@ -268,7 +274,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
         topToolbar={
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>
-              Danh sách cần kiểm tra (quà nhận trước khi phỏng vấn kết thúc)
+              Danh sách cần kiểm tra (quà nhận trước khi phỏng vấn kết thúc{toleranceText})
             </Typography>
             {anomaliesTotal > anomalies.length && (
               <Typography variant="body2" color="text.secondary">

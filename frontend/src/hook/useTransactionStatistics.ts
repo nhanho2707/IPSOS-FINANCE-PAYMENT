@@ -31,6 +31,8 @@ export interface TransactionStatisticsData {
     gap_buckets: Record<string, number>;
     gap_median_minutes: number | null;
     gap_unknown: number;
+    gap_offline: number;
+    anomaly_tolerance_minutes: number;
     anomalies: TransactionAnomaly[];
     anomalies_total: number;
 }

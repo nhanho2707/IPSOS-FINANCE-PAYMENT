@@ -63,27 +63,30 @@ line-height: 2.5rem; /* welcome section items — do legacy, không nhân rộng
 | Variable | Hex | Dùng cho |
 |---|---|---|
 | `--main-color` | `#009d9c` | Button primary, active nav, accent, icon màu chính |
+| `--main-color-dark` | `#007a79` | Hover của button primary |
 
-Không dùng `#009d9c` hardcode — luôn dùng `var(--main-color)`.
+Màu brand được định nghĩa trong `src/config/ThemeConfig.ts` (`BRAND`) và đưa vào MUI theme (`palette.primary`) lẫn biến CSS.
+Không dùng `#009d9c` hardcode — trong `sx` dùng `"primary.main"`, trong CSS dùng `var(--main-color)`.
+Button MUI: dùng `variant="contained"` (tự lấy màu primary), không cần override bằng `!important`.
 
 ### Text
 
-| Variable | Light | Dark | Dùng cho |
-|---|---|---|---|
-| `--text-color` | `#212121` | `#eaeff4` | Text chính — heading, table value, label |
-| `--text-primary-color` | `#707070` | `#707070` | Text phụ — placeholder, mô tả, nav item |
-| `--text-secondary-color` | `#2f469c` | `#2f469c` | Text nhấn màu xanh dương (tag, link) |
-| `--text-third-color` | `#3948a4` | `#3948a4` | Variant xanh dương đậm hơn |
-| `--text-forth-color` | `#009d9c` | `#009d9c` | Text accent = brand color |
-| `--text-fifth-color` | `rgb(214,67,67)` | — | Text lỗi, cảnh báo |
-| `--text-sixth-color` | `#000000de` | — | Text đen chuẩn MUI (87% opacity) |
+| Variable | Giá trị | Dùng cho |
+|---|---|---|
+| `--text-color` | `#212121` | Text chính — heading, table value, label |
+| `--text-primary-color` | `#707070` | Text phụ — placeholder, mô tả, nav item |
+| `--text-secondary-color` | `#2f469c` | Text nhấn màu xanh dương (tag, link) |
+| `--text-third-color` | `#3948a4` | Variant xanh dương đậm hơn |
+| `--text-forth-color` | `#009d9c` | Text accent = brand color |
+| `--text-fifth-color` | `rgb(214,67,67)` | Text lỗi, cảnh báo |
+| `--text-sixth-color` | `#000000de` | Text đen chuẩn MUI (87% opacity) |
 
 ### Background
 
-| Variable | Light | Dark | Dùng cho |
-|---|---|---|---|
-| `--background-color` | `#ffffff` | `#1a1625` | Card, modal, sidebar, input |
-| `--body-color` | `rgb(238,242,246)` | `#121212` | Page background, row striped, button icon |
+| Variable | Giá trị | Dùng cho |
+|---|---|---|
+| `--background-color` | `#ffffff` | Card, modal, sidebar, input |
+| `--body-color` | `rgb(238,242,246)` | Page background, row striped, button icon |
 
 ### Tonal / Interactive (dùng với opacity — không có variable riêng)
 
@@ -98,26 +101,33 @@ Không dùng `#009d9c` hardcode — luôn dùng `var(--main-color)`.
 | Icon wrap active | `rgba(0,157,156, 0.18)` | Background icon khi active |
 | Logout button hover | `rgba(229,57,53, 0.08)` | Hover nút đăng xuất |
 
-### Status — Project
+### Status (nguồn duy nhất: `src/config/ThemeConfig.ts`)
 
-| Class | Hex | Trạng thái |
-|---|---|---|
-| `.planned` | `#FFA500` | Planned |
-| `.in-coming` | `#FFD700` | Incoming |
-| `.on-going` | `#00BFFF` | On-going |
-| `.completed` | `#32CD32` | Completed |
-| `.on-hold` | `#FF6347` | On-hold |
-| `.cancelled` | `#B22222` | Cancelled |
+Màu trạng thái chia thành 6 **tone**. Mỗi tone có 3 màu: `bg` (nền chip), `fg` (chữ, tương phản ≥ 5.7:1 trên `bg`) và `dot` (chấm tròn, tương phản ≥ 3:1 trên nền trắng).
 
-### Status — Transaction
+| Tone | bg | fg | dot |
+|---|---|---|---|
+| `neutral` | `#eceff1` | `#455a64` | `#78909c` |
+| `info` | `#e3f2fd` | `#0d47a1` | `#1e88e5` |
+| `brand` | `#e0f4f4` | `#00605f` | `#009d9c` |
+| `success` | `#e8f5e9` | `#1b5e20` | `#43a047` |
+| `warning` | `#fff3e0` | `#8a4500` | `#ef6c00` |
+| `danger` | `#fdecea` | `#b71c1c` | `#e53935` |
 
-| Class | Dùng cho |
-|---|---|
-| `.success` | `var(--status-completed-color)` |
-| `.pending` | `var(--status-in-coming-color)` |
-| `.suppended` | `var(--status-on-hold-color)` |
-| `.refused` | `var(--status-cancelled-color)` |
-| `.failed` | `var(--status-planned-color)` |
+Ánh xạ trạng thái → tone:
+
+| Project (`PROJECT_STATUS_TONE`) | Tone | Transaction / Gift (`TRANSACTION_STATUS_TONE`) | Tone |
+|---|---|---|---|
+| planned | neutral | pending | warning |
+| in coming | info | success | success |
+| on going | brand | refused | neutral |
+| completed | success | failed | danger |
+| on hold | warning | suppended | neutral |
+| cancelled | danger | | |
+
+Hiển thị trạng thái bằng `<StatusChip label tone />` (`src/components/StatusChip.tsx`), dùng `getStatusTone(status, map)` để lấy tone. Không dùng chữ trắng trên nền màu trạng thái.
+
+CSS có thể dùng biến `--status-<tone>-bg|fg|dot` (được sinh từ `ThemeConfig.ts` qua `GlobalStyles`).
 
 ### Provider
 
@@ -141,9 +151,9 @@ Không hardcode màu avatar trực tiếp — lấy từ variable theo index.
 
 | Giá trị | Dùng cho |
 |---|---|
-| `0.375rem` (5px) | Badge nhỏ, `.box-status-button` |
-| `0.5rem` (7px) | Button `.btn`, toggle button |
-| `0.625rem` (9px) | Nav item, card row, sidebar-user, modal button |
+| `0.375rem` (5px) | Badge nhỏ |
+| `8px` (`theme.shape.borderRadius`) | Button, input, chip và các component MUI khác |
+| `0.625rem` (9px) | Nav item, card row, sidebar-user |
 | `0.75rem` (10.5px) | Modal box |
 | `1.25rem` (17.5px) | Widget card, content area |
 | `50%` | Avatar, dot status |
@@ -159,13 +169,9 @@ box-shadow:
 
 /* Modal */
 box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-
-/* Button (.btn) */
-box-shadow:
-  0 0.1875rem 0.0625rem -0.125rem rgba(0,0,0,0.20),
-  0 0.125rem  0.125rem  0        rgba(0,0,0,0.14),
-  0 0.0625rem 0.3125rem 0        rgba(0,0,0,0.12);
 ```
+
+Button không đổ bóng (`MuiButton.defaultProps.disableElevation` trong theme).
 
 ### Transition
 
@@ -196,26 +202,40 @@ Dùng bội số của `0.25rem` (3.5px với base 14px):
 
 ## 4. Component Patterns
 
-### Button primary
+### Button
 
-```css
-background-color: var(--main-color);
-color: #fff;
-font-size: 0.875rem;   /* base */
-font-weight: 500;
-border-radius: 0.5rem;
-padding: 0.5rem 1.375rem;
-```
+Dùng trực tiếp `Button` / `LoadingButton` của MUI, không thêm class CSS (`.btn`, `.bg-*` đã bị xoá).
+Nhãn nút viết dạng thường ("Add New Project"), theme đã tắt viết hoa — không gõ cứng chữ in hoa.
 
-### Button destructive (logout, cancel)
+| Loại | Code |
+|---|---|
+| Primary | `<Button variant="contained">` |
+| Phụ / Cancel | `<Button color="inherit">` |
+| Outlined | `<Button variant="outlined">` |
+| Nguy hiểm (xoá, disable) | `<Button variant="contained" color="error">` |
 
-```css
-color: #e53935;
-background: transparent;
-font-size: 0.875rem;
-font-weight: 500;
-/* hover: background-color: rgba(229,57,53,0.08) */
-```
+### Dialog
+
+| Nhu cầu | Component |
+|---|---|
+| Xác nhận có/không, thông báo | `ConfirmDialog` — dùng qua `useDialog()`: `openDialog({ title, message, showConfirmButton, onConfirm, tone, confirmText })` rồi render `<ConfirmDialog {...dialogProps} />` |
+| Nội dung tuỳ biến (form) | `GenericDialog` (`submitDisabled`, `loading`, `tone`) |
+| Nhập một đoạn text | `UniversalInputDialog` |
+| Từ chối kèm lý do | `RejectDialog` |
+
+- Thao tác xoá / chặn / disable: `tone: "danger"` và `confirmText` ghi rõ hành động ("Delete", "Disable"), không dùng "Confirm" chung chung.
+- `onConfirm` trả về Promise thì dialog tự hiện loading và chỉ đóng khi xong.
+- Không dùng `alert()` / `window.confirm()` của trình duyệt.
+
+### Toast
+
+Thông báo ngắn, không chặn thao tác: `const { showToast } = useToast(); showToast("Saved", "success")` (`src/contexts/ToastContext.tsx`).
+
+### Trang trong dự án
+
+`ProjectLayout` đã hiển thị breadcrumbs và header dự án (tên, trạng thái, internal code, symphony, thời gian field).
+Trang con không tự hiển thị lại "Project Name / Symphony"; cần dữ liệu dự án thì dùng `useProjectContext()` (`projectId`, `project`, `refreshProject`).
+Thêm trang mới trong dự án: khai báo trong `src/config/ProjectNavConfig.ts` để sidebar và breadcrumbs cùng nhận.
 
 ### Form input
 
@@ -329,17 +349,9 @@ font-weight: 600;
 
 ---
 
-## 5. Dark Mode
+## 5. Ngôn ngữ & Dark mode
 
-Dark mode toggle qua `document.body.classList.toggle("dark")`.
+- Giao diện nội bộ dùng **tiếng Anh** cho mọi nhãn, nút, tiêu đề và thông báo. Ngoại lệ: trang đáp viên (`CustomVoucher`, `CustomVoucherLog`) và màn hình phỏng vấn viên (`MiniCATI`) giữ tiếng Việt.
+- Giữ nguyên tiêu đề cột trong file Excel import/export (ví dụ "Tỉnh thành", "Đơn giá quà 1") vì đó là định dạng file người dùng đang dùng.
+- App **không có dark mode** (đã gỡ phần CSS hỏng). Nếu cần làm lại, dùng `colorSchemes` của MUI trong `ThemeConfig.ts`.
 
-Chỉ có 4 variable thay đổi trong dark mode — chỉ cần dùng đúng variable, dark mode tự hoạt động:
-
-| Variable | Light | Dark |
-|---|---|---|
-| `--background-color` | `#ffffff` | `#1a1625` |
-| `--body-color` | `rgb(238,242,246)` | `#121212` |
-| `--text-color` | `#212121` | `#eaeff4` |
-| (màu khác) | giữ nguyên | giữ nguyên |
-
-**Quy tắc**: Không hardcode màu `#fff` hay `#212121` trong component — dùng variable để được dark mode miễn phí.

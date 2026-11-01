@@ -296,9 +296,9 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                             />
                         )}
                         {threadStatus === 'rejected' && (() => {
-                            const lastResponse = safeThread.findLast(e => e.type === 'response' && e.status === 'rejected');
+                            const lastResponse = [...safeThread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
                             return (
-                                <Tooltip title={lastResponse?.content ? `Lý do: ${lastResponse.content}` : 'Rejected'} placement="top">
+                                <Tooltip title={lastResponse?.content ? `Reason: ${lastResponse.content}` : 'Rejected'} placement="top">
                                     <Chip
                                         label="Rejected"
                                         size="small"

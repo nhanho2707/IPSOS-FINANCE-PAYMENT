@@ -1,11 +1,12 @@
 .LoginForm {
   width: auto;
   height: auto;
-  background-color: var(--bg-color);
+  background-color: var(--background-color);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
   padding: 35px;
   font-family: "Roboto", sans-serif;
   border-radius: 10px;
@@ -26,34 +27,13 @@
 }
 
 .LoginForm .header-form-login p {
-  color: var(--secondary-color);
+  color: var(--text-primary-color);
   font-size: 16px;
   margin-top: 8px;
-  max-width: 400px;
 }
 
 .form-validate {
   margin-top: 20px;
-}
-
-.TextFieldLogin .MuiInputBase-root {
-  width: 400px;
-}
-
-.TextFieldLogin
-  .MuiOutlinedInput-root.Mui-focused
-  .MuiOutlinedInput-notchedOutline {
-  border-color: var(--main-color) !important;
-}
-
-.TextFieldLogin .MuiFormLabel-root.Mui-focused {
-  color: var(--main-color) !important;
-}
-
-.email-control,
-.error-control,
-.password-control {
-  margin: 30px 0;
 }
 
 .footer-form-login p {
@@ -63,21 +43,16 @@
   font-weight: 400;
 }
 
-.forgot-password span {
+.forgot-password {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--main-color);
-  display: flex;
-  justify-content: end;
-  cursor: pointer;
 }
 
 @media (max-width: 600px) {
   .LoginForm {
-    width: 90%;
     padding: 20px;
-  }
-  .TextFieldLogin .MuiInputBase-root {
-    width: 300px; /* Thiết lập chiều rộng mong muốn */
   }
 }

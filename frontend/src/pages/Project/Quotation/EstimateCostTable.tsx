@@ -115,7 +115,7 @@ const addToGroup = (nodes: EstimateCostNode[], groupId: string, child: EstimateC
     });
 
 const ITEM_COLS = [
-    { key: 'chi_phi' as const,        label: 'Chi phí',        type: 'text' as const,   width: 200 },
+    { key: 'chi_phi' as const,        label: 'Cost',        type: 'text' as const,   width: 200 },
     { key: 'unit' as const,           label: 'Unit',           type: 'text' as const,   width: 80  },
     { key: 'quantity' as const,       label: 'Quantity',       type: 'number' as const, width: 90  },
     { key: 'price' as const,          label: 'Price',          type: 'number' as const, width: 120 },

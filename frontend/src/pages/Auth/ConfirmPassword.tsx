@@ -56,7 +56,7 @@ const ConfirmPassword = () => {
             if (axios.isAxiosError(error)) {
                 setStatusMessage(error.response?.data.message);
             } else {
-                console.log(error);
+                console.error(error);
             }
         }finally{
             setLoading(false);
@@ -70,12 +70,17 @@ const ConfirmPassword = () => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: "#f5f5f5"
+                backgroundColor: "var(--body-color)"
             }}
         >
-            <Box 
-                sx={{ 
-                    width: 400,
+            <Box
+                component="form"
+                noValidate
+                onSubmit={(e: React.FormEvent) => { e.preventDefault(); handleResetPassword(); }}
+                sx={{
+                    width: "100%",
+                    maxWidth: 400,
+                    mx: 2,
                     p: 4,
                     borderRadius: 2,
                     backgroundColor: "#fff",
@@ -86,12 +91,12 @@ const ConfirmPassword = () => {
                 }}
             >
                 <Typography variant="h5" textAlign="center">
-                    <span>Confirmation Password</span>
+                    Confirm password
                 </Typography>
                 <Typography variant="body2" textAlign="center">
                     This is a secure area of the application. Please confirm your password before continuing.
                 </Typography>
-                {statusMessage.length != 0 && (
+                {statusMessage.length !== 0 && (
                     <div className='message-invalid'>
                         <span>{statusMessage}</span>
                     </div>
@@ -100,9 +105,10 @@ const ConfirmPassword = () => {
                     <InputLabel>Password</InputLabel>
                     <OutlinedInput
                         type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
                         onChange={(e) => handleChangeInput("password", e.target.value)}
                         endAdornment={
-                            <IconButton onClick={handleClickShowPassword}>
+                            <IconButton aria-label={showPassword ? "Hide password" : "Show password"} onClick={handleClickShowPassword}>
                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                         }
@@ -113,9 +119,10 @@ const ConfirmPassword = () => {
                     <InputLabel>Confirm Password</InputLabel>
                     <OutlinedInput
                         type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
                         onChange={(e) => handleChangeInput("password_confirmation", e.target.value)}
                         endAdornment={
-                            <IconButton onClick={handleClickShowPassword}>
+                            <IconButton aria-label={showPassword ? "Hide password" : "Show password"} onClick={handleClickShowPassword}>
                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                         }
@@ -124,12 +131,12 @@ const ConfirmPassword = () => {
                 </FormControl>
                 <LoadingButton
                     fullWidth
-                    onClick={handleResetPassword}
+                    type="submit"
                     endIcon={<SendIcon />}
                     loading={loading}
                     variant="contained"
                 >
-                    RESET PASSWORD
+                    Reset password
                 </LoadingButton>
             </Box>
         </Box>

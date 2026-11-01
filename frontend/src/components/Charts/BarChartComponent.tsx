@@ -161,7 +161,6 @@ const BarChartComponent: React.FC<BarChartProps> = ({ legend_title, data, sorted
 
     }, [data]);
     
-    console.log(data);
 
     return (
         <div className='widget-row-item'>

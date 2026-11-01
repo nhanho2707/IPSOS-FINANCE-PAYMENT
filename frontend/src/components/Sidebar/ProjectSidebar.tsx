@@ -6,84 +6,23 @@ import { NavLink } from "react-router-dom";
 import logo from "../../assets/img/Ipsos logo.png";
 import {
   HomeOutlined,
-  RequestQuoteOutlined,
-  AssignmentIndOutlined,
-  GroupsOutlined,
-  CardGiftcardOutlined,
-  HeadsetMicOutlined,
-  SettingsOutlined,
-  ReceiptLongOutlined,
-  InsightsOutlined,
   ChevronLeft,
   ChevronRight,
 } from "@mui/icons-material";
-import { useProjects } from "../../hook/useProjects";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
+import { getProjectNavItemsForRole, ProjectNavItem, projectNavPath } from "../../config/ProjectNavConfig";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ProjectSidebarProps {
   projectId: number;
+  project: ProjectData | null;
   isOpen: boolean;
   toggleSidebar: () => void;
 }
 
-interface NavItem {
-  label: string;
-  to: string;
-  icon: React.ElementType;
-  showIf?: (project: ProjectData | null) => boolean;
-}
-
-const buildNavItems = (projectId: number): NavItem[] => [
-  {
-    label: "Quotation",
-    to: `/project-management/projects/${projectId}/quotation`,
-    icon: RequestQuoteOutlined,
-  },
-  {
-    label: "Assignment",
-    to: `/project-management/projects/${projectId}/assignment`,
-    icon: AssignmentIndOutlined,
-  },
-  {
-    label: "Interviewers",
-    to: `/project-management/projects/${projectId}/parttime-employees`,
-    icon: GroupsOutlined,
-    // showIf: (p) => p?.has_approved_quotation ?? false,
-  },
-  {
-    label: "Gifts",
-    to: `/project-management/projects/${projectId}/gifts`,
-    icon: CardGiftcardOutlined,
-    // showIf: (p) => p?.has_approved_quotation ?? false,
-  },
-  {
-    label: "Transactions",
-    to: `/project-management/projects/${projectId}/transactions`,
-    icon: ReceiptLongOutlined,
-  },
-  {
-    label: "Transaction Statistics",
-    to: `/project-management/projects/${projectId}/transaction-statistics`,
-    icon: InsightsOutlined,
-  },
-  {
-    label: "CATI Settings",
-    to: `/project-management/projects/${projectId}/cati-settings`,
-    icon: HeadsetMicOutlined,
-    // showIf: (p) => p?.project_types?.includes("CATI") ?? false,
-  },
-];
-
-const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, isOpen, toggleSidebar }) => {
+const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isOpen, toggleSidebar }) => {
   const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
-  const [projectSelected, setProjectSelected] = useState<ProjectData | null>(null);
-  const { getProject } = useProjects();
-
-  useEffect(() => {
-    getProject(projectId)
-      .then(setProjectSelected)
-      .catch(console.error);
-  }, [projectId]);
+  const { user } = useAuth();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -97,14 +36,16 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, isOpen, togg
     if (isSmallScreen) toggleSidebar();
   };
 
-  const navItems = buildNavItems(projectId).filter(
-    (item) => !item.showIf || item.showIf(projectSelected)
+  const visibleItems = getProjectNavItemsForRole(user?.role).filter(
+    (item) => !item.showIf || item.showIf(project)
   );
+  const mainItems = visibleItems.filter((item) => item.placement === "main");
+  const bottomItems = visibleItems.filter((item) => item.placement === "bottom");
 
-  const renderNavLink = (item: NavItem) => (
-    <Tooltip key={item.to} title={item.label} placement="right" disableHoverListener={isOpen}>
+  const renderNavLink = (item: ProjectNavItem) => (
+    <Tooltip key={item.path} title={item.label} placement="right" disableHoverListener={isOpen}>
       <li className="nav-link">
-        <NavLink to={item.to} onClick={handleClick}>
+        <NavLink to={projectNavPath(projectId, item.path)} onClick={handleClick}>
           <span className="nav-icon-wrap">
             <item.icon style={{ fontSize: "20px" }} />
           </span>
@@ -118,7 +59,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, isOpen, togg
     <div className={`sidebar ${isOpen ? "open" : "close"}`}>
       <div className="sidebar-header">
         <img src={logo} alt="Logo" className="sidebar-logo" />
-        <Tooltip title={isOpen ? "Thu nhỏ" : "Mở rộng"} placement="right">
+        <Tooltip title={isOpen ? "Collapse" : "Expand"} placement="right">
           <IconButton
             onClick={toggleSidebar}
             size="small"
@@ -152,26 +93,14 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, isOpen, togg
 
           <Divider style={{ margin: "8px 0" }} />
 
-          {navItems.map(renderNavLink)}
+          {mainItems.map(renderNavLink)}
         </ul>
       </div>
 
       <div className="sidebar-bottom">
         <Divider sx={{ mb: 1.5 }} />
         <ul className="menu-links" style={{ padding: 0 }}>
-          <Tooltip title="Settings" placement="right" disableHoverListener={isOpen}>
-            <li className="nav-link">
-              <NavLink
-                to={`/project-management/projects/${projectId}/settings`}
-                onClick={handleClick}
-              >
-                <span className="nav-icon-wrap">
-                  <SettingsOutlined style={{ fontSize: "20px" }} />
-                </span>
-                <span className="text nav-text">Settings</span>
-              </NavLink>
-            </li>
-          </Tooltip>
+          {bottomItems.map(renderNavLink)}
         </ul>
       </div>
     </div>

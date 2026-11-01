@@ -1,6 +1,6 @@
 import { Autocomplete, TableCell, TableRow, TextField } from "@mui/material";
 import { memo, useState } from "react";
-import AlertDialog from "../../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
 
 type Option = { value: string | number; label: string; parent?: string | number };
 
@@ -92,9 +92,9 @@ const SingleSelectRow = memo(({ row, isEditing, isDisabled, onChange, confirmMes
             </TableRow>
 
             {confirmMessage && (
-                <AlertDialog
+                <ConfirmDialog
                     open={confirmOpen}
-                    title="Xác nhận thay đổi"
+                    title="Confirm change"
                     message={confirmMessage.replace("{value}", pendingOption?.label ?? "")}
                     showConfirmButton={true}
                     onClose={handleCancel}

@@ -18,7 +18,6 @@ import { ApiConfig } from "../../../config/ApiConfig";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { useNavigate } from "react-router-dom";
 import useDialog from "../../../hook/useDialog"; // Import useDialog hook
-import AlertDialog from "../../AlertDialog/AlertDialog"; // Import AlertDialog component
 import { ColumnFormat } from "../../../config/ColumnConfig";
 
 interface ModalProps {

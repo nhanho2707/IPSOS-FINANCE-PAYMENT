@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     navigate('/error', {
                         state: {
                             errorCode: 403,
-                            errorMessage: 'Bạn không có quyền thực hiện thao tác này.',
+                            errorMessage: 'You do not have permission to perform this action.',
                             blockedApi: `${method} ${url}`,
                         },
                         replace: true,

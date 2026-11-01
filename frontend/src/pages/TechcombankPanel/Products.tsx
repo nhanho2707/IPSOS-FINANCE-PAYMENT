@@ -22,7 +22,7 @@ const Products: React.FC = () => {
                 setSurveys(uniqueSurveys);
             } catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }

@@ -132,7 +132,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             const res = await axios.get(url, { headers });
             setRows(res.data.data ?? []);
         } catch (e) {
-            console.log(e);
+            console.error(e);
         } finally {
             setLoading(false);
         }
@@ -142,51 +142,51 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
         fetchPrices();
         axios.get(ApiConfig.administrative.getProvinces, { headers })
             .then(res => setProvinces(res.data.data ?? []))
-            .catch(console.log);
+            .catch(console.error);
     }, [fetchPrices]);
 
     const columns: ColumnFormat[] = [
-        { label: "Tỉnh thành", name: "province_name", type: "string", flex: 2 },
+        { label: "Province", name: "province_name", type: "string", flex: 2 },
         { label: "Sample Size", name: "sample_size", type: "number", flex: 1
         },
-        { label: "Loại Đơn giá", name: "price_type", type: "string", flex: 1 },
+        { label: "Price type", name: "price_type", type: "string", flex: 1 },
         {
-            label: "Đơn giá (VNĐ)",
+            label: "Price (VND)",
             name: "price",
             type: "number",
             flex: 1,
             renderCell: (row: PriceRow) => row.price.toLocaleString("vi-VN"),
         },
         {
-            label: "Đơn giá 1 (VNĐ)",
+            label: "Price 1 (VND)",
             name: "price_1",
             type: "number",
             flex: 1,
             renderCell: (row: PriceRow) => row.price_1.toLocaleString("vi-VN"),
         },
         {
-            label: "Đơn giá 2 (VNĐ)",
+            label: "Price 2 (VND)",
             name: "price_2",
             type: "number",
             flex: 1,
             renderCell: (row: PriceRow) => row.price_2.toLocaleString("vi-VN"),
         },
         {
-            label: "Đơn giá 3 (VNĐ)",
+            label: "Price 3 (VND)",
             name: "price_3",
             type: "number",
             flex: 1,
             renderCell: (row: PriceRow) => row.price_3.toLocaleString("vi-VN"),
         },
         {
-            label: "Đơn giá 4 (VNĐ)",
+            label: "Price 4 (VND)",
             name: "price_4",
             type: "number",
             flex: 1,
             renderCell: (row: PriceRow) => row.price_4.toLocaleString("vi-VN"),
         },
         {
-            label: "Đơn giá 5 (VNĐ)",
+            label: "Price 5 (VND)",
             name: "price_5",
             type: "number",
             flex: 1,
@@ -257,7 +257,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             return error.response?.data?.message ?? error.message;
         }
 
-        return "Có lỗi xảy ra, vui lòng thử lại.";
+        return "Something went wrong. Please try again.";
     }
 
     const handleAddProvincePrice = async () => {
@@ -309,7 +309,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
 
         const missingHeaders = EXCEL_REQUIRED_HEADERS.filter((h) => !headers.includes(h));
         if (missingHeaders.length > 0) {
-            return { items: [], errors: [`File thiếu cột bắt buộc: ${missingHeaders.join(", ")}`] };
+            return { items: [], errors: [`The file is missing required columns: ${missingHeaders.join(", ")}`] };
         }
 
         const provinceByName = new Map(provinces.map((p) => [normalizeProvinceName(p.name), p]));
@@ -331,17 +331,17 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             const provinceName = String(cell(EXCEL_PROVINCE) ?? "").trim();
             const province = provinceByName.get(normalizeProvinceName(provinceName));
             if (!province) {
-                rowErrors.push(provinceName ? `không tìm thấy tỉnh thành "${provinceName}"` : "thiếu tỉnh thành");
+                rowErrors.push(provinceName ? `province "${provinceName}" not found` : "province is missing");
             }
 
             const priceType = String(cell(EXCEL_PRICE_TYPE) ?? "").trim().toLowerCase();
             if (!SAMPLE_TYPES.includes(priceType)) {
-                rowErrors.push(`loại đơn giá phải là ${SAMPLE_TYPES.join(", ")}`);
+                rowErrors.push(`price type must be one of ${SAMPLE_TYPES.join(", ")}`);
             }
 
             const sampleSize = parseAmount(cell(EXCEL_SAMPLE_SIZE));
             if (sampleSize === null || !Number.isInteger(sampleSize) || sampleSize <= 0) {
-                rowErrors.push("sample size phải là số nguyên lớn hơn 0");
+                rowErrors.push("sample size must be a whole number greater than 0");
             }
 
             const prices = {} as Record<PriceField, number>;
@@ -349,7 +349,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 const amount = parseAmount(cell(EXCEL_PRICE_HEADERS[field]));
 
                 if (amount === null) {
-                    rowErrors.push(`${EXCEL_PRICE_HEADERS[field]} không hợp lệ`);
+                    rowErrors.push(`${EXCEL_PRICE_HEADERS[field]} is invalid`);
                     prices[field] = 0;
                     return;
                 }
@@ -357,12 +357,12 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 prices[field] = amount;
 
                 if (field === "price" && amount === 0) {
-                    rowErrors.push(`${EXCEL_PRICE_HEADERS.price} phải lớn hơn 0`);
+                    rowErrors.push(`${EXCEL_PRICE_HEADERS.price} must be greater than 0`);
                 }
 
                 const previousField = PRICE_FIELDS[fieldIndex - 1];
                 if (previousField && amount > 0 && prices[previousField] === 0) {
-                    rowErrors.push(`phải nhập ${EXCEL_PRICE_HEADERS[previousField]} trước ${EXCEL_PRICE_HEADERS[field]}`);
+                    rowErrors.push(`${EXCEL_PRICE_HEADERS[previousField]} must be filled in before ${EXCEL_PRICE_HEADERS[field]}`);
                 }
             });
 
@@ -371,14 +371,14 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 const firstRow = seenRows.get(key);
 
                 if (firstRow !== undefined) {
-                    rowErrors.push(`trùng tỉnh thành và loại đơn giá với dòng ${firstRow}`);
+                    rowErrors.push(`same province and price type as row ${firstRow}`);
                 } else {
                     seenRows.set(key, excelRow);
                 }
             }
 
             if (rowErrors.length > 0 || !province || sampleSize === null) {
-                errors.push(`Dòng ${excelRow}: ${rowErrors.join("; ")}`);
+                errors.push(`Row ${excelRow}: ${rowErrors.join("; ")}`);
                 return;
             }
 
@@ -391,7 +391,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
         });
 
         if (items.length === 0 && errors.length === 0) {
-            errors.push("File không có dữ liệu.");
+            errors.push("The file has no data.");
         }
 
         return { items, errors };
@@ -450,7 +450,6 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
     return (
         <Box>
             <ReusableTable
-                title="Đơn giá theo tỉnh thành"
                 columns={columns}
                 data={rows}
                 actionStatus={{ ...actionState, loading }}
@@ -458,7 +457,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                     <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
                         {canEdit && (
                             <Button
-                                className="btn"
+                                variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={() => setOpenCreateProvincePriceDialog(true)}
                             >
@@ -467,7 +466,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         )}
                         {canEdit && (
                             <Button
-                                className="btn"
+                                variant="contained"
                                 startIcon={<FileUploadIcon />}
                                 disabled={importing}
                                 onClick={() => fileInputRef.current?.click()}
@@ -476,7 +475,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             </Button>
                         )}
                         <Button
-                            className="btn"
+                            variant="contained"
                             startIcon={<FileDownloadIcon />}
                             onClick={handleExport}
                         >
@@ -493,7 +492,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 }
             />
             <Dialog open={openCreateProvincePriceDialog} onClose={handleCloseCreateProvincePriceDialog} maxWidth="sm">
-                <DialogTitle>Thêm đơn giá theo tỉnh thành</DialogTitle>
+                <DialogTitle>Add province price</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={{mt: 1}}>
                         {formError && <Alert severity="error">{formError}</Alert>}
@@ -505,7 +504,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             isOptionEqualToValue={(o, v) => o.id === v.id}
                             onChange={(_, v) => handleProvincePriceDataChange("province", v)}
                             sx={{ minWidth: 220 }}
-                            renderInput={(params) => <TextField {...params} label="Tỉnh thành" />}
+                            renderInput={(params) => <TextField {...params} label="Province" />}
                         />
                         <Autocomplete
                             size="small"
@@ -513,7 +512,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price_type}
                             onChange={(_, v) => handleProvincePriceDataChange("price_type",v)}
                             sx={{ minWidth: 220 }}
-                            renderInput={(params) => <TextField {...params} label="Loại Đơn giá" />}
+                            renderInput={(params) => <TextField {...params} label="Price type" />}
                         />
                         <TextField
                             size="small"
@@ -528,7 +527,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         />
                         <TextField
                             size="small"
-                            label="Đơn giá quà 1"
+                            label="Gift price 1"
                             type="number"
                             disabled={provincePriceData.sample_size == 0}
                             value={provincePriceData.price}
@@ -538,7 +537,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         />
                         <TextField
                             size="small"
-                            label="Đơn giá quà 2"
+                            label="Gift price 2"
                             type="number"
                             disabled={provincePriceData.price == 0}
                             value={provincePriceData.price_1}
@@ -548,7 +547,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         />
                         <TextField
                             size="small"
-                            label="Đơn giá quà 3"
+                            label="Gift price 3"
                             type="number"
                             disabled={provincePriceData.price_1 == 0}
                             value={provincePriceData.price_2}
@@ -558,7 +557,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         />
                         <TextField
                             size="small"
-                            label="Đơn giá quà 4" 
+                            label="Gift price 4" 
                             type="number"
                             disabled={provincePriceData.price_2 == 0}
                             value={provincePriceData.price_3}
@@ -568,7 +567,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         />
                         <TextField
                             size="small"
-                            label="Đơn giá quà 5"
+                            label="Gift price 5"
                             type="number"
                             disabled={provincePriceData.price_3 == 0}
                             value={provincePriceData.price_4}
@@ -578,7 +577,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         />
                         <TextField
                             size="small"
-                            label="Đơn giá quà 6"
+                            label="Gift price 6"
                             type="number"
                             disabled={provincePriceData.price_4 == 0}
                             value={provincePriceData.price_5}
@@ -597,18 +596,17 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         loadingPosition="end"
                         variant="contained"
                         disabled={!isCreateValid}
-                        className='btn bg-vinnet-primary'
                         >
-                            <span>CREATE</span>
+                            <span>Create</span>
                     </LoadingButton>
                 </DialogActions>
             </Dialog>
 
             <Dialog open={importErrors.length > 0} onClose={() => setImportErrors([])} fullWidth maxWidth="sm">
-                <DialogTitle>Import đơn giá thất bại</DialogTitle>
+                <DialogTitle>Price import failed</DialogTitle>
                 <DialogContent>
                     <Alert severity="error" sx={{ mb: 1 }}>
-                        Chưa có đơn giá nào được lưu. Vui lòng sửa file rồi import lại.
+                        No prices were saved. Please fix the file and import again.
                     </Alert>
                     <Box component="ul" sx={{ pl: 3, m: 0 }}>
                         {importErrors.map((error, index) => (
@@ -625,8 +623,11 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 open={rowToDelete !== null}
                 onClose={() => setRowToDelete(null)}
                 onConfirm={handleConfirmDelete}
-                title="Xoá đơn giá"
-                message={rowToDelete ? `Bạn có chắc chắn muốn xoá đơn giá "${rowToDelete.price_type}" của ${rowToDelete.province_name}?` : ""}
+                title="Delete price"
+                tone="danger"
+                confirmText="Delete"
+                
+                message={rowToDelete ? `Are you sure you want to delete the "${rowToDelete.price_type}" price for ${rowToDelete.province_name}?` : ""}
             />
         </Box>  
     );

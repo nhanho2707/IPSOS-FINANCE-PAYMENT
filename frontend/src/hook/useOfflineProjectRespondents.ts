@@ -271,7 +271,7 @@ export function useOfflineProjectRespondents(projectId: number) {
         const successCount = results.filter(r => r.success).length;
 
         setError(successCount < results.length);
-        setMessage(`Đã tặng quà thành công ${successCount}/${results.length} đáp viên.`);
+        setMessage(`Gifts sent successfully to ${successCount}/${results.length} respondents.`);
 
         return { results, stoppedOnFailures };
     }, [sendOfflineTransaction, fetchProjectRespondents, page, rowsPerPage, searchTerm]);

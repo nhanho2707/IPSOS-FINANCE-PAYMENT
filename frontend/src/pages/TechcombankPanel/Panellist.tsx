@@ -71,7 +71,7 @@ const Panellist:React.FC = () => {
                 setSurveys(uniqueSurveys);
             } catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -85,7 +85,7 @@ const Panellist:React.FC = () => {
                 setTotalMembers(numeral(response.data.count).format('0,000'));
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -99,7 +99,7 @@ const Panellist:React.FC = () => {
                 setPanellistData(response.data);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -121,7 +121,7 @@ const Panellist:React.FC = () => {
                 setGenderDistributionData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -143,7 +143,7 @@ const Panellist:React.FC = () => {
                 setResourceData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -164,7 +164,7 @@ const Panellist:React.FC = () => {
                 setProvinceData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -185,7 +185,7 @@ const Panellist:React.FC = () => {
                 setAgeGroupData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -207,7 +207,7 @@ const Panellist:React.FC = () => {
                 setHouseHoldIncomeData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -228,7 +228,7 @@ const Panellist:React.FC = () => {
                 setOccupationData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -250,7 +250,7 @@ const Panellist:React.FC = () => {
                 setAUMData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -272,7 +272,7 @@ const Panellist:React.FC = () => {
                 setMainBankData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -313,7 +313,7 @@ const Panellist:React.FC = () => {
                 setChannelsData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -354,7 +354,7 @@ const Panellist:React.FC = () => {
                 setProductsData(formattedData);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }
@@ -367,7 +367,7 @@ const Panellist:React.FC = () => {
                 setVennProductsData(response.data);
             }catch(error){
                 if(axios.isAxiosError(error)){
-                    console.log(error);
+                    console.error(error);
                     setIsError(true);
                     setStatusMessage(error.response?.data.message ?? error.message);
                 }

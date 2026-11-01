@@ -16,9 +16,10 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LinkIcon from '@mui/icons-material/Link';
 import UndoIcon from '@mui/icons-material/Undo';
 import useDialog from "../../../hook/useDialog";
-import AlertDialog from "../../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
 import GenericDialog from "../../../components/Dialogs/GenericDialog";
 import { useAuth } from "../../../contexts/AuthContext";
+import { hasRole, ROLE_ACCESS } from "../../../config/RoleConfig";
 import OperationsDynamicForm from "./OperationsDynamicForm";
 import { useOperations } from "../../../hook/useOperations";
 import EstimateCostTable, { EstimateCostNode, normalizeNodes } from "./EstimateCostTable";
@@ -31,8 +32,8 @@ const Quotation: React.FC = () => {
     const [searchParams] = useSearchParams();
 
     const { user } = useAuth();
-    const canMutate = user?.role !== 'Field Manager';
-    const canApprove = ['Admin', 'Researcher'].includes(user?.role ?? '');
+    const canMutate = hasRole(user?.role, ROLE_ACCESS.quotationMutate);
+    const canApprove = hasRole(user?.role, ROLE_ACCESS.quotationApprove);
 
     const [ formKey, setFormKey ] = useState(0);
     const [ quotationSchema, setQuotationSchema ] = useState([]);
@@ -72,7 +73,7 @@ const Quotation: React.FC = () => {
     const [ estimateCostItems, setEstimateCostItems ] = useState<EstimateCostNode[]>([]);
     const [ showEstimatedCost, setShowEstimatedCost ] = useState(false);
 
-    const { open, title, message: messageDialog, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    const { openDialog, dialogProps } = useDialog();
     
     const [ openCloneNewVersion, setOpenCloneNewVersion ] = useState<boolean>(false);
     const [ selectedCloneVersion, setSelectedCloneVersion ] = useState<QuotationVersionData | null>(null);
@@ -251,6 +252,8 @@ const Quotation: React.FC = () => {
     const handleRemove = () => {
         openDialog({
             title: "Delete Version",
+            tone: "danger",
+            confirmText: "Delete",
             message: `Are you sure that you want to remove this version "${selectedVersion?.version}"?`,
             showConfirmButton: true,
             onConfirm: async () => {
@@ -270,6 +273,7 @@ const Quotation: React.FC = () => {
 
         openDialog({
             title: 'Submit Version',
+            confirmText: 'Submit',
             message: `Are you sure that you want to submit this version?`,
             showConfirmButton: true,
             onConfirm: async () => {
@@ -288,6 +292,7 @@ const Quotation: React.FC = () => {
     const handleApprove = () => {
         openDialog({
             title: 'Approve Version',
+            confirmText: 'Approve',
             message: `Are you sure that you want to approve this version?`,
             showConfirmButton: true,
             onConfirm: async () => {
@@ -301,6 +306,7 @@ const Quotation: React.FC = () => {
     const handleWithdraw = () => {
         openDialog({
             title: 'Withdraw Version',
+            confirmText: 'Withdraw',
             message: `Are you sure that you want to withdraw this version? It will return to draft and can be edited again.`,
             showConfirmButton: true,
             onConfirm: async () => {
@@ -313,8 +319,9 @@ const Quotation: React.FC = () => {
 
     const handleConfirmFm = () => {
         openDialog({
-            title: 'Xác nhận FM Review',
-            message: `Bạn có chắc chắn muốn xác nhận đã review xong quotation này không?\n\nSau khi xác nhận:\n• FM sẽ không thể feedback thêm\n• Researcher có thể approve quotation`,
+            title: 'Confirm FM review',
+            confirmText: 'Confirm',
+            message: `Confirm that you have finished reviewing this quotation?\n\nAfter confirming:\n• FM can no longer add feedback\n• Researcher can approve the quotation`,
             showConfirmButton: true,
             onConfirm: async () => {
                 await confirmFmVersion();
@@ -482,7 +489,7 @@ const Quotation: React.FC = () => {
                                     )}
 
                                     {selectedVersion.status === 'submitted' && (
-                                        <Tooltip title="Withdraw (Rút lại)">
+                                        <Tooltip title="Withdraw">
                                             <IconButton
                                                 color="error"
                                                 onClick={handleWithdraw}
@@ -507,7 +514,7 @@ const Quotation: React.FC = () => {
                                                 </Tooltip>
                                             )}
 
-                                            <Tooltip title="Withdraw (Rút lại về submitted)">
+                                            <Tooltip title="Withdraw back to submitted">
                                                 <IconButton
                                                     color="error"
                                                     onClick={handleWithdraw}
@@ -538,7 +545,7 @@ const Quotation: React.FC = () => {
                                     return thread[thread.length - 1].type === 'feedback';
                                 });
                                 return (
-                                    <Tooltip title={hasPending ? 'Còn feedback chưa được xử lý. Researcher phải resolve/reject tất cả trước khi FM confirm.' : 'Xác nhận FM đã review xong'}>
+                                    <Tooltip title={hasPending ? 'Some feedback is still open. The researcher must resolve or reject all of it before FM can confirm.' : 'Confirm FM review is complete'}>
                                         <span>
                                             <IconButton
                                                 color="info"
@@ -719,7 +726,7 @@ const Quotation: React.FC = () => {
                 {!canMutate && (
                     <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                         <Button
-                            className="btn"
+                            variant="contained"
                             onClick={handleSaveEstimateCost}
                         >
                             Save
@@ -733,11 +740,14 @@ const Quotation: React.FC = () => {
                                 fontSize: "0.8125rem",
                                 '&:hover': { borderColor: "var(--main-color)", backgroundColor: "rgba(0,157,156,0.06)" }
                             }}
-                            onClick={() => {
-                                if (window.confirm('Reset về template mặc định? Dữ liệu hiện tại sẽ bị xóa.')) {
-                                    setEstimateCostItems(createDefaultEstimateCost());
-                                }
-                            }}
+                            onClick={() => openDialog({
+                                title: 'Load Template',
+                                message: 'Reset to the default template? Current data will be lost.',
+                                showConfirmButton: true,
+                                tone: 'danger',
+                                confirmText: 'Reset',
+                                onConfirm: () => setEstimateCostItems(createDefaultEstimateCost()),
+                            })}
                         >
                             Load Template
                         </Button>
@@ -745,14 +755,7 @@ const Quotation: React.FC = () => {
                 )}
             </TabPanel>
 
-            <AlertDialog
-                open={open}
-                title={title}
-                message={messageDialog}
-                showConfirmButton={showConfirmButton}
-                onClose={closeDialog}
-                onConfirm={confirmDialog}
-            />
+            <ConfirmDialog {...dialogProps} />
 
             <GenericDialog
                 open={openCloneNewVersion}
@@ -799,8 +802,8 @@ const Quotation: React.FC = () => {
                 } 
                 onClose={() => setOpenCloneNewVersion(false)} 
                 onSubmit={handleCloneNewVersion} 
-                submitText = "SUBMIT"
-                cancelText = "CANCEL"
+                submitText = "Submit"
+                cancelText = "Cancel"
             />
         </>
     )

@@ -99,7 +99,7 @@ const ModalEditRespondent: React.FC<ModalProps> = ({
       //   formData
       // );
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -138,11 +138,10 @@ const ModalEditRespondent: React.FC<ModalProps> = ({
           ))} */}
         </Grid>
         <Box className="btn-modal-footer" textAlign="end">
-          <Button className="btn-modal-cancel" onClick={onClose}>
+          <Button color="inherit" onClick={onClose}>
             Cancel
           </Button>
           <Button
-            className="btn-modal-submit"
             variant="contained"
             onClick={handleSave}
           >

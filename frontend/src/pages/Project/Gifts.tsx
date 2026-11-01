@@ -1,20 +1,21 @@
-import { Box, Button, Checkbox, IconButton, LinearProgress, Typography } from "@mui/material";
+import { Box, Button, Checkbox, IconButton, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { useProjects } from "../../hook/useProjects";
 import { OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData } from "../../config/OfflineProjectRespondentFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import SearchTextBox from "../../components/SearchTextBox";
 import ReusableTable from "../../components/Table/ReusableTable";
 import * as XLSX from "xlsx";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import useDialog from "../../hook/useDialog";
 import { MAX_CONSECUTIVE_GIFT_FAILURES, useOfflineProjectRespondents } from "../../hook/useOfflineProjectRespondents";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LoadingButton from '@mui/lab/LoadingButton';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import StopIcon from '@mui/icons-material/Stop';
+import StatusChip from "../../components/StatusChip";
+import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
+import { toProperCase } from "../../utils/format";
 
 const MAX_FAILURES_SHOWN = 30;
 
@@ -28,11 +29,9 @@ interface BulkSendProgress {
 const Gifts: React.FC = () => {
     const { id } = useParams<{id: string}>();
     const projectId = Number(id) || 0;
-    const [ projectSelected, setProjectSelected] = useState<ProjectData | null>(null);
 
-    const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    const { openDialog, closeDialog, dialogProps } = useDialog();
     
-    const { getProject } = useProjects();
     const [ offlineProjectRespondentCellConfig, setOfflineProjectRespondentCellConfig ] = useState(OfflineProjectRespondentCellConfig);
 
     const { offineProjectRespondents, removeProjectRespondent, offlineTransactionSending, bulkOfflineTransactionSending, fetchAllPendingProjectRespondents, importOfflineProjectRespondents, loading: loadingOfflineProjectRespondents, error: errorOfflineProjectRespondents, message: messageOfflineProjectRespondents, page, rowsPerPage, searchTerm, total, setSearchTerm, setPage, setRowsPerPage } = useOfflineProjectRespondents(projectId);
@@ -83,6 +82,8 @@ const Gifts: React.FC = () => {
     const handleRemoveClick = (row: OfflineProjectRespondentData) => {
         openDialog({
             title: "Remove Respondents",
+            tone: "danger",
+            confirmText: "Remove",
             message: "Are you sure that you want to remove " + row.respondent_id + " from this project?",
             showConfirmButton: true,
             onClose: handleRemoveCancelDialog,
@@ -145,8 +146,8 @@ const Gifts: React.FC = () => {
 
             if (rows.length === 0) {
                 openDialog({
-                    title: "Tặng quà hàng loạt",
-                    message: "Không có đáp viên nào đang ở trạng thái pending.",
+                    title: "Bulk send gifts",
+                    message: "There are no respondents with pending status.",
                     showConfirmButton: false
                 });
             }
@@ -154,8 +155,8 @@ const Gifts: React.FC = () => {
             console.error('Failed to fetch pending respondents', error);
 
             openDialog({
-                title: "Tặng quà hàng loạt",
-                message: "Không tải được danh sách đáp viên pending. Vui lòng thử lại.",
+                title: "Bulk send gifts",
+                message: "Could not load pending respondents. Please try again.",
                 showConfirmButton: false
             });
         } finally {
@@ -168,17 +169,17 @@ const Gifts: React.FC = () => {
         const successCount = results.length - failures.length;
 
         const lines = [
-            `Thành công: ${successCount}/${total}`,
-            `Thất bại: ${failures.length}`,
-            ...(stoppedOnFailures ? [`⚠️ Tự động dừng sau ${MAX_CONSECUTIVE_GIFT_FAILURES} lỗi liên tiếp. Vui lòng kiểm tra lỗi (ví dụ số dư tài khoản) trước khi gửi tiếp.`] : []),
-            ...(results.length < total ? [`Đã dừng: ${total - results.length} đáp viên chưa được gửi.`] : []),
-            ...(failures.length > 0 ? ["", "Danh sách lỗi:"] : []),
+            `Succeeded: ${successCount}/${total}`,
+            `Failed: ${failures.length}`,
+            ...(stoppedOnFailures ? [`⚠️ Stopped automatically after ${MAX_CONSECUTIVE_GIFT_FAILURES} consecutive errors. Check the cause (e.g. account balance) before sending again.`] : []),
+            ...(results.length < total ? [`Stopped: ${total - results.length} respondents were not sent.`] : []),
+            ...(failures.length > 0 ? ["", "Errors:"] : []),
             ...failures.slice(0, MAX_FAILURES_SHOWN).map(f => `❌ ${f.row.respondent_id} (${f.row.phone_number}): ${f.message}`),
-            ...(failures.length > MAX_FAILURES_SHOWN ? [`... và ${failures.length - MAX_FAILURES_SHOWN} lỗi khác`] : [])
+            ...(failures.length > MAX_FAILURES_SHOWN ? [`... and ${failures.length - MAX_FAILURES_SHOWN} more errors`] : [])
         ];
 
         openDialog({
-            title: "Kết quả tặng quà hàng loạt",
+            title: "Bulk send results",
             message: lines.join("\n"),
             showConfirmButton: false
         });
@@ -222,8 +223,8 @@ const Gifts: React.FC = () => {
         if (rows.length === 0) return;
 
         openDialog({
-            title: "Tặng quà hàng loạt",
-            message: `Bạn có chắc chắn muốn tặng quà cho ${rows.length} đáp viên đã chọn?`,
+            title: "Bulk send gifts",
+            message: `Send gifts to the ${rows.length} selected respondents?`,
             showConfirmButton: true,
             onConfirm: () => handleBulkSendConfirm(rows)
         });
@@ -260,7 +261,7 @@ const Gifts: React.FC = () => {
             name: "status",
             type: "string",
             align: "center",
-            flex: 1,
+            width: 112,
             renderHeader: () => {
                 return (
                     <div style={{ whiteSpace: "normal", lineHeight: 1.2, textAlign: "center" }}>
@@ -268,56 +269,25 @@ const Gifts: React.FC = () => {
                     </div>
                 );
             },
-            renderCell: (row: any) => {
-                return (
-                    <div>
-                        <span className={"box-status-button " + row.status.toLocaleLowerCase().replace(" ", "-")}>{row.status}</span>
-                    </div>
-                );
-            }
+            renderCell: (row: OfflineProjectRespondentData) => (
+                <StatusChip
+                    label={toProperCase(row.status ?? "")}
+                    tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
+                    tooltip={row.status_label}
+                />
+            )
         },
         {
             label: "Actions",
             name: "actions",
             type: "menu",
             align: "center",
-            flex: 1,
-            renderHeader: () => {
-                return (
-                    <div style={{ whiteSpace: "normal", lineHeight: 1.2, textAlign: "center" }}>
-                        Actions 
-                    </div>
-                );
-            },
-            renderAction: (row: any) => {
-                const disabled = (row.status != 'pending');
-
-                return (
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <IconButton
-                            color="error"
-                            size="small"
-                            disabled={disabled}
-                            onClick={() => handleRemoveClick(row)}
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                    </div>
-                )
-            }
-        },
-        {
-            label: "",
-            name: "functions",
-            type: "menu",
-            align: "center",
-            flex: 1,
+            width: 184,
             renderAction: (row: OfflineProjectRespondentData) => {
-                const disabled = (row.status != 'pending');
-                const view_disabled = row.status == 'success';
+                const disabled = row.status !== 'pending';
 
                 return (
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
                         <LoadingButton
                             onClick={() => handleSendGiftClick(row)}
                             size="small"
@@ -327,6 +297,8 @@ const Gifts: React.FC = () => {
                             variant="contained"
                             disabled={disabled || bulkSending}
                             sx={{
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
                                 backgroundColor: 'var(--vinnet-color-primary)',
                                 color: '#fff',
                                 fontSize: '0.8125rem',
@@ -349,10 +321,22 @@ const Gifts: React.FC = () => {
                                 },
                             }}
                             >
-                                Tặng quà
+                                Send gift
                         </LoadingButton>
+                        <Tooltip title="Remove respondent">
+                            <span>
+                                <IconButton
+                                    color="error"
+                                    size="small"
+                                    aria-label="Remove respondent"
+                                    disabled={disabled}
+                                    onClick={() => handleRemoveClick(row)}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
                     </div>
-                    
                 )
             }
         }
@@ -388,7 +372,7 @@ const Gifts: React.FC = () => {
             if (!jsonData.length) {
                 openDialog({
                     title: "Import Respondents Failed",
-                    message: 'File không có dữ liệu!',
+                    message: 'The file has no data.',
                     showConfirmButton: false
                 });
                 return;
@@ -407,7 +391,7 @@ const Gifts: React.FC = () => {
             if(missingColumns.length > 0){
                 openDialog({
                     title: "Import Respondents Failed",
-                    message: `File thiếu cột bắt buộc: ${missingColumns.join(", ")} `,
+                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
                     showConfirmButton: false
                 });
                 return;
@@ -439,35 +423,14 @@ const Gifts: React.FC = () => {
         await importOfflineProjectRespondents(payload);
     };
     
-    useEffect(() => {
-        async function fetchProject(){
-            try{
-                const p = await getProject(projectId);
-                setProjectSelected(p);
-            }catch(error){
-                console.log(error);
-            }
-        }
-
-        fetchProject();
-    }, [projectId]);
 
     return (
         <>
             <Box className="box-table">
             <div className="filter">
-                <div className="filter-left">
-                    <div className="project-info">
-                    <div>
-                        <strong>Project Name:</strong> {projectSelected?.project_name}
-                    </div>
-                    <div>
-                        <strong>Symphony:</strong> {projectSelected?.symphony}
-                    </div>
-                    </div>
-                </div>
+                <div className="filter-left" />
                 <div className="filter-right">
-                    <Button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>
+                    <Button variant="contained" onClick={() => fileInputRef.current?.click()}>
                         Import Respondents
                     </Button>
                     <input
@@ -493,7 +456,7 @@ const Gifts: React.FC = () => {
                             disabled={selectedCount === 0 || bulkSending}
                             sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '0.625rem', boxShadow: 'none' }}
                         >
-                            Tặng quà hàng loạt ({selectedCount})
+                            Bulk send gifts ({selectedCount})
                         </LoadingButton>
                         <LoadingButton
                             onClick={handleSelectAllPending}
@@ -503,7 +466,7 @@ const Gifts: React.FC = () => {
                             disabled={bulkSending}
                             sx={{ textTransform: 'none', borderRadius: '0.625rem' }}
                         >
-                            Chọn tất cả pending
+                            Select all pending
                         </LoadingButton>
                         {selectedCount > 0 && !bulkSending && (
                             <Button
@@ -511,7 +474,7 @@ const Gifts: React.FC = () => {
                                 onClick={() => setSelectedRows({})}
                                 sx={{ textTransform: 'none' }}
                             >
-                                Bỏ chọn
+                                Clear selection
                             </Button>
                         )}
                         {bulkSending && (
@@ -524,7 +487,7 @@ const Gifts: React.FC = () => {
                                 onClick={handleStopBulkSend}
                                 sx={{ textTransform: 'none', borderRadius: '0.625rem' }}
                             >
-                                {stopRequested ? 'Đang dừng...' : 'Dừng'}
+                                {stopRequested ? 'Stopping...' : 'Stop'}
                             </Button>
                         )}
                     </Box>
@@ -539,7 +502,7 @@ const Gifts: React.FC = () => {
             {bulkProgress && (
                 <Box sx={{ px: 2, mb: 1.5 }}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        Đang tặng quà {bulkProgress.done}/{bulkProgress.total} — thành công {bulkProgress.success}, lỗi {bulkProgress.failed}. Vui lòng không đóng trang.
+                        Sending gifts {bulkProgress.done}/{bulkProgress.total} — {bulkProgress.success} succeeded, {bulkProgress.failed} failed. Please keep this page open.
                     </Typography>
                     <LinearProgress
                         variant="determinate"
@@ -549,7 +512,6 @@ const Gifts: React.FC = () => {
             )}
 
             <ReusableTable
-                title="Employees"
                 columns={columns}
                 data={offineProjectRespondents}
                 actionStatus={{
@@ -565,14 +527,7 @@ const Gifts: React.FC = () => {
                 onRowsPerPageChange={handleChangeRowsPerPage}
             ></ReusableTable>
     
-            <AlertDialog
-                open={open}
-                onClose={closeDialog}
-                onConfirm={confirmDialog}
-                showConfirmButton={showConfirmButton}
-                title={title}
-                message={message}
-            />
+            <ConfirmDialog {...dialogProps} />
             </Box>
         </>
     )

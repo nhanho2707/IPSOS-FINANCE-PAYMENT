@@ -1,5 +1,5 @@
 import "../../assets/css/components.css";
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import {
   TextField,
@@ -8,6 +8,7 @@ import {
   Typography,
   InputAdornment,
   IconButton,
+  Link,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import LockResetIcon from "@mui/icons-material/LockReset";
@@ -67,12 +68,17 @@ const SetPassword = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "var(--body-color)",
       }}
     >
       <Box
+        component="form"
+        noValidate
+        onSubmit={(e: React.FormEvent) => { e.preventDefault(); handleSubmit(); }}
         sx={{
-          width: 500,
+          width: "100%",
+          maxWidth: 500,
+          mx: 2,
           p: 4,
           borderRadius: 2,
           backgroundColor: "#fff",
@@ -97,14 +103,20 @@ const SetPassword = () => {
 
         <FormControl fullWidth>
           <TextField
-            label="New Password"
+            label="New password"
             type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            autoFocus
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword((v) => !v)}>
+                  <IconButton
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((v) => !v)}
+                    edge="end"
+                  >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
@@ -115,8 +127,9 @@ const SetPassword = () => {
 
         <FormControl fullWidth>
           <TextField
-            label="Confirm Password"
+            label="Confirm password"
             type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
@@ -124,22 +137,25 @@ const SetPassword = () => {
 
         <LoadingButton
           fullWidth
-          onClick={handleSubmit}
+          type="submit"
           endIcon={<LockResetIcon />}
           loading={loading}
           variant="contained"
         >
-          SET PASSWORD
+          Set password
         </LoadingButton>
 
-        <Typography
+        <Link
+          component="button"
+          type="button"
           variant="body2"
-          textAlign="center"
-          sx={{ cursor: "pointer", color: "text.secondary" }}
+          underline="hover"
+          color="text.secondary"
           onClick={logout}
+          sx={{ alignSelf: "center" }}
         >
-          Back to Login
-        </Typography>
+          Back to login
+        </Link>
       </Box>
     </Box>
   );

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import { TextField } from "@mui/material";
+import GenericDialog from "./GenericDialog";
 
 interface RejectDialogProps {
     open: boolean;
@@ -7,6 +8,7 @@ interface RejectDialogProps {
     onConfirm: (reason: string) => void;
     title: string;
     message: string;
+    submitText?: string;
 }
 
 const RejectDialog: React.FC<RejectDialogProps> = ({
@@ -15,49 +17,42 @@ const RejectDialog: React.FC<RejectDialogProps> = ({
     onConfirm,
     title,
     message,
-  }) => {
-
+    submitText = "Submit reason",
+}) => {
     const [rejectReason, setRejectReason] = useState<string>('');
-  
+
+    useEffect(() => {
+        if (open) setRejectReason('');
+    }, [open]);
+
     const handleConfirm = () => {
-        if (rejectReason.trim()) {
-            onConfirm(rejectReason);
-        }
-        setRejectReason(''); // Clear the input after confirmation
-        onClose(); // Close the dialog
+        onConfirm(rejectReason.trim());
+        onClose();
     };
-  
+
     return (
-        <Dialog
+        <GenericDialog
             open={open}
+            title={title}
             onClose={onClose}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-            fullWidth={true}
-            maxWidth='sm'
+            onSubmit={handleConfirm}
+            submitText={submitText}
+            cancelText="Cancel"
+            submitDisabled={!rejectReason.trim()}
+            tone="danger"
         >
-            <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-            <DialogContent>
-                <TextField
-                    placeholder={message}
-                    multiline
-                    rows={4}
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    fullWidth
-                    style={{ paddingTop: '16px' }}
-                />
-            </DialogContent>
-            <DialogActions>
-            <Button onClick={onClose} color="primary">
-                HUỶ
-            </Button>
-            <Button onClick={handleConfirm} color="primary" autoFocus>
-                GỬI LÝ DO
-            </Button>
-            </DialogActions>
-        </Dialog>
+            <TextField
+                autoFocus
+                placeholder={message}
+                multiline
+                rows={4}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                fullWidth
+                sx={{ mt: 1 }}
+            />
+        </GenericDialog>
     );
-  };
-  
-  export default RejectDialog;
+};
+
+export default RejectDialog;

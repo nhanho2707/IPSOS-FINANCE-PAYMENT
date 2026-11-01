@@ -59,8 +59,8 @@ const OperationsDynamicForm: React.FC<DynamicFormProps> = ({
             </Paper>
 
             <Button
+                variant="contained"
                 type="submit"
-                className="btn"
                 sx={{ mt: 2 }}
                 disabled={!isEditting}
             >

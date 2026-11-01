@@ -4,12 +4,10 @@ import { CATIBatchData, CATIImportResult, CATIImportSkippedRow, CATIRespondentIm
 import { useCATIBatch } from "../../hook/useCATIBatch";
 import { useParams } from "react-router-dom";
 import ReusableTable from "../../components/Table/ReusableTable";
-import { useProjects } from "../../hook/useProjects";
-import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import useDialog from "../../hook/useDialog";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import BlockIcon from "@mui/icons-material/Block";
@@ -22,11 +20,9 @@ const CATISettings = () => {
     const { id } = useParams<{id: string}>();
     const projectId = Number(id) || 0;
 
-    const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    const { openDialog, dialogProps } = useDialog();
 
-    const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
     
-    const { getProject } = useProjects();
 
     const { batches, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, fetchCATIBatches, importCATIBatch, destroyBatch, updateStatus } = useCATIBatch(projectId);
 
@@ -67,7 +63,9 @@ const CATISettings = () => {
                             startIcon={ <DeleteIcon /> }
                             onClick={() => openDialog({
                                 title: "Delete Batch",
-                                message: "Bạn có chắc chắn muốn delete batch này?",
+                                tone: "danger",
+                                confirmText: "Delete",
+                                message: "Are you sure you want to delete this batch?",
                                 showConfirmButton: true,
                                 onConfirm: () => handleRemoveClick(row)
                             })}
@@ -82,7 +80,9 @@ const CATISettings = () => {
                             startIcon={ row.status === 'active' ? <BlockIcon /> : <CheckCircleIcon /> }
                             onClick={() => openDialog({
                                 title: "Block Batch",
-                                message: `ạn có chắc chắn muốn ${row.status === 'active' ? "block" : "activate" } batch này?`,
+                                tone: "danger",
+                                confirmText: "Block",
+                                message: `Are you sure you want to ${row.status === 'active' ? "block" : "activate" } this batch?`,
                                 showConfirmButton: true,
                                 onConfirm: () => handleBlockClick(row)
                             })}
@@ -117,12 +117,12 @@ const CATISettings = () => {
         const details = Object.entries(grouped).map(([reason, rowNumbers]) => {
             const shown = rowNumbers.slice(0, MAX_ROWS_SHOWN_PER_REASON).join(", ");
             const more = rowNumbers.length > MAX_ROWS_SHOWN_PER_REASON ? `, ... (+${rowNumbers.length - MAX_ROWS_SHOWN_PER_REASON})` : "";
-            return `❌ ${reason}: ${rowNumbers.length} row(s) (dòng ${shown}${more})`;
+            return `❌ ${reason}: ${rowNumbers.length} row(s) (rows ${shown}${more})`;
         });
 
         const lines = [
             `Imported ${result.imported}/${result.total} respondents.`,
-            ...(result.error !== null ? [`⚠️ Import bị dừng: ${result.error}`] : []),
+            ...(result.error !== null ? [`⚠️ Import stopped: ${result.error}`] : []),
             ...(details.length > 0 ? ["", `Skipped ${result.skipped.length} rows:`, ...details] : [])
         ];
 
@@ -142,7 +142,7 @@ const CATISettings = () => {
             if (!batchName.trim()) {
                 openDialog({
                     title: "Import Batch Failed",
-                    message: 'Vui lòng nhập Batch name trước khi import!',
+                    message: 'Please enter a batch name before importing.',
                     showConfirmButton: false
                 });
                 return;
@@ -160,7 +160,7 @@ const CATISettings = () => {
             if (!jsonData.length) {
                 openDialog({
                     title: "Import Batch Failed",
-                    message: 'File không có dữ liệu!',
+                    message: 'The file has no data.',
                     showConfirmButton: false
                 });
                 return;
@@ -179,7 +179,7 @@ const CATISettings = () => {
             if(missingColumns.length > 0){
                 openDialog({
                     title: "Import Batch Failed",
-                    message: `File thiếu cột bắt buộc: ${missingColumns.join(", ")} `,
+                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
                     showConfirmButton: false
                 });
                 return;
@@ -211,23 +211,10 @@ const CATISettings = () => {
         }
     };
 
-    useEffect(() => {
-        async function fetchProject(){
-            try{
-                const p = await getProject(projectId);
-                setProjectSelected(p);
-            }catch(error){
-                console.log(error);
-            }
-        }
-
-        fetchProject();
-    }, [projectId]);
     
     return (
         <Box>
             <ReusableTable
-                title="Batches"
                 columns={columns}
                 data={batches}
                 actionStatus={actionState}
@@ -248,14 +235,9 @@ const CATISettings = () => {
                             backgroundColor: "#fafafa"
                         }}
                     >
-                        <Box>
-                            <Typography variant="subtitle1" gutterBottom sx={{ mt: "4px"}}>
-                                <strong>Project Name</strong>: {projectSelected?.project_name}
-                            </Typography>
-                            <Typography variant="subtitle1" gutterBottom sx={{ mt: "4px"}}>
-                                <strong>Symphony:</strong> {projectSelected?.symphony}
-                            </Typography>
-                        </Box>
+                        <Typography sx={{ fontSize: "1.0625rem", fontWeight: 600, color: "text.primary" }}>
+                            Batches
+                        </Typography>
                         <Box sx={{
                             display: "flex",
                             alignItems: "center",
@@ -319,14 +301,7 @@ const CATISettings = () => {
                 }
             />
             
-            <AlertDialog
-                open={open}
-                title={title}
-                message={message}
-                showConfirmButton={showConfirmButton}
-                onClose={closeDialog}
-                onConfirm={confirmDialog}
-            />
+            <ConfirmDialog {...dialogProps} />
         </Box>
     )
 }

@@ -46,7 +46,6 @@ const MerchantInfor = () => {
                     }
                 });
                 
-                console.log(response.data.data);
                 
                 setInputValue("merchantCode", response.data.data.VINNET_MERCHANT_CODE || '');
                 setInputValue("merchantKey", response.data.data.VINNET_MERCHANT_KEY || '');
@@ -167,9 +166,8 @@ const MerchantInfor = () => {
                         loading={loading}
                         loadingPosition="end"
                         variant="contained"
-                        className='btn bg-primary'
                         >
-                        <span>CHANGE KEY</span>
+                        <span>Change Key</span>
                     </LoadingButton>
                 </CardActions>
             </Card>

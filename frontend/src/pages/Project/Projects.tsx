@@ -1,15 +1,17 @@
-import { Avatar, Box, Button, IconButton, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, Button, FormControlLabel, IconButton, LinearProgress, Link, Switch, Tooltip, Typography } from "@mui/material";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { useProjects } from "../../hook/useProjects";
 import { useMetadata } from "../../hook/useMetadata";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { CLONE_PROJECT_ROLES, ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
+import { ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
+import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
+import { getProjectHomePath } from "../../config/ProjectNavConfig";
 import { StatusDropdown } from "../../components/Table/StatusDropdown";
 import useDialog from "../../hook/useDialog";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog, { ConfirmDialogTone } from "../../components/Dialogs/ConfirmDialog";
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SearchDatePickerFromTo from "../../components/SearchDatePickerFromTo";
@@ -17,18 +19,18 @@ import SearchTextBox from "../../components/SearchTextBox";
 import ModalAddProject from "../../components/Modals/Project/ModalAddProject";
 import ModalCloneProject from "../../components/Modals/Project/ModalCloneProject";
 import { Dayjs } from "dayjs";
-import { formatClass } from "../../utils/format";
 import { useAuth } from "../../contexts/AuthContext";
+import { toProperCase } from "../../utils/format";
 
 const Projects = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'Admin';
-  const canClone = CLONE_PROJECT_ROLES.includes(user?.role ?? '');
+  const canToggleDisabled = hasRole(user?.role, ROLE_ACCESS.projectToggleDisabled);
+  const canClone = hasRole(user?.role, ROLE_ACCESS.projectClone);
 
   const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled } = useProjects();
   const { data } = useMetadata();
-  const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+  const { openDialog, dialogProps } = useDialog();
   
   const [ updatingId, setUpdatingId ] = useState<number | null>(null);
   const [ cloneTarget, setCloneTarget ] = useState<ProjectData | null>(null);
@@ -43,6 +45,17 @@ const Projects = () => {
     'cancelled' : ['on going', 'on hold', 'cancelled']
   };
 
+  const actionIconSx = {
+    backgroundColor: 'var(--body-color)',
+    borderRadius: '8px',
+    border: '1px solid',
+    borderColor: 'divider',
+    '&:hover': {
+      backgroundColor: 'rgba(0, 157, 156, 0.08)',
+    },
+    padding: '5px',
+  };
+
   const STATUS = {
     PLANNED: 'planned',
     IN_COMING: 'in coming',
@@ -54,42 +67,60 @@ const Projects = () => {
 
   const columns: ColumnFormat[] = [
     {
-      label: "",
-      name: "flatform",
-      type: "image",
-      align: "center",
-      width: 40,
-      renderCell: (row: ProjectData) => {
-        return (
-          <Avatar
-            className={formatClass(row.status || "")}
-            sx={{
-              width: '28px',
-              height: '28px',
-              fontSize: '8px'
-            }}
-          >
-            {row.id}
-          </Avatar>
-        );
-      }
+      label: "ID",
+      name: "id",
+      type: "number",
+      align: "left",
+      width: 56,
+      renderCell: (row: ProjectData) => (
+        <Typography component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
+          #{row.id}
+        </Typography>
+      )
     },
-    ...ProjectCellConfig,
+    ...ProjectCellConfig.map((col): ColumnFormat => col.name !== "project_name" ? col : {
+      ...col,
+      flex: 2,
+      renderCell: (row: ProjectData) => (
+        <Tooltip title={row.project_name} placement="top-start" enterDelay={600}>
+          <Link
+            component={RouterLink}
+            to={getProjectHomePath(row.id ?? 0, user?.role)}
+            underline="hover"
+            sx={{ fontWeight: 500, color: 'text.primary', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >
+            {row.project_name}
+          </Link>
+        </Tooltip>
+      )
+    }),
     {
       label: "Sample Size",
       name: "sample_size",
       type: "string",
       align: "left",
-      width: 120,
+      width: 132,
       renderCell: (row: ProjectData) => {
-        const count_respondents = row.count_respondents;
-
-        const sample_size = row.provinces?.reduce((sum: number, p: ProvinceData) => {
+        const completed = row.count_respondents ?? 0;
+        const target = row.provinces?.reduce((sum: number, p: ProvinceData) => {
           return sum + (p.sample_size_main || 0) + (p.sample_size_booters || 0);
-        }, 0);
+        }, 0) ?? 0;
+        const percent = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
 
         return (
-          <>{count_respondents} / {sample_size}</>
+          <Tooltip title={target > 0 ? `${percent}% of target` : "No sample size set"}>
+            <Box>
+              <Typography component="span" sx={{ fontSize: '0.8125rem', fontVariantNumeric: 'tabular-nums' }}>
+                {completed} / {target}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={percent}
+                aria-label="Sample progress"
+                sx={{ mt: 0.5, height: 4, borderRadius: 2, backgroundColor: 'var(--body-color)' }}
+              />
+            </Box>
+          </Tooltip>
         )
       }
     },
@@ -98,7 +129,7 @@ const Projects = () => {
       name: "status",
       type: "string",
       align: "left",
-      width: 100,
+      width: 140,
       renderCell: (row: ProjectData) => {
         return (
           <StatusDropdown
@@ -110,20 +141,20 @@ const Projects = () => {
         )
       }
     },
-    ...(isAdmin ? [{
-      label: "Disabled",
+    ...(canToggleDisabled ? [{
+      label: "Active",
       name: "disabled",
       type: "boolean" as const,
       align: "left" as const,
-      width: 100,
+      width: 80,
       renderCell: (row: ProjectData) => (
-        <Tooltip title={row.disabled ? "Click to enable" : "Click to disable"}>
+        <Tooltip title={row.disabled ? "Disabled — click to enable" : "Active — click to disable"}>
           <Switch
-            checked={!!row.disabled}
+            checked={!row.disabled}
             onChange={() => handleUpdateDisabled(row, !row.disabled)}
             disabled={updatingId === row.id}
-            color="error"
             size="small"
+            inputProps={{ 'aria-label': row.disabled ? 'Enable project' : 'Disable project' }}
           />
         </Tooltip>
       )
@@ -144,43 +175,27 @@ const Projects = () => {
             }}
           >
             {canClone && (
-              <Tooltip title="Clone dự án">
+              <Tooltip title="Clone project">
                 <IconButton
-                  aria-label="clone"
+                  aria-label="Clone project"
                   onClick={() => setCloneTarget(row)}
-                  sx={{
-                    backgroundColor: 'var(--body-color)',
-                    borderRadius: '8px',
-                    border: '1px solid',
-                    borderColor: 'rgba(0,0,0,0.08)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 157, 156, 0.08)',
-                    },
-                    padding: '5px',
-                  }}
+                  sx={actionIconSx}
                 >
                   <ContentCopyIcon sx={{ fontSize: '0.875rem' }} />
                 </IconButton>
               </Tooltip>
             )}
-            <IconButton
-              aria-label="actions"
-              onClick={() =>
-                navigate(`/project-management/projects/${row.id}/quotation`)
-              }
-              sx={{
-                backgroundColor: 'var(--body-color)',
-                borderRadius: '8px',
-                border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.08)',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 157, 156, 0.08)',
-                },
-                padding: '5px',
-              }}
-            >
-              <ArrowForwardIosIcon sx={{ fontSize: '0.875rem' }} />
-            </IconButton>
+            <Tooltip title="Open project">
+              <IconButton
+                aria-label="Open project"
+                onClick={() =>
+                  navigate(getProjectHomePath(row.id ?? 0, user?.role))
+                }
+                sx={actionIconSx}
+              >
+                <ArrowForwardIosIcon sx={{ fontSize: '0.875rem' }} />
+              </IconButton>
+            </Tooltip>
           </Box>
         )
       }
@@ -201,12 +216,17 @@ const Projects = () => {
     });
   }
 
-  const showConfirm = (message: string): Promise<boolean> => {
+  const showConfirm = (
+    message: string,
+    options: { title?: string; tone?: ConfirmDialogTone; confirmText?: string } = {}
+  ): Promise<boolean> => {
     return new Promise((resolve) => {
       openDialog({
-        title: "Update Status",
+        title: options.title ?? "Update Status",
         message: message,
         showConfirmButton: true,
+        tone: options.tone,
+        confirmText: options.confirmText,
         onConfirm: () => resolve(true),
         onClose: () => resolve(false)
       })
@@ -216,7 +236,12 @@ const Projects = () => {
   const handleUpdateDisabled = async (project: ProjectData, disabled: boolean) => {
     const action = disabled ? 'disable' : 'enable';
     const confirmed = await showConfirm(
-      `Bạn có chắc chắn muốn ${action} dự án này không?`
+      `Are you sure you want to ${action} this project?`,
+      {
+        title: disabled ? "Disable Project" : "Enable Project",
+        tone: disabled ? "danger" : "default",
+        confirmText: disabled ? "Disable" : "Enable",
+      }
     );
 
     if (!confirmed) return;
@@ -229,8 +254,8 @@ const Projects = () => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         showError(error.response?.status === 403
-          ? "Bạn không có quyền thực hiện thao tác này."
-          : "Có lỗi xảy ra. Vui lòng thử lại."
+          ? "You do not have permission to perform this action."
+          : "Something went wrong. Please try again."
         );
       }
     } finally {
@@ -241,18 +266,18 @@ const Projects = () => {
   const handleUpdateStatus = async (project: ProjectData, status: string) => {
     if(status === STATUS.IN_COMING && !project.has_submitted_quotation){
       return showError(
-        'Vui lòng submit quotation trước khi chuyển dự án sang "in coming"!'
+        'Please submit the quotation before moving the project to "In Coming".'
       );
     }
 
     if(project.count_employees === 0 && status === STATUS.ON_GOING){
       return showError(
-        'Vui lòng cập nhật danh sách phỏng vấn viên trước khi "on going" dự án!'
+        'Please add interviewers before moving the project to "On Going".'
       );
     }
 
     const confirmed = await showConfirm(
-      `Bạn có chắc chắn muốn thay đổi trạng thái dự án sang "${status}" không?`
+      `Are you sure you want to change the project status to "${toProperCase(status)}"?`
     )
 
     if(!confirmed) return;
@@ -269,9 +294,9 @@ const Projects = () => {
         const statusCode = error.response?.status;
 
         if(statusCode === 403){
-          showError("Bạn không có quyền thay đổi trạng thái.");
+          showError("You do not have permission to change the status.");
         } else {
-          showError("Có lỗi xảy ra. Vui lòng thử lại.");
+          showError("Something went wrong. Please try again.");
         }
       }
     } finally{
@@ -279,11 +304,11 @@ const Projects = () => {
     }
   }
   
-  const handleChangePage = (event: any, newPage: number) => {
+  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage)
   }
 
-  const handleChangeRowsPerPage = (event: any) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -323,27 +348,27 @@ const Projects = () => {
                 <Typography sx={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-color)' }}>
                   Projects
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {isAdmin && (
-                    <Tooltip title={showDisabled ? "Ẩn các dự án đã disable" : "Hiện các dự án đã disable"}>
-                      <Button
-                        variant={showDisabled ? "contained" : "outlined"}
-                        color="error"
-                        size="small"
-                        onClick={() => setShowDisabled(prev => !prev)}
-                        sx={{ textTransform: 'none', fontSize: '0.8rem' }}
-                      >
-                        {showDisabled ? "Đang hiển thị: Tất cả" : "Hiện dự án đã ẩn"}
-                      </Button>
-                    </Tooltip>
-                  )}
-                  <Button className="btn" onClick={() => setOpenModalAdd(true)}>
-                    Add New Project
-                  </Button>
-                </Box>
+                <Button variant="contained" onClick={() => setOpenModalAdd(true)}>
+                  Add New Project
+                </Button>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-                <SearchDatePickerFromTo fromValue={searchFromDate} toValue={searchToDate} onSearchChange={handleDateChange} />
+                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                  <SearchDatePickerFromTo fromValue={searchFromDate} toValue={searchToDate} onSearchChange={handleDateChange} />
+                  {canToggleDisabled && (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          size="small"
+                          checked={showDisabled}
+                          onChange={(e) => setShowDisabled(e.target.checked)}
+                        />
+                      }
+                      label="Show disabled projects"
+                      sx={{ m: 0, gap: 0.5, '& .MuiFormControlLabel-label': { fontSize: '0.8125rem', color: 'text.secondary' } }}
+                    />
+                  )}
+                </Box>
                 <SearchTextBox
                   placeholder="Search project name, internal code,..."
                   onSearchChange={handleSearchChange}
@@ -354,14 +379,7 @@ const Projects = () => {
       />
 
 
-      <AlertDialog
-        open={open}
-        title={title}
-        message={message}
-        showConfirmButton={showConfirmButton}
-        onClose={closeDialog}
-        onConfirm={confirmDialog}
-      />
+      <ConfirmDialog {...dialogProps} />
 
       <ModalAddProject
         openModal={openModalAdd}

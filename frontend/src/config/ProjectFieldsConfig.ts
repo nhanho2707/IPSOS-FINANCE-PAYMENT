@@ -5,12 +5,14 @@ export const ProjectCellConfig: ColumnFormat[] = [
   {
     label: "Symphony",
     name: "symphony",
-    type: "string"
+    type: "string",
+    width: 110
   },
   {
     label: "Internal Code",
     name: "internal_code",
-    type: "string"
+    type: "string",
+    width: 110
   },
   {
     label: "Project Name",
@@ -20,12 +22,14 @@ export const ProjectCellConfig: ColumnFormat[] = [
   {
     label: "Field Start",
     name: "planned_field_start",
-    type: "date"
+    type: "date",
+    width: 100
   },
   {
     label: "Field End",
     name: "planned_field_end",
-    type: "date"
+    type: "date",
+    width: 100
   },
 ];
 
@@ -73,7 +77,6 @@ export interface CloneProjectPayload {
     include_permissions: boolean;
 };
 
-export const CLONE_PROJECT_ROLES = ['Admin', 'Researcher', 'Scripter'];
 
 export const ProjectGeneralFieldsConfig: ColumnFormat[] = [
   {

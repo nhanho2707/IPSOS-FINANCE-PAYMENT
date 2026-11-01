@@ -11,18 +11,10 @@ interface NavBarProps {
 }
 
 const Navbar: React.FC<NavBarProps> = ({ toggleSidebar, navbarFullWidth }) => {
-  const [ darkMode, setDarkMode ] = useState();
   const [language, setLanguage] = useState<'en' | 'vi'>('en');
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
-  const handleDarkModeToggle = () => {
-    //setDarkMode((prevDarkMode) => !prevDarkMode);
-    document.body.classList.toggle("dark");
-  };
-
-  const styleIconNavbar = {
-    color: darkMode ? "var(--text-color)" : "",
-  };
+  const styleIconNavbar = {};
 
   const handleLanguageToggle = () => {
     const newLanguage = language === 'en' ? 'vi' : 'en';

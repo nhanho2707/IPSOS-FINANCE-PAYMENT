@@ -13,9 +13,9 @@ interface ModalCloneProjectProps {
 type CloneOptionKey = 'include_prices' | 'include_quotation' | 'include_permissions';
 
 const CLONE_OPTIONS: { key: CloneOptionKey; label: string }[] = [
-  { key: 'include_prices', label: 'Giá quà & sample size theo tỉnh' },
-  { key: 'include_quotation', label: 'Quotation (bản mới nhất, tạo lại thành v1 draft)' },
-  { key: 'include_permissions', label: 'Danh sách user được phân quyền' },
+  { key: 'include_prices', label: 'Gift prices & sample size by province' },
+  { key: 'include_quotation', label: 'Quotation (latest version, recreated as v1 draft)' },
+  { key: 'include_permissions', label: 'Assigned users' },
 ];
 
 const buildInitialValues = (project: ProjectData): CloneProjectPayload => ({
@@ -61,10 +61,10 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
   return (
     <GenericDialog
       open
-      title={`Clone dự án ${project.internal_code ?? ''}`}
+      title={`Clone project ${project.internal_code ?? ''}`}
       onClose={onClose}
       onSubmit={handleSubmit}
-      submitText="CLONE"
+      submitText="Clone"
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
         {isCloning && <LinearProgress />}
@@ -103,7 +103,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
 
         <Box>
           <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, mb: 0.5 }}>
-            Sao chép thêm
+            Also copy
           </Typography>
           <FormGroup>
             {CLONE_OPTIONS.map((option) => (
@@ -121,7 +121,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
             ))}
           </FormGroup>
           <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 0.5 }}>
-            Platform, loại dự án và team luôn được sao chép. Respondents, giao dịch, PVV và CATI batches không được sao chép.
+            Platform, project types and teams are always copied. Respondents, transactions, interviewers and CATI batches are not copied.
           </Typography>
         </Box>
       </Box>

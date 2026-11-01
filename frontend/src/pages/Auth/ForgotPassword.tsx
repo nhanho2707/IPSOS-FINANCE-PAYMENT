@@ -7,6 +7,7 @@ import {
   FormControl,
   Typography,
   Alert,
+  Link,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from "@mui/icons-material/Send";
@@ -52,12 +53,17 @@ const ForgotPassword = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "var(--body-color)",
       }}
     >
       <Box
+        component="form"
+        noValidate
+        onSubmit={(e: React.FormEvent) => { e.preventDefault(); handleSendLink(); }}
         sx={{
-          width: 500,
+          width: "100%",
+          maxWidth: 500,
+          mx: 2,
           p: 4,
           borderRadius: 2,
           backgroundColor: "#fff",
@@ -83,6 +89,8 @@ const ForgotPassword = () => {
           <TextField
             label="Email"
             type="email"
+            autoComplete="email"
+            autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -90,23 +98,26 @@ const ForgotPassword = () => {
 
         <LoadingButton
           fullWidth
-          onClick={handleSendLink}
+          type="submit"
           endIcon={<SendIcon />}
           loading={loading}
           variant="contained"
           disabled={!email || !!successMessage}
         >
-          SEND RESET LINK
+          Send reset link
         </LoadingButton>
 
-        <Typography
+        <Link
+          component="button"
+          type="button"
           variant="body2"
-          textAlign="center"
-          sx={{ cursor: "pointer", color: "text.secondary" }}
+          underline="hover"
+          color="text.secondary"
           onClick={() => navigate("/login")}
+          sx={{ alignSelf: "center" }}
         >
-          Back to Login
-        </Typography>
+          Back to login
+        </Link>
       </Box>
     </Box>
   );

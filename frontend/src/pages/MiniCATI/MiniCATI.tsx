@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Select, MenuItem, Box, Button, Card, CardContent, Typography, TextField, Menu, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, FormControl, InputLabel, Grid, Stack } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
+import { useToast } from "../../contexts/ToastContext";
 import { ApiConfig } from "../../config/ApiConfig";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { ColumnFormat } from "../../config/ColumnConfig";
@@ -63,6 +64,7 @@ export default function MiniCATI() {
 
   const [status, setStatus] = useState("");
   const [comment, setComment] = useState("");
+  const { showToast } = useToast();
   
   const handleSubmit = async () => {
     if (!status || !currentRespondent) return;
@@ -73,7 +75,7 @@ export default function MiniCATI() {
     const selected = statusOptions.find((s) => s.value === status);
 
     if (status === "Suspended") {
-        if (!comment.trim()) return alert("Vui lòng nhập ghi chú");
+        if (!comment.trim()) return showToast("Vui lòng nhập ghi chú", "warning");
         finalComment = comment;
     } else if (status.startsWith("Reject")) {
         finalComment = selected?.label || "";

@@ -152,8 +152,8 @@ Không hardcode màu avatar trực tiếp — lấy từ variable theo index.
 | Giá trị | Dùng cho |
 |---|---|
 | `0.375rem` (5px) | Badge nhỏ |
-| `0.5rem` (7px) | Button `.btn`, toggle button |
-| `0.625rem` (9px) | Nav item, card row, sidebar-user, modal button |
+| `8px` (`theme.shape.borderRadius`) | Button, input, chip và các component MUI khác |
+| `0.625rem` (9px) | Nav item, card row, sidebar-user |
 | `0.75rem` (10.5px) | Modal box |
 | `1.25rem` (17.5px) | Widget card, content area |
 | `50%` | Avatar, dot status |
@@ -169,13 +169,9 @@ box-shadow:
 
 /* Modal */
 box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-
-/* Button (.btn) */
-box-shadow:
-  0 0.1875rem 0.0625rem -0.125rem rgba(0,0,0,0.20),
-  0 0.125rem  0.125rem  0        rgba(0,0,0,0.14),
-  0 0.0625rem 0.3125rem 0        rgba(0,0,0,0.12);
 ```
+
+Button không đổ bóng (`MuiButton.defaultProps.disableElevation` trong theme).
 
 ### Transition
 
@@ -206,26 +202,40 @@ Dùng bội số của `0.25rem` (3.5px với base 14px):
 
 ## 4. Component Patterns
 
-### Button primary
+### Button
 
-```css
-background-color: var(--main-color);
-color: #fff;
-font-size: 0.875rem;   /* base */
-font-weight: 500;
-border-radius: 0.5rem;
-padding: 0.5rem 1.375rem;
-```
+Dùng trực tiếp `Button` / `LoadingButton` của MUI, không thêm class CSS (`.btn`, `.bg-*` đã bị xoá).
+Nhãn nút viết dạng thường ("Add New Project"), theme đã tắt viết hoa — không gõ cứng chữ in hoa.
 
-### Button destructive (logout, cancel)
+| Loại | Code |
+|---|---|
+| Primary | `<Button variant="contained">` |
+| Phụ / Cancel | `<Button color="inherit">` |
+| Outlined | `<Button variant="outlined">` |
+| Nguy hiểm (xoá, disable) | `<Button variant="contained" color="error">` |
 
-```css
-color: #e53935;
-background: transparent;
-font-size: 0.875rem;
-font-weight: 500;
-/* hover: background-color: rgba(229,57,53,0.08) */
-```
+### Dialog
+
+| Nhu cầu | Component |
+|---|---|
+| Xác nhận có/không, thông báo | `ConfirmDialog` — dùng qua `useDialog()`: `openDialog({ title, message, showConfirmButton, onConfirm, tone, confirmText })` rồi render `<ConfirmDialog {...dialogProps} />` |
+| Nội dung tuỳ biến (form) | `GenericDialog` (`submitDisabled`, `loading`, `tone`) |
+| Nhập một đoạn text | `UniversalInputDialog` |
+| Từ chối kèm lý do | `RejectDialog` |
+
+- Thao tác xoá / chặn / disable: `tone: "danger"` và `confirmText` ghi rõ hành động ("Delete", "Disable"), không dùng "Confirm" chung chung.
+- `onConfirm` trả về Promise thì dialog tự hiện loading và chỉ đóng khi xong.
+- Không dùng `alert()` / `window.confirm()` của trình duyệt.
+
+### Toast
+
+Thông báo ngắn, không chặn thao tác: `const { showToast } = useToast(); showToast("Saved", "success")` (`src/contexts/ToastContext.tsx`).
+
+### Trang trong dự án
+
+`ProjectLayout` đã hiển thị breadcrumbs và header dự án (tên, trạng thái, internal code, symphony, thời gian field).
+Trang con không tự hiển thị lại "Project Name / Symphony"; cần dữ liệu dự án thì dùng `useProjectContext()` (`projectId`, `project`, `refreshProject`).
+Thêm trang mới trong dự án: khai báo trong `src/config/ProjectNavConfig.ts` để sidebar và breadcrumbs cùng nhận.
 
 ### Form input
 

@@ -99,8 +99,8 @@ const QuotationDynamicForm: React.FC<DynamicFormProps> = ({ schema, initialData,
                 </TableContainer>
             </Paper>
             <Button
+                variant="contained"
                 type="submit"
-                className="btn"
                 sx={{ mt: 2 }}
                 disabled={!isEditting}
             >

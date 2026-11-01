@@ -56,15 +56,14 @@ const SlideShowModal: React.FC<ModalProps> = ({openModal, onClose})  => {
                 </Grid>
             </Grid>
             <Box className="btn-modal-footer" textAlign="end">
-                <Button className="btn-modal-cancel" onClick={handlePrevSlide}>
-                    PREVIOUS
+                <Button color="inherit" onClick={handlePrevSlide}>
+                    Previous
                 </Button>
                 <Button
-                    className="btn-modal-submit"
                     variant="contained"
                     onClick={handleNextSlide}
                 >
-                    NEXT
+                    Next
                 </Button>
             </Box>
         </Box>

@@ -167,9 +167,8 @@ const MerchantInfor = () => {
                         loading={loading}
                         loadingPosition="end"
                         variant="contained"
-                        className='btn bg-primary'
                         >
-                        <span>CHANGE KEY</span>
+                        <span>Change Key</span>
                     </LoadingButton>
                 </CardActions>
             </Card>

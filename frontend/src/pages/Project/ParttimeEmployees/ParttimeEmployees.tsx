@@ -1,24 +1,20 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { EmployeeCellConfig, EmployeeData } from "../../../config/EmployeeFieldsConfig";
 import useDialog from "../../../hook/useDialog";
 import UniversalInputDialog from "../../../components/Dialogs/UniversalInputDialog";
-import AlertDialog from "../../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
 import SearchTextBox from "../../../components/SearchTextBox";
 import { useEmployees } from "../../../hook/useEmployees";
 import ReusableTable from "../../../components/Table/ReusableTable";
 import { ColumnFormat } from "../../../config/ColumnConfig";
-import { useProjects } from "../../../hook/useProjects";
-import { ProjectData } from "../../../config/ProjectFieldsConfig";
 
 const ParttimeEmployees = () => {
     const { id } = useParams<{id: string}>();
     const projectId = Number(id) || 0;
-    const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
 
-    const { getProject } = useProjects();
     const { employees, meta, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading: loadingEmployees, error: errorEmployees, message: messageEmployees, addEmployees, removeEmployee } = useEmployees(projectId);
     
     const [ employeeCellConfig, setEmployeeCellConfig ] = useState(EmployeeCellConfig)
@@ -129,27 +125,10 @@ const ParttimeEmployees = () => {
         setPage(0);
     };
 
-    useEffect(() => {
-        async function fetchProject(){
-            try{
-                const p = await getProject(projectId);
-                setProjectSelected(p);
-            }catch(error){
-                console.log(error);
-            }
-        }
-        
-        fetchProject();
-    }, [projectId]);
 
     return (
         <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                {/* Project Info */}
-                <Box>
-                    <div><strong>Project Name:</strong> {projectSelected?.project_name}</div>
-                    <div><strong>Symphony:</strong> {projectSelected?.symphony}</div>
-                </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 2 }}>
 
                 {/* Add Employee Button */}
                     <Button variant="contained" color="primary" onClick={() => setOpenImportEmployeesDialog(true)}>
@@ -186,11 +165,13 @@ const ParttimeEmployees = () => {
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
 
-            <AlertDialog
+            <ConfirmDialog
                 open={open}
                 onClose={handleCancel}
                 onConfirm={handleConfirm}
                 showConfirmButton={showConfirmButton}
+                tone="danger"
+                confirmText="Remove"
                 title={title}
                 message={message}
             />

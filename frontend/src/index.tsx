@@ -12,6 +12,7 @@ import i18n from "./i18n/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GlobalStyles, ThemeProvider } from "@mui/material";
 import { appTheme, themeCssVariables } from "./config/ThemeConfig";
+import { ToastProvider } from "./contexts/ToastContext";
 
 const queryClient = new QueryClient();
 
@@ -23,11 +24,13 @@ root.render(
   <React.StrictMode>
     <ThemeProvider theme={appTheme}>
       <GlobalStyles styles={{ ":root": themeCssVariables }} />
-      <I18nextProvider i18n={i18n}>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </I18nextProvider>
+      <ToastProvider>
+        <I18nextProvider i18n={i18n}>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </I18nextProvider>
+      </ToastProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

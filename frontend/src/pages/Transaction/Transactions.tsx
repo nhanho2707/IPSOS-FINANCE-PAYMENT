@@ -333,9 +333,8 @@ const Transactions = () => {
                             loadingPosition="end"
                             variant="contained"
                             disabled={selectedProjects.length == 0}
-                            className='btn bg-vinnet-primary'
                             >
-                                <span>EXPORT EXCEL</span>
+                                <span>Export Excel</span>
                         </LoadingButton>
                     </Box>
                 </Box>

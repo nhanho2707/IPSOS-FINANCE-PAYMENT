@@ -1,6 +1,7 @@
 import { ContentCopy, Visibility, VisibilityOff } from "@mui/icons-material";
 import { Grid, IconButton, InputAdornment, TextField, Typography } from "@mui/material"
 import { useState } from "react";
+import { useToast } from "../contexts/ToastContext";
 
 interface SecretTextBoxProps {
     label: string,
@@ -9,6 +10,7 @@ interface SecretTextBoxProps {
 
 const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
     const [ show, setShow ] = useState(false);
+    const { showToast } = useToast();
     
     const handleToggleVisibility = () => {
         setShow((prev) => !prev);
@@ -17,9 +19,9 @@ const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(value);
-            alert("Copied to clipboard!");
+            showToast("Copied to clipboard");
         } catch (err) {
-            console.error("Failed to copy: ", err);
+            showToast("Copy failed. Please copy it manually.", "error");
         }
     };
 
@@ -37,10 +39,10 @@ const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
                     readOnly: true, //chỉ hiển thị, không cho sửa
                     endAdornment:(
                         <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility}>
+                            <IconButton onClick={handleToggleVisibility} aria-label={show ? "Hide value" : "Show value"}>
                                 {show ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
-                            <IconButton onClick={handleCopy}>
+                            <IconButton onClick={handleCopy} aria-label="Copy to clipboard">
                                 <ContentCopy />
                             </IconButton>
                         </InputAdornment>

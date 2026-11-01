@@ -37,10 +37,9 @@ const TicketMultiSelect: React.FC<TicketMultiSelectProps> = ({label, titleDialog
 
             <Button
                 variant="contained"
-                className="btn"
                 onClick={() => setOpen(true)}
             >
-                <span>SELECT...</span>
+                <span>Select...</span>
             </Button>
 
             <Dialog open={open} onClose={() => setOpen(false)}>

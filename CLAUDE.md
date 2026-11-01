@@ -102,6 +102,10 @@ const [actionState, setActionState] = useState<ActionState>({
 ### Component Rules
 - Use **MUI v5** components (`@mui/material`). Do not introduce a second UI library.
 - Shared dialogs: `GenericDialog` for custom content, `ConfirmDialog` for yes/no, `RejectDialog` for rejection with reason.
+  Open `ConfirmDialog` through `useDialog()` (`<ConfirmDialog {...dialogProps} />`); use `tone: "danger"` plus an explicit `confirmText` for destructive actions. Never use `alert()` / `window.confirm()`.
+- Non-blocking feedback: `useToast().showToast(message, severity)` from `contexts/ToastContext.tsx`.
+- Buttons: plain MUI `variant="contained"` / `color="inherit"`; colors come from the theme in `config/ThemeConfig.ts`. Do not add CSS button classes.
+- Project sub-pages: the header and breadcrumbs come from `ProjectLayout`; read project data with `useProjectContext()` and register new pages in `config/ProjectNavConfig.ts`.
 - Table: use `ReusableTable` — pass columns config and data. Do not write one-off `<Table>` implementations.
 - Icons: prefer `@mui/icons-material` or `@phosphor-icons/react`.
 

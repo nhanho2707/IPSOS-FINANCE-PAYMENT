@@ -7,7 +7,7 @@ import { useMetadata } from "../../hook/useMetadata";
 import LoadingButton from "@mui/lab/LoadingButton";
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import { UserData } from "../../config/AccountFieldsConfig";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import useDialog from "../../hook/useDialog";
 
 const Assignment: React.FC = () => {
@@ -20,7 +20,7 @@ const Assignment: React.FC = () => {
 
     const { actionState, getProject, assignUsers } = useProjects();
     const { data, isLoading } = useMetadata();
-    const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    const { openDialog, dialogProps } = useDialog();
 
     const handleAssignUsers = async () => {
         try
@@ -85,26 +85,19 @@ const Assignment: React.FC = () => {
                         />
                     </Box>
                     <LoadingButton
+                        variant="contained"
                         onClick={handleAssignUsers}
                         size="small"
                         startIcon={<PersonAddAltOutlinedIcon />}
                         loading={loadingAssignUsers}
                         loadingPosition="end"
                         disabled={assignedUsers.length === 0}
-                        className="btn"
                     >
-                        <span>ASSIGN</span>
+                        <span>Assign</span>
                     </LoadingButton>
                 </Box>
 
-                <AlertDialog
-                    open={open}
-                    title={title}
-                    message={message}
-                    showConfirmButton={showConfirmButton}
-                    onClose={closeDialog}
-                    onConfirm={confirmDialog}
-                />
+                <ConfirmDialog {...dialogProps} />
             </Grid>
         </Grid>
     )

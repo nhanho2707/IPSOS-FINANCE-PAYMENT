@@ -4,12 +4,10 @@ import { CATIBatchData, CATIImportResult, CATIImportSkippedRow, CATIRespondentIm
 import { useCATIBatch } from "../../hook/useCATIBatch";
 import { useParams } from "react-router-dom";
 import ReusableTable from "../../components/Table/ReusableTable";
-import { useProjects } from "../../hook/useProjects";
-import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import useDialog from "../../hook/useDialog";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import BlockIcon from "@mui/icons-material/Block";
@@ -22,11 +20,9 @@ const CATISettings = () => {
     const { id } = useParams<{id: string}>();
     const projectId = Number(id) || 0;
 
-    const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    const { openDialog, dialogProps } = useDialog();
 
-    const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
     
-    const { getProject } = useProjects();
 
     const { batches, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, fetchCATIBatches, importCATIBatch, destroyBatch, updateStatus } = useCATIBatch(projectId);
 
@@ -67,6 +63,8 @@ const CATISettings = () => {
                             startIcon={ <DeleteIcon /> }
                             onClick={() => openDialog({
                                 title: "Delete Batch",
+                                tone: "danger",
+                                confirmText: "Delete",
                                 message: "Bạn có chắc chắn muốn delete batch này?",
                                 showConfirmButton: true,
                                 onConfirm: () => handleRemoveClick(row)
@@ -82,6 +80,8 @@ const CATISettings = () => {
                             startIcon={ row.status === 'active' ? <BlockIcon /> : <CheckCircleIcon /> }
                             onClick={() => openDialog({
                                 title: "Block Batch",
+                                tone: "danger",
+                                confirmText: "Block",
                                 message: `ạn có chắc chắn muốn ${row.status === 'active' ? "block" : "activate" } batch này?`,
                                 showConfirmButton: true,
                                 onConfirm: () => handleBlockClick(row)
@@ -211,18 +211,6 @@ const CATISettings = () => {
         }
     };
 
-    useEffect(() => {
-        async function fetchProject(){
-            try{
-                const p = await getProject(projectId);
-                setProjectSelected(p);
-            }catch(error){
-                console.log(error);
-            }
-        }
-
-        fetchProject();
-    }, [projectId]);
     
     return (
         <Box>
@@ -248,14 +236,9 @@ const CATISettings = () => {
                             backgroundColor: "#fafafa"
                         }}
                     >
-                        <Box>
-                            <Typography variant="subtitle1" gutterBottom sx={{ mt: "4px"}}>
-                                <strong>Project Name</strong>: {projectSelected?.project_name}
-                            </Typography>
-                            <Typography variant="subtitle1" gutterBottom sx={{ mt: "4px"}}>
-                                <strong>Symphony:</strong> {projectSelected?.symphony}
-                            </Typography>
-                        </Box>
+                        <Typography sx={{ fontSize: "1.0625rem", fontWeight: 600, color: "text.primary" }}>
+                            Batches
+                        </Typography>
                         <Box sx={{
                             display: "flex",
                             alignItems: "center",
@@ -319,14 +302,7 @@ const CATISettings = () => {
                 }
             />
             
-            <AlertDialog
-                open={open}
-                title={title}
-                message={message}
-                showConfirmButton={showConfirmButton}
-                onClose={closeDialog}
-                onConfirm={confirmDialog}
-            />
+            <ConfirmDialog {...dialogProps} />
         </Box>
     )
 }

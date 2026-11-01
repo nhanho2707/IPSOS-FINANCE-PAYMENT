@@ -1,8 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { useProjects } from "../../hook/useProjects";
+import { useProjectContext } from "../../hook/useProjectContext";
 import { Box, Button, Divider, Grid, Paper, TextField, Typography } from "@mui/material";
 import SecretTextBox from "../../components/SecretTextBox";
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -25,32 +23,24 @@ const labelSx = {
 };
 
 const Settings = () => {
-    const { id } = useParams<{ id: string }>();
-    const projectId = Number(id) || 0;
+    const { projectId, project: selectedProject, refreshProject } = useProjectContext();
 
     const { user } = useAuth();
     const canEdit = ['Admin', 'Scripter'].includes(user?.role ?? '');
 
-    const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
-    const { getProject } = useProjects();
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<SettingsData>({ internal_code: '', project_name: '', symphony: '' });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const fetchProject = async () => {
-            try {
-                const p = await getProject(projectId);
-                setSelectedProject(p);
-                setFormData({ internal_code: p.internal_code ?? '', project_name: p.project_name ?? '', symphony: p.symphony ?? '' });
-            } catch (error) {
-                console.log(error);
-            }
-        };
-
-        fetchProject();
-    }, [projectId]);
+        if (!selectedProject) return;
+        setFormData({
+            internal_code: selectedProject.internal_code ?? '',
+            project_name: selectedProject.project_name ?? '',
+            symphony: selectedProject.symphony ?? '',
+        });
+    }, [selectedProject]);
 
     const handleCancel = () => {
         setFormData({
@@ -69,8 +59,8 @@ const Settings = () => {
             await axios.put(url, formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setSelectedProject(prev => prev ? { ...prev, ...formData } : prev);
             setIsEditing(false);
+            await refreshProject();
         } catch (error) {
             console.log(error);
         } finally {
@@ -176,7 +166,7 @@ const Settings = () => {
                         <Divider />
                         <Box sx={{ px: 2.5, py: 1.5, display: "flex", gap: 1 }}>
                             <Button
-                                className="btn"
+                                variant="contained"
                                 startIcon={!isEditing ? <EditOutlinedIcon /> : <SaveOutlinedIcon />}
                                 disabled={saving}
                                 onClick={() => (!isEditing ? setIsEditing(true) : handleSave())}

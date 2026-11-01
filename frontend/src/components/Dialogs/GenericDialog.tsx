@@ -1,4 +1,6 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import React from "react";
+import { Breakpoint, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 interface GenericDialogProps {
     open: boolean,
@@ -7,25 +9,44 @@ interface GenericDialogProps {
     onClose: () => void,
     onSubmit: () => void,
     submitText?: string,
-    cancelText?: string
+    cancelText?: string,
+    submitDisabled?: boolean,
+    loading?: boolean,
+    tone?: "default" | "danger",
+    maxWidth?: Breakpoint,
 }
 
-const GenericDialog: React.FC<GenericDialogProps> = ({ open, title, children, onClose, onSubmit, submitText = "SUBMIT", cancelText = "CANCEL" }) => {
+const GenericDialog: React.FC<GenericDialogProps> = ({
+    open,
+    title,
+    children,
+    onClose,
+    onSubmit,
+    submitText = "Submit",
+    cancelText = "Cancel",
+    submitDisabled = false,
+    loading = false,
+    tone = "default",
+    maxWidth = "sm",
+}) => {
 
     return (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-            <DialogTitle>{title}</DialogTitle>
-            <DialogContent
-                sx={{
-                    width: '100%',
-                    pt: 2
-                }}
-            >
+        <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth={maxWidth}>
+            <DialogTitle sx={{ fontSize: "1.0625rem", fontWeight: 600 }}>{title}</DialogTitle>
+            <DialogContent sx={{ width: '100%', pt: 2 }}>
                 {children}
             </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>{cancelText}</Button>
-                <Button onClick={onSubmit} color="primary" autoFocus>{submitText}</Button>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button onClick={onClose} color="inherit" disabled={loading}>{cancelText}</Button>
+                <LoadingButton
+                    onClick={onSubmit}
+                    variant="contained"
+                    color={tone === "danger" ? "error" : "primary"}
+                    disabled={submitDisabled}
+                    loading={loading}
+                >
+                    {submitText}
+                </LoadingButton>
             </DialogActions>
         </Dialog>
     )

@@ -64,7 +64,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
       title={`Clone dự án ${project.internal_code ?? ''}`}
       onClose={onClose}
       onSubmit={handleSubmit}
-      submitText="CLONE"
+      submitText="Clone"
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
         {isCloning && <LinearProgress />}

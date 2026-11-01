@@ -534,10 +534,9 @@ const AccountManagement = () => {
                         loading={actionState.loading}
                         loadingPosition="end"
                         variant="contained"
-                        className='btn bg-vinnet-primary'
                         disabled={isCreateInvalid}
                         >
-                            <span>CREATE</span>
+                            <span>Create</span>
                     </LoadingButton>
                 </DialogActions>
             </Dialog>
@@ -644,6 +643,8 @@ const AccountManagement = () => {
                 onClose={() => setStatusTarget(null)}
                 onConfirm={handleConfirmStatusChange}
                 title={statusTarget?.is_active ? "Deactivate account" : "Activate account"}
+                tone={statusTarget?.is_active ? "danger" : "default"}
+                confirmText={statusTarget?.is_active ? "Deactivate" : "Activate"}
                 message={statusTarget?.is_active
                     ? `${statusTarget?.email} will be signed out immediately and will no longer be able to log in.`
                     : `${statusTarget?.email} will be able to log in again.`}

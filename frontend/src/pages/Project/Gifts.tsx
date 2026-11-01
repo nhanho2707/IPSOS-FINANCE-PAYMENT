@@ -1,14 +1,12 @@
 import { Box, Button, Checkbox, IconButton, LinearProgress, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { useProjects } from "../../hook/useProjects";
 import { OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData } from "../../config/OfflineProjectRespondentFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import SearchTextBox from "../../components/SearchTextBox";
 import ReusableTable from "../../components/Table/ReusableTable";
 import * as XLSX from "xlsx";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import useDialog from "../../hook/useDialog";
 import { MAX_CONSECUTIVE_GIFT_FAILURES, useOfflineProjectRespondents } from "../../hook/useOfflineProjectRespondents";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,11 +29,9 @@ interface BulkSendProgress {
 const Gifts: React.FC = () => {
     const { id } = useParams<{id: string}>();
     const projectId = Number(id) || 0;
-    const [ projectSelected, setProjectSelected] = useState<ProjectData | null>(null);
 
-    const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+    const { openDialog, closeDialog, dialogProps } = useDialog();
     
-    const { getProject } = useProjects();
     const [ offlineProjectRespondentCellConfig, setOfflineProjectRespondentCellConfig ] = useState(OfflineProjectRespondentCellConfig);
 
     const { offineProjectRespondents, removeProjectRespondent, offlineTransactionSending, bulkOfflineTransactionSending, fetchAllPendingProjectRespondents, importOfflineProjectRespondents, loading: loadingOfflineProjectRespondents, error: errorOfflineProjectRespondents, message: messageOfflineProjectRespondents, page, rowsPerPage, searchTerm, total, setSearchTerm, setPage, setRowsPerPage } = useOfflineProjectRespondents(projectId);
@@ -86,6 +82,8 @@ const Gifts: React.FC = () => {
     const handleRemoveClick = (row: OfflineProjectRespondentData) => {
         openDialog({
             title: "Remove Respondents",
+            tone: "danger",
+            confirmText: "Remove",
             message: "Are you sure that you want to remove " + row.respondent_id + " from this project?",
             showConfirmButton: true,
             onClose: handleRemoveCancelDialog,
@@ -442,35 +440,14 @@ const Gifts: React.FC = () => {
         await importOfflineProjectRespondents(payload);
     };
     
-    useEffect(() => {
-        async function fetchProject(){
-            try{
-                const p = await getProject(projectId);
-                setProjectSelected(p);
-            }catch(error){
-                console.log(error);
-            }
-        }
-
-        fetchProject();
-    }, [projectId]);
 
     return (
         <>
             <Box className="box-table">
             <div className="filter">
-                <div className="filter-left">
-                    <div className="project-info">
-                    <div>
-                        <strong>Project Name:</strong> {projectSelected?.project_name}
-                    </div>
-                    <div>
-                        <strong>Symphony:</strong> {projectSelected?.symphony}
-                    </div>
-                    </div>
-                </div>
+                <div className="filter-left" />
                 <div className="filter-right">
-                    <Button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>
+                    <Button variant="contained" onClick={() => fileInputRef.current?.click()}>
                         Import Respondents
                     </Button>
                     <input
@@ -568,14 +545,7 @@ const Gifts: React.FC = () => {
                 onRowsPerPageChange={handleChangeRowsPerPage}
             ></ReusableTable>
     
-            <AlertDialog
-                open={open}
-                onClose={closeDialog}
-                onConfirm={confirmDialog}
-                showConfirmButton={showConfirmButton}
-                title={title}
-                message={message}
-            />
+            <ConfirmDialog {...dialogProps} />
             </Box>
         </>
     )

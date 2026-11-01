@@ -458,7 +458,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                     <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
                         {canEdit && (
                             <Button
-                                className="btn"
+                                variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={() => setOpenCreateProvincePriceDialog(true)}
                             >
@@ -467,7 +467,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         )}
                         {canEdit && (
                             <Button
-                                className="btn"
+                                variant="contained"
                                 startIcon={<FileUploadIcon />}
                                 disabled={importing}
                                 onClick={() => fileInputRef.current?.click()}
@@ -476,7 +476,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             </Button>
                         )}
                         <Button
-                            className="btn"
+                            variant="contained"
                             startIcon={<FileDownloadIcon />}
                             onClick={handleExport}
                         >
@@ -597,9 +597,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         loadingPosition="end"
                         variant="contained"
                         disabled={!isCreateValid}
-                        className='btn bg-vinnet-primary'
                         >
-                            <span>CREATE</span>
+                            <span>Create</span>
                     </LoadingButton>
                 </DialogActions>
             </Dialog>
@@ -626,6 +625,9 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 onClose={() => setRowToDelete(null)}
                 onConfirm={handleConfirmDelete}
                 title="Xoá đơn giá"
+                tone="danger"
+                confirmText="Xoá"
+                cancelText="Huỷ"
                 message={rowToDelete ? `Bạn có chắc chắn muốn xoá đơn giá "${rowToDelete.price_type}" của ${rowToDelete.province_name}?` : ""}
             />
         </Box>  

@@ -8,7 +8,7 @@
 |---|---|---|
 | `global.css` | CSS variables (`:root`), dark mode, font import | `index.tsx` |
 | `layout.css` | App shell: `.wrapper`, `.content`, `.content-detail` | `index.tsx` |
-| `components.css` | Shared utilities: `.btn`, `.row`, action menu | `index.tsx` |
+| `components.css` | Shared utilities: `.row`, action menu, typography helpers | `index.tsx` |
 | `features.css` | Widget, welcome section, legend, chart, subtotal | `index.tsx` |
 | `table.css` | Table, filter bar, pagination | `index.tsx` |
 | `modal.css` | Modal box, modal footer, modal buttons | Import trực tiếp trong component dùng modal |
@@ -33,7 +33,7 @@
 
 ## Quy tắc đặt tên class
 
-- **kebab-case**: `.filter-title`, `.btn-modal-submit`, `.widget-container`
+- **kebab-case**: `.filter-title`, `.btn-modal-footer`, `.widget-container`
 - Prefix theo context: `.tcb-*` (Techcombank), `.modal-*` (modal), `.table-*` / `.filter-*` (table)
 - Không dùng camelCase hay PascalCase trong CSS
 

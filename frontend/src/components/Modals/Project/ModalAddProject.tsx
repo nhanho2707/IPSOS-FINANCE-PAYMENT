@@ -208,11 +208,10 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
             ))}
           </Grid>
           <Box className="btn-modal-footer" textAlign="end">
-            <Button className="btn-modal-cancel" onClick={onClose}>
+            <Button color="inherit" onClick={onClose}>
               Cancel
             </Button>
             <LoadingButton
-              className="btn-modal-submit"
               variant="contained"
               loading={actionState.loading}
               onClick={handleSave}

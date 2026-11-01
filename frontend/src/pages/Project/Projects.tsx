@@ -6,7 +6,7 @@ import { ColumnFormat } from "../../config/ColumnConfig";
 import { CLONE_PROJECT_ROLES, ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
 import { StatusDropdown } from "../../components/Table/StatusDropdown";
 import useDialog from "../../hook/useDialog";
-import AlertDialog from "../../components/AlertDialog/AlertDialog";
+import ConfirmDialog, { ConfirmDialogTone } from "../../components/Dialogs/ConfirmDialog";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -27,7 +27,7 @@ const Projects = () => {
 
   const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled } = useProjects();
   const { data } = useMetadata();
-  const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
+  const { openDialog, dialogProps } = useDialog();
   
   const [ updatingId, setUpdatingId ] = useState<number | null>(null);
   const [ cloneTarget, setCloneTarget ] = useState<ProjectData | null>(null);
@@ -191,12 +191,17 @@ const Projects = () => {
     });
   }
 
-  const showConfirm = (message: string): Promise<boolean> => {
+  const showConfirm = (
+    message: string,
+    options: { title?: string; tone?: ConfirmDialogTone; confirmText?: string } = {}
+  ): Promise<boolean> => {
     return new Promise((resolve) => {
       openDialog({
-        title: "Update Status",
+        title: options.title ?? "Update Status",
         message: message,
         showConfirmButton: true,
+        tone: options.tone,
+        confirmText: options.confirmText,
         onConfirm: () => resolve(true),
         onClose: () => resolve(false)
       })
@@ -206,7 +211,12 @@ const Projects = () => {
   const handleUpdateDisabled = async (project: ProjectData, disabled: boolean) => {
     const action = disabled ? 'disable' : 'enable';
     const confirmed = await showConfirm(
-      `Bạn có chắc chắn muốn ${action} dự án này không?`
+      `Bạn có chắc chắn muốn ${action} dự án này không?`,
+      {
+        title: disabled ? "Disable Project" : "Enable Project",
+        tone: disabled ? "danger" : "default",
+        confirmText: disabled ? "Disable" : "Enable",
+      }
     );
 
     if (!confirmed) return;
@@ -327,7 +337,7 @@ const Projects = () => {
                       </Button>
                     </Tooltip>
                   )}
-                  <Button className="btn" onClick={() => setOpenModalAdd(true)}>
+                  <Button variant="contained" onClick={() => setOpenModalAdd(true)}>
                     Add New Project
                   </Button>
                 </Box>
@@ -344,14 +354,7 @@ const Projects = () => {
       />
 
 
-      <AlertDialog
-        open={open}
-        title={title}
-        message={message}
-        showConfirmButton={showConfirmButton}
-        onClose={closeDialog}
-        onConfirm={confirmDialog}
-      />
+      <ConfirmDialog {...dialogProps} />
 
       <ModalAddProject
         openModal={openModalAdd}

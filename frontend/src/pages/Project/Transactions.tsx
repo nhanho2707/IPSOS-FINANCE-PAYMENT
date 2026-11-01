@@ -1,21 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ProjectData } from "../../config/ProjectFieldsConfig";
 import SearchTextBox from "../../components/SearchTextBox";
 import { Box, IconButton } from "@mui/material";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { useTransactions } from "../../hook/useTransactions";
 import { TransactionCellConfig, TransactionData } from "../../config/TransactionFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { useProjects } from "../../hook/useProjects";
 import SmsIcon from "@mui/icons-material/Sms";
 
 const Transactions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id) || 0;
-  const [ projectSelected, setProjectSelected ] = useState<ProjectData | null>(null);
 
-  const { getProject } = useProjects();
   const { transactions, loading: loadingTransactions, error: errorTransactions, message: messageTransactions, page, setPage, rowsPerPage, setRowsPerPage, total, setSearchTerm } = useTransactions(projectId);
   const [ transactionCellConfig, setTransactionCellConfig ] = useState(TransactionCellConfig);
   
@@ -61,36 +57,15 @@ const Transactions: React.FC = () => {
     setPage(0);
   };
 
-  useEffect(() => {
-    async function fetchProject() {
-      try{
-        const p = await getProject(projectId);
-        setProjectSelected(p);
-      }catch(error){
-        console.log(error);
-      }
-    }
-
-    fetchProject();
-  }, [projectId]);
 
   return (
     <>
       <Box className="box-table">
         <div className="filter">
-            <div className="filter-left">
-              <div className="project-info">
-                <div>
-                    <strong>Project Name:</strong> {projectSelected?.project_name}
-                </div>
-                <div>
-                    <strong>Symphony:</strong> {projectSelected?.symphony}
-                </div>
-              </div>
-            </div>
+            <div className="filter-left" />
             <div className="filter-right">
             {/* {canView("employees.functions.visible_import_employees") && (
-                <Button className="btn btn-primary" onClick={() => setOpenImportEmployeesDialog(true)}>
+                <Button variant="contained" onClick={() => setOpenImportEmployeesDialog(true)}>
                   Import New Employees
                 </Button>
             )} */}

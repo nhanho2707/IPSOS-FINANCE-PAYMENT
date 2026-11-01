@@ -3,6 +3,7 @@ import { CATIRespondentData } from "../config/MiniCATIFieldsConfig";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
 import { ActionState } from "../components/Table/ReusableTable";
+import { useToast } from "../contexts/ToastContext";
 
 export type FilterOptions = {
     filter_1: string[],
@@ -19,6 +20,7 @@ export interface FilterData {
 }
 
 export const useCATIRespondents = () => {
+    const { showToast } = useToast();
 
     const [ currentRespondent, setCurrentRespondent ] = useState<CATIRespondentData | null>(null);
     const [ catiRespondents, setCATIRespondents ] = useState<CATIRespondentData[]>([]);
@@ -173,7 +175,7 @@ export const useCATIRespondents = () => {
             return false;
         } catch(error: any){
             if(error.response?.status === 409){
-                alert(error.response.data.error || 'Số này đã có người khác gọi. Vui lòng chọn số khác.');
+                showToast(error.response.data.error || 'Số này đã có người khác gọi. Vui lòng chọn số khác.', 'warning');
             } else {
                 console.error(error.response?.data);
             }

@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, IconButton, LinearProgress, Typography } from "@mui/material";
+import { Box, Button, Checkbox, IconButton, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData } from "../../config/OfflineProjectRespondentFieldsConfig";
@@ -282,43 +282,12 @@ const Gifts: React.FC = () => {
             name: "actions",
             type: "menu",
             align: "center",
-            flex: 1,
-            renderHeader: () => {
-                return (
-                    <div style={{ whiteSpace: "normal", lineHeight: 1.2, textAlign: "center" }}>
-                        Actions 
-                    </div>
-                );
-            },
-            renderAction: (row: any) => {
-                const disabled = (row.status != 'pending');
-
-                return (
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <IconButton
-                            color="error"
-                            size="small"
-                            disabled={disabled}
-                            onClick={() => handleRemoveClick(row)}
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                    </div>
-                )
-            }
-        },
-        {
-            label: "",
-            name: "functions",
-            type: "menu",
-            align: "center",
-            flex: 1,
+            width: 184,
             renderAction: (row: OfflineProjectRespondentData) => {
-                const disabled = (row.status != 'pending');
-                const view_disabled = row.status == 'success';
+                const disabled = row.status !== 'pending';
 
                 return (
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
                         <LoadingButton
                             onClick={() => handleSendGiftClick(row)}
                             size="small"
@@ -328,6 +297,8 @@ const Gifts: React.FC = () => {
                             variant="contained"
                             disabled={disabled || bulkSending}
                             sx={{
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
                                 backgroundColor: 'var(--vinnet-color-primary)',
                                 color: '#fff',
                                 fontSize: '0.8125rem',
@@ -352,8 +323,20 @@ const Gifts: React.FC = () => {
                             >
                                 Tặng quà
                         </LoadingButton>
+                        <Tooltip title="Remove respondent">
+                            <span>
+                                <IconButton
+                                    color="error"
+                                    size="small"
+                                    aria-label="Remove respondent"
+                                    disabled={disabled}
+                                    onClick={() => handleRemoveClick(row)}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
                     </div>
-                    
                 )
             }
         }

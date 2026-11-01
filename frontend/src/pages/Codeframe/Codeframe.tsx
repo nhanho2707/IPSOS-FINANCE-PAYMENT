@@ -29,7 +29,7 @@ const columns: ColumnFormat[] = [
         width: 140,
     },
     {
-        label: "Câu trả lời",
+        label: "Answer",
         name: "response_text",
         type: "string",
     },
@@ -43,11 +43,11 @@ const columns: ColumnFormat[] = [
             row.code ? (
                 <Chip label={row.code} size="small" color="primary" variant="outlined" />
             ) : (
-                <Chip label="Chưa coding" size="small" variant="outlined" sx={{ color: "text.disabled" }} />
+                <Chip label="Not coded" size="small" variant="outlined" sx={{ color: "text.disabled" }} />
             ),
     },
     {
-        label: "Người coding",
+        label: "Coded by",
         name: "coded_by",
         type: "string",
         align: "center",
@@ -55,7 +55,7 @@ const columns: ColumnFormat[] = [
         renderCell: (row) => row.coded_by ?? "—",
     },
     {
-        label: "Thời điểm",
+        label: "Coded at",
         name: "coded_at",
         type: "string",
         align: "center",
@@ -118,7 +118,7 @@ export default function Codeframe() {
                 <DialogTitle>Import Data</DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Chọn file Excel (.xlsx) chứa dữ liệu câu trả lời mở để bắt đầu coding.
+                        Choose an Excel file (.xlsx) with open-ended answers to start coding.
                     </Typography>
                     <Button
                         variant="outlined"
@@ -126,7 +126,7 @@ export default function Codeframe() {
                         fullWidth
                         sx={{ py: 3, borderStyle: "dashed", textTransform: "none" }}
                     >
-                        {selectedFile ? selectedFile.name : "Chọn file .xlsx"}
+                        {selectedFile ? selectedFile.name : "Choose .xlsx file"}
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -138,7 +138,7 @@ export default function Codeframe() {
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button onClick={handleCloseDialog} sx={{ textTransform: "none" }}>
-                        Huỷ
+                        Cancel
                     </Button>
                     <Button
                         variant="contained"
@@ -146,7 +146,7 @@ export default function Codeframe() {
                         disabled={!selectedFile || actionState.loading}
                         sx={{ textTransform: "none" }}
                     >
-                        {actionState.loading ? "Đang import..." : "Import"}
+                        {actionState.loading ? "Importing..." : "Import"}
                     </Button>
                 </DialogActions>
             </Dialog>

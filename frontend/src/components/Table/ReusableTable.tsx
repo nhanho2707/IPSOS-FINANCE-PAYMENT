@@ -5,10 +5,11 @@ import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
 import {
     Alert,
     Box,
-    CircularProgress,
     Divider,
     IconButton,
+    LinearProgress,
     Paper,
+    Skeleton,
     Table,
     TableBody,
     TableCell,
@@ -28,22 +29,54 @@ export interface ActionState {
     type?: ActionType;
 }
 
-interface ReusableTableProps {
-    title?: string;
+interface ReusableTableProps<T extends object> {
     columns: ColumnFormat[];
-    data: any[];
+    data: T[];
     actionStatus: ActionState;
     total?: number;
     page?: number;
     rowsPerPage?: number;
     onPageChange?: (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => void;
     onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    filters?: React.ReactNode;
-    actions?: (row: any) => React.ReactNode;
     topToolbar?: React.ReactNode;
+    getRowKey?: (row: T, index: number) => React.Key;
+    emptyText?: string;
 }
 
-const ReusableTable: React.FC<ReusableTableProps> = ({
+const SKELETON_ROWS = 5;
+const MIN_FLEX_COLUMN_PX = 64;
+
+const defaultRowKey = (row: object, index: number): React.Key => {
+    const id = (row as { id?: unknown }).id;
+    return typeof id === "string" || typeof id === "number" ? id : index;
+};
+
+// table-layout: fixed only honours explicit widths, so `flex` columns share the space
+// left over by fixed-width columns in proportion to their flex value.
+const resolveColumnWidths = (columns: ColumnFormat[]) => {
+    const fixedPx = columns.reduce((sum, col) => sum + (col.width ?? 0), 0);
+    const flexColumns = columns.filter((col) => col.width === undefined);
+    const totalFlex = flexColumns.reduce((sum, col) => sum + (col.flex ?? 1), 0);
+
+    const widths = columns.map((col) => {
+        if (col.width !== undefined) return `${col.width}px`;
+        const share = (col.flex ?? 1) / (totalFlex || 1);
+        return `calc((100% - ${fixedPx}px) * ${share.toFixed(4)})`;
+    });
+
+    const minTableWidth = fixedPx + flexColumns.length * MIN_FLEX_COLUMN_PX;
+    return { widths, minTableWidth };
+};
+
+const renderCellContent = <T extends object>(col: ColumnFormat, row: T): React.ReactNode => {
+    if (col.renderCell) return col.renderCell(row);
+    if (col.renderAction) return col.renderAction(row);
+    const value = (row as Record<string, unknown>)[col.name];
+    if (value === null || value === undefined || typeof value === "boolean") return "";
+    return typeof value === "object" ? JSON.stringify(value) : String(value);
+};
+
+const ReusableTable = <T extends object>({
     columns,
     data = [],
     actionStatus,
@@ -53,8 +86,13 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
     onPageChange,
     onRowsPerPageChange,
     topToolbar,
-}) => {
+    getRowKey = defaultRowKey,
+    emptyText = "No data",
+}: ReusableTableProps<T>) => {
     const [openAlert, setOpenAlert] = useState(false);
+    const { widths, minTableWidth } = resolveColumnWidths(columns);
+    const isLoading = Boolean(actionStatus.loading);
+    const showSkeleton = isLoading && data.length === 0;
 
     useEffect(() => {
         setOpenAlert(Boolean(actionStatus.message));
@@ -68,7 +106,7 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                     sx={{ mb: 1.5, borderRadius: "8px", fontSize: "0.875rem" }}
                     action={
                         <IconButton
-                            aria-label="close"
+                            aria-label="Close"
                             color="inherit"
                             size="small"
                             onClick={() => setOpenAlert(false)}
@@ -98,13 +136,21 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                     </>
                 )}
 
+                <Box sx={{ height: 3 }}>
+                    {isLoading && !showSkeleton && <LinearProgress sx={{ height: 3 }} />}
+                </Box>
+
                 <TableContainer sx={{ maxHeight: "calc(100vh - 240px)", overflowX: "auto" }}>
-                    <Table stickyHeader sx={{ tableLayout: "fixed", width: "100%" }}>
+                    <Table
+                        stickyHeader
+                        aria-busy={isLoading}
+                        sx={{ tableLayout: "fixed", width: "100%", minWidth: minTableWidth }}
+                    >
                         <TableHead>
                             <TableRow>
                                 {columns.map((col, idx) => (
                                     <TableCell
-                                        key={idx}
+                                        key={col.name || idx}
                                         align={col.align ?? "left"}
                                         sx={{
                                             backgroundColor: "var(--body-color)",
@@ -114,7 +160,7 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                                             whiteSpace: "nowrap",
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
-                                            width: col.width ?? "auto",
+                                            width: widths[idx],
                                             py: 1.25,
                                             px: 1.5,
                                             borderBottom: "2px solid",
@@ -128,20 +174,16 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                         </TableHead>
 
                         <TableBody>
-                            {actionStatus.loading ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={columns.length}
-                                        align="center"
-                                        sx={{ py: 6, border: 0 }}
-                                    >
-                                        <CircularProgress
-                                            size={28}
-                                            thickness={4}
-                                            sx={{ color: "var(--main-color)" }}
-                                        />
-                                    </TableCell>
-                                </TableRow>
+                            {showSkeleton ? (
+                                Array.from({ length: SKELETON_ROWS }).map((_, rowIdx) => (
+                                    <TableRow key={`skeleton-${rowIdx}`}>
+                                        {columns.map((col, idx) => (
+                                            <TableCell key={col.name || idx} sx={{ py: 1.25, px: 1.5 }}>
+                                                <Skeleton variant="text" sx={{ fontSize: "0.8125rem" }} />
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
                             ) : data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
@@ -156,14 +198,14 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                                             variant="body2"
                                             sx={{ color: "var(--text-primary-color)", fontSize: "0.875rem" }}
                                         >
-                                            Không có dữ liệu
+                                            {emptyText}
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 data.map((row, i) => (
                                     <TableRow
-                                        key={i}
+                                        key={getRowKey(row, i)}
                                         sx={{
                                             transition: "background-color 0.15s ease",
                                             "&:hover": {
@@ -174,24 +216,19 @@ const ReusableTable: React.FC<ReusableTableProps> = ({
                                     >
                                         {columns.map((col, idx) => (
                                             <TableCell
-                                                key={idx}
+                                                key={col.name || idx}
                                                 align={col.align ?? "left"}
                                                 sx={{
                                                     whiteSpace: "nowrap",
                                                     overflow: "hidden",
                                                     textOverflow: "ellipsis",
-                                                    width: col.width ?? "auto",
                                                     fontSize: "0.8125rem",
                                                     color: "var(--text-color)",
                                                     py: 1,
                                                     px: 1.5,
                                                 }}
                                             >
-                                                {col.renderCell
-                                                    ? col.renderCell(row)
-                                                    : col.renderAction
-                                                    ? col.renderAction(row)
-                                                    : row[col.name]}
+                                                {renderCellContent(col, row)}
                                             </TableCell>
                                         ))}
                                     </TableRow>

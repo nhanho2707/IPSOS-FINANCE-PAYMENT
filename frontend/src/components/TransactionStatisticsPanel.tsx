@@ -37,10 +37,10 @@ const formatMinutes = (minutes: number | null | undefined) => {
   const sign = minutes < 0 ? "-" : "";
   const abs = Math.abs(minutes);
 
-  if (abs < 60) return `${sign}${abs} phút`;
-  if (abs < 1440) return `${sign}${Math.floor(abs / 60)} giờ ${abs % 60} phút`;
+  if (abs < 60) return `${sign}${abs} min`;
+  if (abs < 1440) return `${sign}${Math.floor(abs / 60)}h ${abs % 60}m`;
 
-  return `${sign}${Math.floor(abs / 1440)} ngày ${Math.floor((abs % 1440) / 60)} giờ`;
+  return `${sign}${Math.floor(abs / 1440)}d ${Math.floor((abs % 1440) / 60)}h`;
 };
 
 interface StatCardProps {
@@ -109,13 +109,13 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
   const anomaliesTotal = statistics?.anomalies_total ?? 0;
   const gapUnknown = statistics?.gap_unknown ?? 0;
   const gapOffline = statistics?.gap_offline ?? 0;
-  const toleranceText = statistics ? ` > ${statistics.anomaly_tolerance_minutes} phút` : "";
+  const toleranceText = statistics ? ` > ${statistics.anomaly_tolerance_minutes} min` : "";
   // The backend owns the bucket labels (they embed the tolerance), and sends them in display order.
   const gapOrder = Object.keys(statistics?.gap_buckets ?? {});
   const measuredTotal = total - gapUnknown - gapOffline;
   const gapExcludedCaption = [
-    gapUnknown > 0 ? `${gapUnknown} ca thiếu thời gian kết thúc PV` : null,
-    gapOffline > 0 ? `${gapOffline} ca offline (không có giờ PV thực tế)` : null
+    gapUnknown > 0 ? `${gapUnknown} interviews missing an end time` : null,
+    gapOffline > 0 ? `${gapOffline} offline interviews (no actual interview time)` : null
   ].filter(Boolean).join(", ");
   const pagedAnomalies = anomalies.slice(
     anomalyPage * anomalyRowsPerPage,
@@ -132,36 +132,36 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
 
   const anomalyColumns: ColumnFormat[] = [
     { label: "Respondent ID", name: "respondent_id", type: "string" },
-    { label: "SĐT", name: "phone", type: "string" },
+    { label: "Phone", name: "phone", type: "string" },
     {
       label: "Channel",
       name: "channel",
       type: "string",
       renderCell: (row) => CHANNEL_LABELS[row.channel as TransactionChannel] ?? row.channel
     },
-    { label: "Mã PVV", name: "employee_id", type: "string" },
+    { label: "Interviewer ID", name: "employee_id", type: "string" },
     { label: "PVV", name: "employee_name", type: "string" },
     {
-      label: "Kết thúc PV",
+      label: "Interview ended",
       name: "interview_end",
       type: "date",
       renderCell: (row) => formatDateTime(row.interview_end)
     },
     {
-      label: "Nhận quà",
+      label: "Gift received",
       name: "gift_time",
       type: "date",
       renderCell: (row) => formatDateTime(row.gift_time)
     },
     {
-      label: "Giá trị quà",
+      label: "Gift value",
       name: "amount",
       type: "number",
       align: "right",
       renderCell: (row) => formatAmount(row.amount)
     },
     {
-      label: "Chênh lệch",
+      label: "Gap",
       name: "gap_minutes",
       type: "number",
       align: "right",
@@ -184,7 +184,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           onChange={(e) => setChannel(e.target.value as TransactionChannel | "")}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="">Tất cả</MenuItem>
+          <MenuItem value="">All</MenuItem>
           {CHANNELS.map((c) => (
             <MenuItem key={c} value={c}>
               {CHANNEL_LABELS[c]}
@@ -193,21 +193,21 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
         </TextField>
 
         <Typography variant="body2" color="text.secondary">
-          Ngày phỏng vấn:
+          Interview date:
         </Typography>
 
         <SearchDatePickerFromTo
           key={datePickerKey}
           fromValue={dateFrom ? dayjs(dateFrom) : null}
           toValue={dateTo ? dayjs(dateTo) : null}
-          buttonLabel="Lọc"
+          buttonLabel="Filter"
           loadingButton={actionState.loading}
           onSearchChange={handleDateRangeChange}
         />
 
         {(dateFrom || dateTo) && (
           <Button size="small" onClick={handleClearDates}>
-            Xoá lọc ngày
+            Clear date filter
           </Button>
         )}
       </Box>
@@ -221,31 +221,31 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            label="Số đáp viên đã nhận quà"
+            label="Respondents who received a gift"
             value={numeral(total).format("0,0")}
             caption={channelBreakdown("count")}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            label="Tổng giá trị quà (VNĐ)"
+            label="Total gift value (VND)"
             value={formatAmount(statistics?.total_amount)}
             caption={channelBreakdown("amount")}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            label="Thời gian trung vị: kết thúc PV → nhận quà"
+            label="Median time: interview end → gift received"
             value={formatMinutes(statistics?.gap_median_minutes)}
-            caption={gapExcludedCaption ? `Không tính: ${gapExcludedCaption}` : undefined}
+            caption={gapExcludedCaption ? `Excludes: ${gapExcludedCaption}` : undefined}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            label={`Số ca bất thường (nhận quà trước khi PV xong${toleranceText})`}
+            label={`Anomalies (gift received before interview ended${toleranceText})`}
             value={anomaliesTotal}
             color={anomaliesTotal > 0 ? "error" : "inherit"}
-            caption={measuredTotal > 0 ? `${numeral(anomaliesTotal / measuredTotal).format("0.[0]%")} số ca đo được thời gian` : undefined}
+            caption={measuredTotal > 0 ? `${numeral(anomaliesTotal / measuredTotal).format("0.[0]%")} of measurable interviews` : undefined}
           />
         </Grid>
       </Grid>
@@ -253,21 +253,21 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12}>
           <HourlyHistogramChart
-            title="Khung giờ bắt đầu phỏng vấn (giờ VN)"
+            title="Interview start time (Vietnam time)"
             data={toHistogramData(statistics?.interview_time_buckets)}
-            valueLabel="Số cuộc phỏng vấn"
+            valueLabel="Interviews"
           />
         </Grid>
         <Grid item xs={12}>
           <HourlyHistogramChart
-            title="Khung giờ nhận quà (giờ VN)"
+            title="Gift received time (Vietnam time)"
             data={toHistogramData(statistics?.gift_time_buckets)}
-            valueLabel="Số lượt nhận quà"
+            valueLabel="Gifts received"
           />
         </Grid>
         <Grid item xs={12}>
           <BarChartWidget
-            title="Khoảng cách: kết thúc PV → nhận quà"
+            title="Gap: interview end → gift received"
             data={toChartData(statistics?.gap_buckets, gapOrder)}
             sorted={false}
             sortedList={gapOrder}
@@ -279,11 +279,11 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
         topToolbar={
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>
-              Danh sách cần kiểm tra (quà nhận trước khi phỏng vấn kết thúc{toleranceText})
+              Needs review (gift received before interview ended{toleranceText})
             </Typography>
             {anomaliesTotal > anomalies.length && (
               <Typography variant="body2" color="text.secondary">
-                Hiển thị {anomalies.length}/{anomaliesTotal} ca chênh lệch lớn nhất, thu hẹp bộ lọc để xem đủ.
+                Showing the {anomalies.length}/{anomaliesTotal} largest gaps. Narrow the filters to see all.
               </Typography>
             )}
           </Box>

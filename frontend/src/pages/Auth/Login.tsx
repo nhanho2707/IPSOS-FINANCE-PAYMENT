@@ -1,138 +1,146 @@
 import "./LoginForm.css";
-import ipsosLogo from "../../assets/img/Ipsos logo.svg"; // Assuming SVG file location
-import { useState } from "react";
+import ipsosLogo from "../../assets/img/Ipsos logo.svg";
+import React, { useState } from "react";
 import axios from "axios";
-
 import {
-  TextField,
-  FormControl,
-  InputLabel,
-  OutlinedInput,
+  Alert,
   IconButton,
-  Button,
+  InputAdornment,
+  Link,
+  TextField,
 } from "@mui/material";
-
-import Alert from "@mui/material/Alert";
+import LoadingButton from "@mui/lab/LoadingButton";
 import { VisibilityOff, Visibility } from "@mui/icons-material";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link as RouterLink, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { ApiConfig } from "../../config/ApiConfig";
 
 const Login = () => {
   const location = useLocation();
-  const [statusMessage, setStatusMessage] = useState(
-    location.state?.sessionExpired ? "Your session has expired. Please log in again." : ""
+  const { login, token, user } = useAuth();
+
+  const [errorMessage, setErrorMessage] = useState<string>(
+    location.state?.sessionExpired ? "Your session has expired. Please sign in again." : ""
   );
   const [showPassword, setShowPassword] = useState(false);
-  //const [login, setLogin] = useState<boolean | null>(null);
-  const [isError, setIsError] = useState<boolean | null>(location.state?.sessionExpired ? true : null);
-  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const [submitting, setSubmitting] = useState(false);
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  if (token && user) {
+    return <Navigate to={user.must_change_password ? "/set-password" : "/project-management/projects"} replace />;
+  }
 
-  const [inforLogin, setInforLogin] = useState({
-    email: "",
-    password: "",
-  });
-  
-  const handleChangeInput = (prev: string, value: string) => {
-    setInforLogin({ ...inforLogin, [prev]: value });
+  const handleChange = (field: "email" | "password") => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCredentials((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleLogin = async () => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    setErrorMessage("");
+
     try {
-      const response = await axios.post(ApiConfig.account.login, {
-        email: inforLogin.email,
-        password: inforLogin.password,
-      });
+      const response = await axios.post(ApiConfig.account.login, credentials);
 
-
-      if (response.data.status_code != 200) {
-        setStatusMessage(response.data.message);
-        setIsError(true);
-        throw new Error(response.data.message);
+      if (response.data.status_code !== 200) {
+        setErrorMessage(response.data.message ?? "Sign in failed. Please try again.");
+        return;
       }
 
       if (response.data.user?.must_change_password) {
-        login(response.data.token, response.data.user, '/set-password');
+        login(response.data.token, response.data.user, "/set-password");
       } else {
         const from = location.state?.from;
-        const redirectTo = from ? `${from.pathname}${from.search ?? ''}` : undefined;
+        const redirectTo = from ? `${from.pathname}${from.search ?? ""}` : undefined;
         login(response.data.token, response.data.user, redirectTo);
       }
-
-      setIsError(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setStatusMessage(error.response?.data.message ?? error.message);
-        setIsError(true);
+        setErrorMessage(error.response?.data?.message ?? error.message);
+      } else {
+        setErrorMessage("Sign in failed. Please try again.");
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleForgotPassword = () => {
-    // Handle forgot password functionality here
-    navigate("/forgot-password");
-  };
+  const canSubmit = credentials.email.trim() !== "" && credentials.password !== "";
 
   return (
-    <>
-      <div className="LoginForm">
-        <div className="header-form-login">
-          <img src={ipsosLogo} alt="Ipsos Logo" />
-          <h2>Welcome Back</h2>
-          <p>Enter the information you enter while registering.</p>
-        </div>
-        <div className="form-validate">
-          <div className="error-control">
-            {isError && (
-              <Alert severity="error">{statusMessage}</Alert> 
-            )}
-          </div>
-          <div className="email-control">
-            <TextField
-              label="Email"
-              variant="outlined"
-              className="TextFieldLogin"
-              onChange={(e) => handleChangeInput("email", e.target.value)}
-            />
-          </div>
-          <div className="password-control">
-            <FormControl className="TextFieldLogin" variant="outlined">
-              <InputLabel htmlFor="outlined-adornment-password">
-                Password
-              </InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-password"
-                type={showPassword ? "text" : "password"}
-                onChange={(e) => handleChangeInput("password", e.target.value)}
-                endAdornment={
-                  <IconButton onClick={handleClickShowPassword}>
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                }
-                label="Password"
-              />
-            </FormControl>
-          </div>
-          <div className="forgot-password">
-            <span onClick={handleForgotPassword}>Forgot Password ?</span>
-          </div>
-
-          <div className="btn-login">
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ my: 4 }}
-              onClick={handleLogin}
-            >
-              Sign In
-            </Button>
-          </div>
-        </div>
+    <div className="LoginForm">
+      <div className="header-form-login">
+        <img src={ipsosLogo} alt="Ipsos" />
+        <h2>Welcome back</h2>
+        <p>Sign in with your Ipsos account.</p>
       </div>
-    </>
+
+      <form className="form-validate" onSubmit={handleSubmit} noValidate>
+        {errorMessage && (
+          <Alert severity="error" sx={{ mt: 3 }} role="alert">
+            {errorMessage}
+          </Alert>
+        )}
+
+        <TextField
+          label="Email"
+          type="email"
+          name="email"
+          autoComplete="username"
+          autoFocus
+          fullWidth
+          value={credentials.email}
+          onChange={handleChange("email")}
+          className="TextFieldLogin"
+          sx={{ mt: 3 }}
+        />
+
+        <TextField
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          name="password"
+          autoComplete="current-password"
+          fullWidth
+          value={credentials.password}
+          onChange={handleChange("password")}
+          className="TextFieldLogin"
+          sx={{ mt: 3 }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <div className="forgot-password">
+          <Link component={RouterLink} to="/forgot-password" underline="hover">
+            Forgot password?
+          </Link>
+        </div>
+
+        <LoadingButton
+          type="submit"
+          variant="contained"
+          fullWidth
+          size="large"
+          loading={submitting}
+          disabled={!canSubmit}
+          sx={{ mt: 4 }}
+        >
+          Sign in
+        </LoadingButton>
+      </form>
+    </div>
   );
 };
 

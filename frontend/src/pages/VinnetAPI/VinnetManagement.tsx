@@ -9,7 +9,6 @@ import Grid from '@mui/material/Grid';
 import SummaryWidget from "../../components/Widgets/SummaryWidget";
 import { ApiConfig } from "../../config/ApiConfig";
 import numeral from "numeral";
-import { VisibilityConfig } from "../../config/RoleConfig";
 import { useVisibility } from "../../hook/useVisibility";
 
 interface VinnectAccountData {
@@ -25,7 +24,6 @@ const VinnetManagement = () => {
 
   const { canView } = useVisibility();
   
-  const visibilityConfig = VisibilityConfig[user.role as keyof typeof VisibilityConfig];
   
   const [isError, setIsError] = useState(false);
   const [statusMessage, setStatusMessage] = useState(''); 
@@ -52,7 +50,6 @@ const VinnetManagement = () => {
         
         const rawAccountData: string = response.data.data;
         const parsedData = JSON.parse(rawAccountData);
-        console.log(parsedData);
 
         // "{"deposited":1.2E7,"spent":7317700.0,"balance":4682300.0}"
         const vinnetAccountData: VinnectAccountData = {
@@ -61,7 +58,6 @@ const VinnetManagement = () => {
           balance: Number(parsedData.balance),
         };
 
-        console.log("Fetched Vinnet Account Data:", vinnetAccountData);
 
         setVinnetAccount(vinnetAccountData);
       } catch(error){
@@ -86,7 +82,6 @@ const VinnetManagement = () => {
   }, [])
 
   useEffect(() => {
-    console.log('State after update:', vinnetAccount);
   }, [vinnetAccount]); // This effect runs whenever vinnetAccount is updated
 
 

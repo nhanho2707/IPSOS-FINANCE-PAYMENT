@@ -40,6 +40,9 @@ import SilverBulletDashBoard from "./pages/SilverBulletDashBoard/SilverBulletDas
 import UMEDashboard from "./pages/dashboards/UMEDashboard";
 import ProgressReport from "./pages/Project/ProgressReport";
 import Codeframe from "./pages/Codeframe/Codeframe";
+import RoleGate from "./routes/RoleGate";
+import { ROLE_ACCESS } from "./config/RoleConfig";
+import { getProjectPageRoles } from "./config/ProjectNavConfig";
 
 // Fetch the CSRF token from the meta tag
 const csrfToken = document
@@ -65,12 +68,12 @@ const App: React.FC = () => {
             <Route path="/custom-voucher/:token" element={<CustomVoucher />} />
             <Route path='/search-link' element={<CustomVoucherLog />} />
 
-            <Route path='/progress-report' element={<DashboardProject />} />
-            <Route path='/silver-bullet-dashboard' element={<SilverBulletDashBoard />} />
-            <Route path='/ume-dashboard' element={<UMEDashboard />} />
-            <Route path='/progress' element={<ProgressReport />} />
-
-            <Route path='/codeframe' element={<Codeframe />} />
+            {/* ================= DASHBOARDS (login required) ================= */}
+            <Route path='/progress-report' element={<ProtectedRoute><DashboardProject /></ProtectedRoute>} />
+            <Route path='/silver-bullet-dashboard' element={<ProtectedRoute><SilverBulletDashBoard /></ProtectedRoute>} />
+            <Route path='/ume-dashboard' element={<ProtectedRoute><UMEDashboard /></ProtectedRoute>} />
+            <Route path='/progress' element={<ProtectedRoute><ProgressReport /></ProtectedRoute>} />
+            <Route path='/codeframe' element={<ProtectedRoute><Codeframe /></ProtectedRoute>} />
 
             {/* ================= DEFAULT LAYOUT GROUP ================= */}
             <Route
@@ -86,11 +89,11 @@ const App: React.FC = () => {
               />
               <Route
                 path="/transaction-manager/transactions"
-                element={<Transactions />}
+                element={<RoleGate allowedRoles={ROLE_ACCESS.transactionsPage}><Transactions /></RoleGate>}
               />
               <Route
                 path="/account-management/accounts"
-                element={<AccountManagement/>}
+                element={<RoleGate allowedRoles={ROLE_ACCESS.accountsPage}><AccountManagement /></RoleGate>}
               />
             </Route>
 
@@ -98,42 +101,42 @@ const App: React.FC = () => {
             <Route
               path="/project-management/projects/:id"
               element={
-                <ProtectedRoute allowedRoles={["Admin", "Scripter"]}>
+                <ProtectedRoute>
                   <ProjectLayout />
                 </ProtectedRoute>
               }
             >
               <Route
                 path="quotation"
-                element={<Quotation />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("quotation")}><Quotation /></RoleGate>}
               />
               <Route
                 path="assignment"
-                element={<Assignment />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("assignment")}><Assignment /></RoleGate>}
               />
               <Route
                 path="parttime-employees"
-                element={<ParttimeEmployees />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("parttime-employees")}><ParttimeEmployees /></RoleGate>}
               />
               <Route
                 path="gifts"
-                element={<Gifts />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("gifts")}><Gifts /></RoleGate>}
               />
               <Route
                 path="transactions"
-                element={<ProjectTransactions />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("transactions")}><ProjectTransactions /></RoleGate>}
               />
               <Route
                 path="transaction-statistics"
-                element={<TransactionStatistics />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("transaction-statistics")}><TransactionStatistics /></RoleGate>}
               />
               <Route
                 path="cati-settings"
-                element={<CATISettings />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("cati-settings")}><CATISettings /></RoleGate>}
               />
               <Route
                 path="settings"
-                element={<Settings />}
+                element={<RoleGate allowedRoles={getProjectPageRoles("settings")}><Settings /></RoleGate>}
               />
             </Route>
             {/* ================= MINI CATI============ */}

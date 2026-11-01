@@ -20,7 +20,6 @@ const SearchDatePicker: React.FC<SearchDatePickerProps> = ({title="", name,  vie
     const handleDateChange = (value: Dayjs | null) => {
         setSelectedDate(value);
         onSearchChange(name, value);
-        console.log("Search Date: ", value?.format("YYYY-MM"));
     }
 
     return(

@@ -58,7 +58,6 @@ export const useCATIRespondents = () => {
             
             const cati_token = localStorage.getItem('cati_token');
 
-            console.log('Token: ', cati_token);
 
             const response = await axios.get(ApiConfig.minicati.getSuspendedList, {
                 method: "GET",
@@ -126,7 +125,7 @@ export const useCATIRespondents = () => {
                 setOptions(response.data.data);
             } 
         } catch(error: any){
-            console.log(error);
+            console.error(error);
         }
     }
 

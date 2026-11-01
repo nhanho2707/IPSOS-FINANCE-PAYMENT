@@ -84,7 +84,6 @@ const Transactions: React.FC = () => {
         </div>
         
         <ReusableTable
-            title="Employees"
             columns={columns}
             data={transactions}
             actionStatus={{

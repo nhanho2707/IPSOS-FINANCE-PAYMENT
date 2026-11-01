@@ -335,7 +335,6 @@ const AccountManagement = () => {
     return (
         <Box>
             <ReusableTable
-                title="Employees"
                 columns={columns}
                 data={accounts}
                 actionStatus={actionState}

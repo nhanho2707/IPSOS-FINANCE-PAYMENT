@@ -6,6 +6,7 @@ import SecretTextBox from "../../components/SecretTextBox";
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { useAuth } from "../../contexts/AuthContext";
+import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
 import { ApiConfig } from "../../config/ApiConfig";
 import ProvincePricesTable from "./ProvincePricesTable";
 
@@ -26,7 +27,7 @@ const Settings = () => {
     const { projectId, project: selectedProject, refreshProject } = useProjectContext();
 
     const { user } = useAuth();
-    const canEdit = ['Admin', 'Scripter'].includes(user?.role ?? '');
+    const canEdit = hasRole(user?.role, ROLE_ACCESS.projectEditInfo);
 
 
     const [isEditing, setIsEditing] = useState(false);
@@ -62,7 +63,7 @@ const Settings = () => {
             setIsEditing(false);
             await refreshProject();
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             setSaving(false);
         }

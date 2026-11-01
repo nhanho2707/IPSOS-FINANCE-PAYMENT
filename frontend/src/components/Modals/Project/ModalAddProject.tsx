@@ -20,6 +20,8 @@ import { ColumnFormat } from "../../../config/ColumnConfig";
 import { ProjectData } from "../../../config/ProjectFieldsConfig";
 import { ProjectGeneralFieldsConfig } from "../../../config/ProjectFieldsConfig";
 import { useProjects } from "../../../hook/useProjects";
+import { useAuth } from "../../../contexts/AuthContext";
+import { getProjectHomePath } from "../../../config/ProjectNavConfig";
 
 interface ModalProps {
   openModal: boolean;
@@ -33,12 +35,14 @@ interface ModalProps {
 
 const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const { addProject, actionState } = useProjects();
 
   const [formFieldsConfig, setFormFieldsConfig] = useState(ProjectGeneralFieldsConfig);
   const [formValues, setFormValues] = useState<ProjectData>({
     project_name: '',
+    disabled: false,
     platform: '',
     teams: [],
     project_types: [],
@@ -155,9 +159,9 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
     try {
       const new_project = await addProject(formValues);
       onClose();
-      navigate(`/project-management/projects/${new_project.id}/quotation`);
+      navigate(getProjectHomePath(new_project.id, user?.role));
     } catch {
-      // actionState.error + actionState.message đã được set trong hook
+      // useProjects already exposes the error through actionState
     }
   };
 

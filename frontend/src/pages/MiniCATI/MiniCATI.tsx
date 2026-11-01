@@ -243,7 +243,6 @@ export default function MiniCATI() {
       )}
       
       <ReusableTable
-        title="Danh sách hẹn gọi lại"
         columns={columns}
         data={catiRespondents}
         actionStatus={actionState}

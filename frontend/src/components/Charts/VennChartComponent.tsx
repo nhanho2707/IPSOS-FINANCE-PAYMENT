@@ -96,7 +96,6 @@ const VennChartComponent: React.FC<VennChartProps> = ({ legend_title, data, sort
 
     }, [data]);
     
-    console.log(data);
 
     return (
         <div className='widget-row-item'>

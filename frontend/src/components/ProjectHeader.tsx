@@ -3,7 +3,8 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 import { Alert, Box, Breadcrumbs, Button, Chip, Link, Skeleton, Typography } from "@mui/material";
 import { NavigateNext } from "@mui/icons-material";
 import { ProjectData } from "../config/ProjectFieldsConfig";
-import { findProjectNavItem, projectNavPath } from "../config/ProjectNavConfig";
+import { findProjectNavItem, getProjectHomePath } from "../config/ProjectNavConfig";
+import { useAuth } from "../contexts/AuthContext";
 import { getStatusTone, PROJECT_STATUS_TONE } from "../config/ThemeConfig";
 import { toProperCase } from "../utils/format";
 import StatusChip from "./StatusChip";
@@ -31,6 +32,7 @@ const MetaItem: React.FC<{ label: string; value?: string | null }> = ({ label, v
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loading, error, onRetry }) => {
     const location = useLocation();
+    const { user } = useAuth();
     const currentPage = findProjectNavItem(location.pathname);
     const projectName = project?.project_name || `Project #${projectId}`;
 
@@ -51,7 +53,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loadi
                 {currentPage ? (
                     <Link
                         component={RouterLink}
-                        to={projectNavPath(projectId, "quotation")}
+                        to={getProjectHomePath(projectId, user?.role)}
                         underline="hover"
                         color="text.secondary"
                         sx={{ display: "block", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
@@ -74,7 +76,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loadi
                     sx={{ mt: 1.5, fontSize: "0.875rem" }}
                     action={<Button color="inherit" size="small" onClick={onRetry}>Retry</Button>}
                 >
-                    Không tải được thông tin dự án.
+                    Could not load project details.
                 </Alert>
             ) : loading && !project ? (
                 <Box sx={{ mt: 1 }}>

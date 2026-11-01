@@ -149,7 +149,6 @@ const ParttimeEmployees = () => {
                 <SearchTextBox placeholder="Search id, name,..." onSearchChange={handleSearchChange} />
             </Box>
             <ReusableTable
-                title="Employees"
                 columns={columns}
                 data={employees}
                 actionStatus={{

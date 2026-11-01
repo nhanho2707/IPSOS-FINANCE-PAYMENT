@@ -14,7 +14,6 @@ const SearchTextBox: React.FC<SearchTextBoxProps> = ({placeholder = "Search...",
         const value = event.target.value;
         setSearch(value);
         onSearchChange(value);
-        console.log("Search: ", event.target.value)
     }
 
     return (

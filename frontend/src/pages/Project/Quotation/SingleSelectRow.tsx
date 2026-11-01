@@ -94,7 +94,7 @@ const SingleSelectRow = memo(({ row, isEditing, isDisabled, onChange, confirmMes
             {confirmMessage && (
                 <ConfirmDialog
                     open={confirmOpen}
-                    title="Xác nhận thay đổi"
+                    title="Confirm change"
                     message={confirmMessage.replace("{value}", pendingOption?.label ?? "")}
                     showConfirmButton={true}
                     onClose={handleCancel}

@@ -12,8 +12,8 @@ interface DialogOptions {
   tone?: ConfirmDialogTone;
 }
 
-const DEFAULT_TITLE = "Xác nhận hành động";
-const DEFAULT_MESSAGE = "Bạn có chắc chắn muốn thực hiện thao tác này?";
+const DEFAULT_TITLE = "Confirm action";
+const DEFAULT_MESSAGE = "Are you sure you want to continue?";
 
 const useDialog = () => {
   const [open, setOpen] = useState<boolean>(false);

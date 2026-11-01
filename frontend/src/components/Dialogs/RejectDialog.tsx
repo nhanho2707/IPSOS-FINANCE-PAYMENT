@@ -17,7 +17,7 @@ const RejectDialog: React.FC<RejectDialogProps> = ({
     onConfirm,
     title,
     message,
-    submitText = "Gửi lý do",
+    submitText = "Submit reason",
 }) => {
     const [rejectReason, setRejectReason] = useState<string>('');
 
@@ -37,7 +37,7 @@ const RejectDialog: React.FC<RejectDialogProps> = ({
             onClose={onClose}
             onSubmit={handleConfirm}
             submitText={submitText}
-            cancelText="Huỷ"
+            cancelText="Cancel"
             submitDisabled={!rejectReason.trim()}
             tone="danger"
         >

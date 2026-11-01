@@ -34,11 +34,10 @@ const TradeUnionTransactions: React.FC = () => {
             }
             );
 
-            console.log("Send email response", response.data);
-            setMessage(response.data.message || "Gửi email thành công");
+            setMessage(response.data.message || "Email sent successfully");
         } catch (error) {
             console.error("Send email failed", error);
-            setMessage("Gửi email thất bại, vui lòng thử lại");
+            setMessage("Failed to send email. Please try again.");
         }
     };
 
@@ -75,12 +74,12 @@ const TradeUnionTransactions: React.FC = () => {
 
     const handleImport = async () => {
         if(!listName.trim()){
-            setMessage("Vui lòng nhập tên đợt tặng quà.");
+            setMessage("Please enter a campaign name.");
             return;
         }
 
         if(!selectedFile){
-            setMessage("Vui lòng chọn file để import.");
+            setMessage("Please choose a file to import.");
             return;
         }
 
@@ -96,7 +95,6 @@ const TradeUnionTransactions: React.FC = () => {
                 }
             });
 
-            console.log("Import response", response.data);
 
             if(response.data.status_code === 200){
                 setMessage("Import recipients successfully.");
@@ -105,7 +103,7 @@ const TradeUnionTransactions: React.FC = () => {
             }
         } catch(error){
             console.error("Failed to import recipients", error);
-            setMessage("Đã có lỗi xảy ra khi import. Vui lòng thử lại.");
+            setMessage("Import failed. Please try again.");
         }
 
     }
@@ -139,15 +137,12 @@ const TradeUnionTransactions: React.FC = () => {
             </Box>
             <Box sx={{ mt: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                    Danh sách đợt tặng quà
+                    Gift campaigns
                 </Typography>
                 <ReusableTable
-                    title="Recipient Lists"
                     columns={columns}
                     data={recipientLists}
-                    loading={loading}
-                    error={error}
-                    message={tradeUnionMessage}
+                    actionStatus={{ type: 'fetch', loading, error, message: tradeUnionMessage }}
                     page = {page}
                     rowsPerPage = {rowsPerPage}
                     total = {total}
@@ -161,7 +156,7 @@ const TradeUnionTransactions: React.FC = () => {
                 <DialogContent>
                     <TextField
                         fullWidth
-                        label="Tên đợt tặng quà"
+                        label="Campaign name"
                         value={listName}
                         onChange={(e) => setListName(e.target.value)}
                         sx={{ mb: 2 }}

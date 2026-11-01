@@ -79,7 +79,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
                 .attr('text-anchor', 'middle')
                 .attr('fill', 'var(--text-primary-color)')
                 .style('font-size', `${AXIS_FONT_SIZE}px`)
-                .text('Không có dữ liệu');
+                .text('No data');
 
             return;
         }

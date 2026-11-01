@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Grid, Typography } from '@mui/material';
 import NPSDonutChart from './NPSDonutChart';
 import RankedFactorTable from './RankedFactorTable';
@@ -19,7 +19,21 @@ import {
 } from './umeDashboardData';
 import { UME_COLORS, UME_FONTS } from './umeDashboardTheme';
 
+const FREDOKA_FONT_URL = 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap';
+
+// Fredoka is only used by this dashboard, so it is loaded here instead of in global.css.
+const useFredokaFont = () => {
+  useEffect(() => {
+    if (document.querySelector(`link[href="${FREDOKA_FONT_URL}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = FREDOKA_FONT_URL;
+    document.head.appendChild(link);
+  }, []);
+};
+
 const UMEDashboard = () => {
+  useFredokaFont();
     const [filters, setFilters] = useState<DashboardFilterState>({
         cities: [],
         users: [],

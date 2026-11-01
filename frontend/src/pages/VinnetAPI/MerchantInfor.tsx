@@ -46,7 +46,6 @@ const MerchantInfor = () => {
                     }
                 });
                 
-                console.log(response.data.data);
                 
                 setInputValue("merchantCode", response.data.data.VINNET_MERCHANT_CODE || '');
                 setInputValue("merchantKey", response.data.data.VINNET_MERCHANT_KEY || '');

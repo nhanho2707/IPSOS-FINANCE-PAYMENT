@@ -6,6 +6,7 @@ import { NavLink } from "react-router-dom";
 import logo from "../../assets/img/Ipsos logo.png";
 import { ChevronLeft, ChevronRight, FolderOpen, Logout, ManageAccounts, Payments } from "@mui/icons-material";
 import { useAuth } from "../../contexts/AuthContext";
+import { hasRole, Role, ROLE_ACCESS } from "../../config/RoleConfig";
 
 interface SideBarProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ interface NavItem {
   label: string;
   to: string;
   icon: React.ElementType;
-  allowedRoles: string[] | null; // null = tất cả roles đều thấy
+  allowedRoles: readonly Role[] | null;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -30,20 +31,15 @@ const NAV_ITEMS: NavItem[] = [
     label: "Transactions",
     to: "/transaction-manager/transactions",
     icon: Payments,
-    allowedRoles: ["Admin"],
+    allowedRoles: ROLE_ACCESS.transactionsPage,
   },
   {
     label: "Accounts",
     to: "/account-management/accounts",
     icon: ManageAccounts,
-    allowedRoles: ["Admin"],
+    allowedRoles: ROLE_ACCESS.accountsPage,
   },
 ];
-
-const isNavVisible = (allowedRoles: string[] | null, userRole: string): boolean => {
-  if (!allowedRoles) return true;
-  return allowedRoles.some((r) => r.toLowerCase() === userRole.toLowerCase());
-};
 
 const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -64,14 +60,14 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
   }, []);
 
   const visibleNavs = NAV_ITEMS.filter((nav) =>
-    isNavVisible(nav.allowedRoles, user?.role ?? "")
+    hasRole(user?.role, nav.allowedRoles)
   );
 
   return (
     <div className={`sidebar ${isOpen ? "open" : "close"}`}>
       <div className="sidebar-header">
         <img src={logo} alt="Logo" className="sidebar-logo" />
-        <Tooltip title={isOpen ? "Thu nhỏ" : "Mở rộng"} placement="right">
+        <Tooltip title={isOpen ? "Collapse" : "Expand"} placement="right">
           <IconButton
             onClick={toggleSidebar}
             size="small"
@@ -138,7 +134,7 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
               {user?.first_name} {user?.last_name}
             </Typography>
           )}
-          <Tooltip title="Đăng xuất" placement="right" disableHoverListener={isOpen}>
+          <Tooltip title="Log out" placement="right" disableHoverListener={isOpen}>
             <button className="sidebar-logout-btn" onClick={logout}>
               <Logout sx={{ fontSize: "16px" }} />
               {isOpen && <span>Log out</span>}

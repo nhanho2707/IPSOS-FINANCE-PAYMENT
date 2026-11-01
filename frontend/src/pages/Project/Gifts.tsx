@@ -146,8 +146,8 @@ const Gifts: React.FC = () => {
 
             if (rows.length === 0) {
                 openDialog({
-                    title: "Tặng quà hàng loạt",
-                    message: "Không có đáp viên nào đang ở trạng thái pending.",
+                    title: "Bulk send gifts",
+                    message: "There are no respondents with pending status.",
                     showConfirmButton: false
                 });
             }
@@ -155,8 +155,8 @@ const Gifts: React.FC = () => {
             console.error('Failed to fetch pending respondents', error);
 
             openDialog({
-                title: "Tặng quà hàng loạt",
-                message: "Không tải được danh sách đáp viên pending. Vui lòng thử lại.",
+                title: "Bulk send gifts",
+                message: "Could not load pending respondents. Please try again.",
                 showConfirmButton: false
             });
         } finally {
@@ -169,17 +169,17 @@ const Gifts: React.FC = () => {
         const successCount = results.length - failures.length;
 
         const lines = [
-            `Thành công: ${successCount}/${total}`,
-            `Thất bại: ${failures.length}`,
-            ...(stoppedOnFailures ? [`⚠️ Tự động dừng sau ${MAX_CONSECUTIVE_GIFT_FAILURES} lỗi liên tiếp. Vui lòng kiểm tra lỗi (ví dụ số dư tài khoản) trước khi gửi tiếp.`] : []),
-            ...(results.length < total ? [`Đã dừng: ${total - results.length} đáp viên chưa được gửi.`] : []),
-            ...(failures.length > 0 ? ["", "Danh sách lỗi:"] : []),
+            `Succeeded: ${successCount}/${total}`,
+            `Failed: ${failures.length}`,
+            ...(stoppedOnFailures ? [`⚠️ Stopped automatically after ${MAX_CONSECUTIVE_GIFT_FAILURES} consecutive errors. Check the cause (e.g. account balance) before sending again.`] : []),
+            ...(results.length < total ? [`Stopped: ${total - results.length} respondents were not sent.`] : []),
+            ...(failures.length > 0 ? ["", "Errors:"] : []),
             ...failures.slice(0, MAX_FAILURES_SHOWN).map(f => `❌ ${f.row.respondent_id} (${f.row.phone_number}): ${f.message}`),
-            ...(failures.length > MAX_FAILURES_SHOWN ? [`... và ${failures.length - MAX_FAILURES_SHOWN} lỗi khác`] : [])
+            ...(failures.length > MAX_FAILURES_SHOWN ? [`... and ${failures.length - MAX_FAILURES_SHOWN} more errors`] : [])
         ];
 
         openDialog({
-            title: "Kết quả tặng quà hàng loạt",
+            title: "Bulk send results",
             message: lines.join("\n"),
             showConfirmButton: false
         });
@@ -223,8 +223,8 @@ const Gifts: React.FC = () => {
         if (rows.length === 0) return;
 
         openDialog({
-            title: "Tặng quà hàng loạt",
-            message: `Bạn có chắc chắn muốn tặng quà cho ${rows.length} đáp viên đã chọn?`,
+            title: "Bulk send gifts",
+            message: `Send gifts to the ${rows.length} selected respondents?`,
             showConfirmButton: true,
             onConfirm: () => handleBulkSendConfirm(rows)
         });
@@ -321,7 +321,7 @@ const Gifts: React.FC = () => {
                                 },
                             }}
                             >
-                                Tặng quà
+                                Send gift
                         </LoadingButton>
                         <Tooltip title="Remove respondent">
                             <span>
@@ -372,7 +372,7 @@ const Gifts: React.FC = () => {
             if (!jsonData.length) {
                 openDialog({
                     title: "Import Respondents Failed",
-                    message: 'File không có dữ liệu!',
+                    message: 'The file has no data.',
                     showConfirmButton: false
                 });
                 return;
@@ -391,7 +391,7 @@ const Gifts: React.FC = () => {
             if(missingColumns.length > 0){
                 openDialog({
                     title: "Import Respondents Failed",
-                    message: `File thiếu cột bắt buộc: ${missingColumns.join(", ")} `,
+                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
                     showConfirmButton: false
                 });
                 return;
@@ -456,7 +456,7 @@ const Gifts: React.FC = () => {
                             disabled={selectedCount === 0 || bulkSending}
                             sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '0.625rem', boxShadow: 'none' }}
                         >
-                            Tặng quà hàng loạt ({selectedCount})
+                            Bulk send gifts ({selectedCount})
                         </LoadingButton>
                         <LoadingButton
                             onClick={handleSelectAllPending}
@@ -466,7 +466,7 @@ const Gifts: React.FC = () => {
                             disabled={bulkSending}
                             sx={{ textTransform: 'none', borderRadius: '0.625rem' }}
                         >
-                            Chọn tất cả pending
+                            Select all pending
                         </LoadingButton>
                         {selectedCount > 0 && !bulkSending && (
                             <Button
@@ -474,7 +474,7 @@ const Gifts: React.FC = () => {
                                 onClick={() => setSelectedRows({})}
                                 sx={{ textTransform: 'none' }}
                             >
-                                Bỏ chọn
+                                Clear selection
                             </Button>
                         )}
                         {bulkSending && (
@@ -487,7 +487,7 @@ const Gifts: React.FC = () => {
                                 onClick={handleStopBulkSend}
                                 sx={{ textTransform: 'none', borderRadius: '0.625rem' }}
                             >
-                                {stopRequested ? 'Đang dừng...' : 'Dừng'}
+                                {stopRequested ? 'Stopping...' : 'Stop'}
                             </Button>
                         )}
                     </Box>
@@ -502,7 +502,7 @@ const Gifts: React.FC = () => {
             {bulkProgress && (
                 <Box sx={{ px: 2, mb: 1.5 }}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        Đang tặng quà {bulkProgress.done}/{bulkProgress.total} — thành công {bulkProgress.success}, lỗi {bulkProgress.failed}. Vui lòng không đóng trang.
+                        Sending gifts {bulkProgress.done}/{bulkProgress.total} — {bulkProgress.success} succeeded, {bulkProgress.failed} failed. Please keep this page open.
                     </Typography>
                     <LinearProgress
                         variant="determinate"
@@ -512,7 +512,6 @@ const Gifts: React.FC = () => {
             )}
 
             <ReusableTable
-                title="Employees"
                 columns={columns}
                 data={offineProjectRespondents}
                 actionStatus={{

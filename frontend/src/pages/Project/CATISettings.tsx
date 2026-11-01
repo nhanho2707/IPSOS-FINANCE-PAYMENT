@@ -65,7 +65,7 @@ const CATISettings = () => {
                                 title: "Delete Batch",
                                 tone: "danger",
                                 confirmText: "Delete",
-                                message: "Bạn có chắc chắn muốn delete batch này?",
+                                message: "Are you sure you want to delete this batch?",
                                 showConfirmButton: true,
                                 onConfirm: () => handleRemoveClick(row)
                             })}
@@ -82,7 +82,7 @@ const CATISettings = () => {
                                 title: "Block Batch",
                                 tone: "danger",
                                 confirmText: "Block",
-                                message: `ạn có chắc chắn muốn ${row.status === 'active' ? "block" : "activate" } batch này?`,
+                                message: `Are you sure you want to ${row.status === 'active' ? "block" : "activate" } this batch?`,
                                 showConfirmButton: true,
                                 onConfirm: () => handleBlockClick(row)
                             })}
@@ -117,12 +117,12 @@ const CATISettings = () => {
         const details = Object.entries(grouped).map(([reason, rowNumbers]) => {
             const shown = rowNumbers.slice(0, MAX_ROWS_SHOWN_PER_REASON).join(", ");
             const more = rowNumbers.length > MAX_ROWS_SHOWN_PER_REASON ? `, ... (+${rowNumbers.length - MAX_ROWS_SHOWN_PER_REASON})` : "";
-            return `❌ ${reason}: ${rowNumbers.length} row(s) (dòng ${shown}${more})`;
+            return `❌ ${reason}: ${rowNumbers.length} row(s) (rows ${shown}${more})`;
         });
 
         const lines = [
             `Imported ${result.imported}/${result.total} respondents.`,
-            ...(result.error !== null ? [`⚠️ Import bị dừng: ${result.error}`] : []),
+            ...(result.error !== null ? [`⚠️ Import stopped: ${result.error}`] : []),
             ...(details.length > 0 ? ["", `Skipped ${result.skipped.length} rows:`, ...details] : [])
         ];
 
@@ -142,7 +142,7 @@ const CATISettings = () => {
             if (!batchName.trim()) {
                 openDialog({
                     title: "Import Batch Failed",
-                    message: 'Vui lòng nhập Batch name trước khi import!',
+                    message: 'Please enter a batch name before importing.',
                     showConfirmButton: false
                 });
                 return;
@@ -160,7 +160,7 @@ const CATISettings = () => {
             if (!jsonData.length) {
                 openDialog({
                     title: "Import Batch Failed",
-                    message: 'File không có dữ liệu!',
+                    message: 'The file has no data.',
                     showConfirmButton: false
                 });
                 return;
@@ -179,7 +179,7 @@ const CATISettings = () => {
             if(missingColumns.length > 0){
                 openDialog({
                     title: "Import Batch Failed",
-                    message: `File thiếu cột bắt buộc: ${missingColumns.join(", ")} `,
+                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
                     showConfirmButton: false
                 });
                 return;
@@ -215,7 +215,6 @@ const CATISettings = () => {
     return (
         <Box>
             <ReusableTable
-                title="Batches"
                 columns={columns}
                 data={batches}
                 actionStatus={actionState}

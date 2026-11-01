@@ -16,8 +16,8 @@ export const ModalAddRespondentConfig: ColumnFormat[] = [
     name: "gender",
     type: "select",
     options: [
-      { value: 1, label: 'Nam' },
-      { value: 2, label: 'Nữ' }
+      { value: 1, label: 'Male' },
+      { value: 2, label: 'Female' }
     ],
   },
   {

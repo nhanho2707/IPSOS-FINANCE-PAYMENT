@@ -6,7 +6,7 @@
 
 | File | Dùng cho | Import ở đâu |
 |---|---|---|
-| `global.css` | CSS variables (`:root`), dark mode, font import | `index.tsx` |
+| `global.css` | CSS variables (`:root`), font import | `index.tsx` |
 | `layout.css` | App shell: `.wrapper`, `.content`, `.content-detail` | `index.tsx` |
 | `components.css` | Shared utilities: `.row`, action menu, typography helpers | `index.tsx` |
 | `features.css` | Widget, welcome section, legend, chart, subtotal | `index.tsx` |
@@ -53,13 +53,13 @@ color: var(--text-color);
 
 ### Variables quan trọng
 
-| Variable | Giá trị light | Giá trị dark | Dùng cho |
-|---|---|---|---|
-| `--text-color` | `#212121` | `#eaeff4` | Text chính toàn app |
-| `--background-color` | `#fff` | `#1a1625` | Background card/modal |
-| `--body-color` | `rgb(238,242,246)` | `#121212` | Background page |
-| `--main-color` | `#009d9c` | `#009d9c` | Brand color, button primary |
-| `--sidebar-expanded` | `15.625rem` | — | Width sidebar mở |
+| Variable | Giá trị | Dùng cho |
+|---|---|---|
+| `--text-color` | `#212121` | Text chính toàn app |
+| `--background-color` | `#fff` | Background card/modal |
+| `--body-color` | `rgb(238,242,246)` | Background page |
+| `--main-color` | `#009d9c` (sinh từ `ThemeConfig.ts`) | Brand color, button primary |
+| `--sidebar-expanded` | `15.625rem` | Width sidebar mở |
 | `--sidebar-collapsed` | `5.5rem` | — | Width sidebar đóng |
 | `--transition-02` | `all 0.2s ease` | — | Transition nhanh |
 

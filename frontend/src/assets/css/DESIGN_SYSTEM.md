@@ -71,22 +71,22 @@ Button MUI: dùng `variant="contained"` (tự lấy màu primary), không cần 
 
 ### Text
 
-| Variable | Light | Dark | Dùng cho |
-|---|---|---|---|
-| `--text-color` | `#212121` | `#eaeff4` | Text chính — heading, table value, label |
-| `--text-primary-color` | `#707070` | `#707070` | Text phụ — placeholder, mô tả, nav item |
-| `--text-secondary-color` | `#2f469c` | `#2f469c` | Text nhấn màu xanh dương (tag, link) |
-| `--text-third-color` | `#3948a4` | `#3948a4` | Variant xanh dương đậm hơn |
-| `--text-forth-color` | `#009d9c` | `#009d9c` | Text accent = brand color |
-| `--text-fifth-color` | `rgb(214,67,67)` | — | Text lỗi, cảnh báo |
-| `--text-sixth-color` | `#000000de` | — | Text đen chuẩn MUI (87% opacity) |
+| Variable | Giá trị | Dùng cho |
+|---|---|---|
+| `--text-color` | `#212121` | Text chính — heading, table value, label |
+| `--text-primary-color` | `#707070` | Text phụ — placeholder, mô tả, nav item |
+| `--text-secondary-color` | `#2f469c` | Text nhấn màu xanh dương (tag, link) |
+| `--text-third-color` | `#3948a4` | Variant xanh dương đậm hơn |
+| `--text-forth-color` | `#009d9c` | Text accent = brand color |
+| `--text-fifth-color` | `rgb(214,67,67)` | Text lỗi, cảnh báo |
+| `--text-sixth-color` | `#000000de` | Text đen chuẩn MUI (87% opacity) |
 
 ### Background
 
-| Variable | Light | Dark | Dùng cho |
-|---|---|---|---|
-| `--background-color` | `#ffffff` | `#1a1625` | Card, modal, sidebar, input |
-| `--body-color` | `rgb(238,242,246)` | `#121212` | Page background, row striped, button icon |
+| Variable | Giá trị | Dùng cho |
+|---|---|---|
+| `--background-color` | `#ffffff` | Card, modal, sidebar, input |
+| `--body-color` | `rgb(238,242,246)` | Page background, row striped, button icon |
 
 ### Tonal / Interactive (dùng với opacity — không có variable riêng)
 
@@ -349,17 +349,9 @@ font-weight: 600;
 
 ---
 
-## 5. Dark Mode
+## 5. Ngôn ngữ & Dark mode
 
-Dark mode toggle qua `document.body.classList.toggle("dark")`.
+- Giao diện nội bộ dùng **tiếng Anh** cho mọi nhãn, nút, tiêu đề và thông báo. Ngoại lệ: trang đáp viên (`CustomVoucher`, `CustomVoucherLog`) và màn hình phỏng vấn viên (`MiniCATI`) giữ tiếng Việt.
+- Giữ nguyên tiêu đề cột trong file Excel import/export (ví dụ "Tỉnh thành", "Đơn giá quà 1") vì đó là định dạng file người dùng đang dùng.
+- App **không có dark mode** (đã gỡ phần CSS hỏng). Nếu cần làm lại, dùng `colorSchemes` của MUI trong `ThemeConfig.ts`.
 
-Chỉ có 4 variable thay đổi trong dark mode — chỉ cần dùng đúng variable, dark mode tự hoạt động:
-
-| Variable | Light | Dark |
-|---|---|---|
-| `--background-color` | `#ffffff` | `#1a1625` |
-| `--body-color` | `rgb(238,242,246)` | `#121212` |
-| `--text-color` | `#212121` | `#eaeff4` |
-| (màu khác) | giữ nguyên | giữ nguyên |
-
-**Quy tắc**: Không hardcode màu `#fff` hay `#212121` trong component — dùng variable để được dark mode miễn phí.

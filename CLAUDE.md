@@ -96,8 +96,14 @@ const [actionState, setActionState] = useState<ActionState>({
 
 ### Role-Based UI (RBAC)
 - Visibility is configured in `frontend/src/config/RoleConfig.ts` via `BaseVisibility` + per-role `override` objects.
-- Use `buildVisibility(role)` to get a merged visibility object; never check roles inline with string comparisons in JSX.
+- Use `buildVisibility(role)` (or the `useVisibility()` hook) to get a merged visibility object; never check roles inline with string comparisons in JSX.
+- Action/page permissions live in `ROLE_ACCESS` (mirrors `ensureUserHasRole` in `backend/routes/api.php`); check them with `hasRole(user?.role, ROLE_ACCESS.x)`.
+- Routes: wrap pages with `<ProtectedRoute allowedRoles>` / `<RoleGate allowedRoles>`. Project sub-pages take their roles from `ProjectNavConfig.ts`, which also drives the project sidebar.
 - Backend roles: `Admin`, `Finance`, `Scripter`, `Researcher`, `Field Manager`.
+
+### UI Language
+- Internal UI copy is English. Respondent-facing pages (`CustomVoucher*`) and the interviewer screen (`MiniCATI`) stay Vietnamese.
+- Do not rename Excel import/export column headers; they are the file format users already rely on.
 
 ### Component Rules
 - Use **MUI v5** components (`@mui/material`). Do not introduce a second UI library.

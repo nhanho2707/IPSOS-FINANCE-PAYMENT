@@ -10,7 +10,8 @@ import {
   ChevronRight,
 } from "@mui/icons-material";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { PROJECT_NAV_ITEMS, ProjectNavItem, projectNavPath } from "../../config/ProjectNavConfig";
+import { getProjectNavItemsForRole, ProjectNavItem, projectNavPath } from "../../config/ProjectNavConfig";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ProjectSidebarProps {
   projectId: number;
@@ -21,6 +22,7 @@ interface ProjectSidebarProps {
 
 const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isOpen, toggleSidebar }) => {
   const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -34,7 +36,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
     if (isSmallScreen) toggleSidebar();
   };
 
-  const visibleItems = PROJECT_NAV_ITEMS.filter(
+  const visibleItems = getProjectNavItemsForRole(user?.role).filter(
     (item) => !item.showIf || item.showIf(project)
   );
   const mainItems = visibleItems.filter((item) => item.placement === "main");
@@ -57,7 +59,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
     <div className={`sidebar ${isOpen ? "open" : "close"}`}>
       <div className="sidebar-header">
         <img src={logo} alt="Logo" className="sidebar-logo" />
-        <Tooltip title={isOpen ? "Thu nhỏ" : "Mở rộng"} placement="right">
+        <Tooltip title={isOpen ? "Collapse" : "Expand"} placement="right">
           <IconButton
             onClick={toggleSidebar}
             size="small"

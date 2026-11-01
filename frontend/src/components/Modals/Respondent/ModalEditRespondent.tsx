@@ -99,7 +99,7 @@ const ModalEditRespondent: React.FC<ModalProps> = ({
       //   formData
       // );
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

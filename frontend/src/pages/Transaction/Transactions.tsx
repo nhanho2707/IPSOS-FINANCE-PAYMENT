@@ -95,8 +95,8 @@ const Transactions = () => {
 
             saveBlob(response.data, "gotit_transactions.xlsx");
         }catch(error){
-            console.log("Export failed", error);
-            setExportError(`Export thất bại: ${await getExportErrorMessage(error)}`);
+            console.error("Export failed", error);
+            setExportError(`Export failed: ${await getExportErrorMessage(error)}`);
         } finally{
             setLoadingExport(false);
         }
@@ -122,8 +122,8 @@ const Transactions = () => {
 
             saveBlob(response.data, "transactions.xlsx");
         }catch(error){
-            console.log("Export failed", error);
-            setExportError(`Export thất bại: ${await getExportErrorMessage(error)}`);
+            console.error("Export failed", error);
+            setExportError(`Export failed: ${await getExportErrorMessage(error)}`);
         } finally{
             setLoadingExportByProjects(false);
         }
@@ -274,7 +274,7 @@ const Transactions = () => {
             )}
             <Grid item xs={12}>
                 <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                    Chọn ngày để xuất transactions (Ví dụ: 01/01/2026 - 01/31/2026)
+                    Choose a date range to export transactions (e.g. 01/01/2026 - 01/31/2026)
                 </Typography>
                 <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="Export Excel" loadingButton={loadingExport} onSearchChange={handleExport} />
                 <Divider sx={{ mt: 2 }} />
@@ -293,7 +293,7 @@ const Transactions = () => {
                         }}
                     >
                         <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                            Chọn dự án để xuất transactions:
+                            Choose projects to export transactions:
                         </Typography>
                         <Autocomplete
                             multiple
@@ -345,7 +345,7 @@ const Transactions = () => {
                 <Divider sx={{ mt: 2, mb: 2 }} />
 
                 <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
-                    Thống kê thời gian phỏng vấn & nhận quà
+                    Interview & gift timing statistics
                 </Typography>
 
                 <Autocomplete
@@ -357,8 +357,8 @@ const Transactions = () => {
                         <TextField
                             {...params}
                             size="small"
-                            label="Chọn dự án"
-                            placeholder="Tất cả dự án"
+                            label="Projects"
+                            placeholder="All projects"
                             sx={{ maxWidth: 400 }}
                         />
                     )}

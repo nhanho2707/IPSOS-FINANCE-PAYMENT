@@ -66,13 +66,13 @@ export default function CustomVoucher() {
                 setQrBase64(null);
                 setUuid(null);
                 setMessage(res.data.error)
-                console.log(res.data.error)
+                console.error(res.data.error)
             }
         }catch(err){
             setQrBase64(null);
             setUuid(null);
             setMessage("Có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ hỗ trợ.")
-            console.log(err)
+            console.error(err)
         } finally {
             setLoading(false);
         }
@@ -102,7 +102,7 @@ export default function CustomVoucher() {
             link.href = dataUrl;
             link.click();
         }catch(err){
-            console.log("Lỗi khi tạo ảnh: ", err);
+            console.error("Lỗi khi tạo ảnh: ", err);
         }
     }
 

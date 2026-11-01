@@ -41,14 +41,14 @@ export function useCodeframe() {
                 type: "import",
                 loading: false,
                 error: false,
-                message: "Import dữ liệu thành công",
+                message: "Data imported successfully",
             });
         } catch (error: any) {
             setActionState({
                 type: "import",
                 loading: false,
                 error: true,
-                message: error.response?.data?.message ?? "Import thất bại, vui lòng thử lại",
+                message: error.response?.data?.message ?? "Import failed. Please try again.",
             });
         }
     }, []);

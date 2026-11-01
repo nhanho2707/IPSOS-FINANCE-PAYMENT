@@ -52,7 +52,7 @@ const DashboardProject: React.FC = () => {
         <Grid item xs={12} sm={3}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2">Tiến độ dự án</Typography>
+              <Typography variant="subtitle2">Project progress</Typography>
               <Typography variant="h5">{kpi.progress}%</Typography>
               <LinearProgress variant="determinate" value={kpi.progress} sx={{ mt: 1 }} />
             </CardContent>
@@ -61,7 +61,7 @@ const DashboardProject: React.FC = () => {
         <Grid item xs={12} sm={3}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2">Quota hoàn thành</Typography>
+              <Typography variant="subtitle2">Quota completed</Typography>
               <Typography variant="h5">
                 {kpi.quota.completed} / {kpi.quota.total}
               </Typography>
@@ -76,15 +76,15 @@ const DashboardProject: React.FC = () => {
         <Grid item xs={12} sm={3}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2">Ngày còn lại</Typography>
-              <Typography variant="h5">{kpi.daysLeft} ngày</Typography>
+              <Typography variant="subtitle2">Days left</Typography>
+              <Typography variant="h5">{kpi.daysLeft} days</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={3}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2">Nguy cơ / Cảnh báo</Typography>
+              <Typography variant="subtitle2">Risks / Alerts</Typography>
               <Typography variant="h5" color="error">
                 {kpi.risk}%
               </Typography>
@@ -99,7 +99,7 @@ const DashboardProject: React.FC = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle1">Tiến độ theo tuần</Typography>
+              <Typography variant="subtitle1">Weekly progress</Typography>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={lineData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -125,8 +125,8 @@ const DashboardProject: React.FC = () => {
                   <YAxis type="category" dataKey="team" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" stackId="a" fill="#4caf50" name="Hoàn thành" />
-                  <Bar dataKey="remaining" stackId="a" fill="#e0e0e0" name="Còn lại" />
+                  <Bar dataKey="completed" stackId="a" fill="#4caf50" name="Completed" />
+                  <Bar dataKey="remaining" stackId="a" fill="#e0e0e0" name="Remaining" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -138,17 +138,17 @@ const DashboardProject: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="subtitle1" sx={{ mb: 2 }}>
-            Danh sách task / milestone
+            Tasks / milestones
           </Typography>
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>Task / Milestone</TableCell>
                 <TableCell>Team</TableCell>
-                <TableCell>Trạng thái</TableCell>
-                <TableCell>Ngày bắt đầu</TableCell>
-                <TableCell>Ngày kết thúc</TableCell>
-                <TableCell>% Hoàn thành</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Start date</TableCell>
+                <TableCell>End date</TableCell>
+                <TableCell>% Complete</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

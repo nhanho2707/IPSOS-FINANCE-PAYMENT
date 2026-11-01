@@ -40,16 +40,6 @@
   width: 400px;
 }
 
-.TextFieldLogin
-  .MuiOutlinedInput-root.Mui-focused
-  .MuiOutlinedInput-notchedOutline {
-  border-color: var(--main-color) !important;
-}
-
-.TextFieldLogin .MuiFormLabel-root.Mui-focused {
-  color: var(--main-color) !important;
-}
-
 .email-control,
 .error-control,
 .password-control {

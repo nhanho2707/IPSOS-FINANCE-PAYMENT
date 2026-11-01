@@ -63,8 +63,11 @@ line-height: 2.5rem; /* welcome section items — do legacy, không nhân rộng
 | Variable | Hex | Dùng cho |
 |---|---|---|
 | `--main-color` | `#009d9c` | Button primary, active nav, accent, icon màu chính |
+| `--main-color-dark` | `#007a79` | Hover của button primary |
 
-Không dùng `#009d9c` hardcode — luôn dùng `var(--main-color)`.
+Màu brand được định nghĩa trong `src/config/ThemeConfig.ts` (`BRAND`) và đưa vào MUI theme (`palette.primary`) lẫn biến CSS.
+Không dùng `#009d9c` hardcode — trong `sx` dùng `"primary.main"`, trong CSS dùng `var(--main-color)`.
+Button MUI: dùng `variant="contained"` (tự lấy màu primary), không cần override bằng `!important`.
 
 ### Text
 
@@ -98,26 +101,33 @@ Không dùng `#009d9c` hardcode — luôn dùng `var(--main-color)`.
 | Icon wrap active | `rgba(0,157,156, 0.18)` | Background icon khi active |
 | Logout button hover | `rgba(229,57,53, 0.08)` | Hover nút đăng xuất |
 
-### Status — Project
+### Status (nguồn duy nhất: `src/config/ThemeConfig.ts`)
 
-| Class | Hex | Trạng thái |
-|---|---|---|
-| `.planned` | `#FFA500` | Planned |
-| `.in-coming` | `#FFD700` | Incoming |
-| `.on-going` | `#00BFFF` | On-going |
-| `.completed` | `#32CD32` | Completed |
-| `.on-hold` | `#FF6347` | On-hold |
-| `.cancelled` | `#B22222` | Cancelled |
+Màu trạng thái chia thành 6 **tone**. Mỗi tone có 3 màu: `bg` (nền chip), `fg` (chữ, tương phản ≥ 5.7:1 trên `bg`) và `dot` (chấm tròn, tương phản ≥ 3:1 trên nền trắng).
 
-### Status — Transaction
+| Tone | bg | fg | dot |
+|---|---|---|---|
+| `neutral` | `#eceff1` | `#455a64` | `#78909c` |
+| `info` | `#e3f2fd` | `#0d47a1` | `#1e88e5` |
+| `brand` | `#e0f4f4` | `#00605f` | `#009d9c` |
+| `success` | `#e8f5e9` | `#1b5e20` | `#43a047` |
+| `warning` | `#fff3e0` | `#8a4500` | `#ef6c00` |
+| `danger` | `#fdecea` | `#b71c1c` | `#e53935` |
 
-| Class | Dùng cho |
-|---|---|
-| `.success` | `var(--status-completed-color)` |
-| `.pending` | `var(--status-in-coming-color)` |
-| `.suppended` | `var(--status-on-hold-color)` |
-| `.refused` | `var(--status-cancelled-color)` |
-| `.failed` | `var(--status-planned-color)` |
+Ánh xạ trạng thái → tone:
+
+| Project (`PROJECT_STATUS_TONE`) | Tone | Transaction / Gift (`TRANSACTION_STATUS_TONE`) | Tone |
+|---|---|---|---|
+| planned | neutral | pending | warning |
+| in coming | info | success | success |
+| on going | brand | refused | neutral |
+| completed | success | failed | danger |
+| on hold | warning | suppended | neutral |
+| cancelled | danger | | |
+
+Hiển thị trạng thái bằng `<StatusChip label tone />` (`src/components/StatusChip.tsx`), dùng `getStatusTone(status, map)` để lấy tone. Không dùng chữ trắng trên nền màu trạng thái.
+
+CSS có thể dùng biến `--status-<tone>-bg|fg|dot` (được sinh từ `ThemeConfig.ts` qua `GlobalStyles`).
 
 ### Provider
 
@@ -141,7 +151,7 @@ Không hardcode màu avatar trực tiếp — lấy từ variable theo index.
 
 | Giá trị | Dùng cho |
 |---|---|
-| `0.375rem` (5px) | Badge nhỏ, `.box-status-button` |
+| `0.375rem` (5px) | Badge nhỏ |
 | `0.5rem` (7px) | Button `.btn`, toggle button |
 | `0.625rem` (9px) | Nav item, card row, sidebar-user, modal button |
 | `0.75rem` (10.5px) | Modal box |

@@ -200,7 +200,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           key={datePickerKey}
           fromValue={dateFrom ? dayjs(dateFrom) : null}
           toValue={dateTo ? dayjs(dateTo) : null}
-          buttonLabel="LỌC"
+          buttonLabel="Lọc"
           loadingButton={actionState.loading}
           onSearchChange={handleDateRangeChange}
         />

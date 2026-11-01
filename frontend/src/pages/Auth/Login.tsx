@@ -122,13 +122,9 @@ const Login = () => {
 
           <div className="btn-login">
             <Button
-              sx={{
-                width: "100%",
-                my: 4,
-                backgroundColor: "var(--main-color) !important",
-                color: "#fff",
-                textTransform: "none !important",
-              }}
+              variant="contained"
+              fullWidth
+              sx={{ my: 4 }}
               onClick={handleLogin}
             >
               Sign In

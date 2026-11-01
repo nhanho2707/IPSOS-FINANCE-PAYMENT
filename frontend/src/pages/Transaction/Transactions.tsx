@@ -276,7 +276,7 @@ const Transactions = () => {
                 <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
                     Chọn ngày để xuất transactions (Ví dụ: 01/01/2026 - 01/31/2026)
                 </Typography>
-                <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="EXPORT EXCEL" loadingButton={loadingExport} onSearchChange={handleExport} />
+                <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="Export Excel" loadingButton={loadingExport} onSearchChange={handleExport} />
                 <Divider sx={{ mt: 2 }} />
             </Grid>
             <Grid item xs={12}>

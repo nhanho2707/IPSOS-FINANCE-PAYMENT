@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, IconButton, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, Button, IconButton, Switch, Tooltip, Typography } from "@mui/material";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { useProjects } from "../../hook/useProjects";
 import { useMetadata } from "../../hook/useMetadata";
@@ -17,7 +17,6 @@ import SearchTextBox from "../../components/SearchTextBox";
 import ModalAddProject from "../../components/Modals/Project/ModalAddProject";
 import ModalCloneProject from "../../components/Modals/Project/ModalCloneProject";
 import { Dayjs } from "dayjs";
-import { formatClass } from "../../utils/format";
 import { useAuth } from "../../contexts/AuthContext";
 
 const Projects = () => {
@@ -54,25 +53,16 @@ const Projects = () => {
 
   const columns: ColumnFormat[] = [
     {
-      label: "",
-      name: "flatform",
-      type: "image",
-      align: "center",
-      width: 40,
-      renderCell: (row: ProjectData) => {
-        return (
-          <Avatar
-            className={formatClass(row.status || "")}
-            sx={{
-              width: '28px',
-              height: '28px',
-              fontSize: '8px'
-            }}
-          >
-            {row.id}
-          </Avatar>
-        );
-      }
+      label: "ID",
+      name: "id",
+      type: "number",
+      align: "left",
+      width: 56,
+      renderCell: (row: ProjectData) => (
+        <Typography component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
+          #{row.id}
+        </Typography>
+      )
     },
     ...ProjectCellConfig,
     {
@@ -98,7 +88,7 @@ const Projects = () => {
       name: "status",
       type: "string",
       align: "left",
-      width: 100,
+      width: 140,
       renderCell: (row: ProjectData) => {
         return (
           <StatusDropdown

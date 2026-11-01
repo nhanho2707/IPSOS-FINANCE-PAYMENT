@@ -15,6 +15,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import LoadingButton from '@mui/lab/LoadingButton';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import StopIcon from '@mui/icons-material/Stop';
+import StatusChip from "../../components/StatusChip";
+import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
+import { toProperCase } from "../../utils/format";
 
 const MAX_FAILURES_SHOWN = 30;
 
@@ -260,7 +263,7 @@ const Gifts: React.FC = () => {
             name: "status",
             type: "string",
             align: "center",
-            flex: 1,
+            width: 112,
             renderHeader: () => {
                 return (
                     <div style={{ whiteSpace: "normal", lineHeight: 1.2, textAlign: "center" }}>
@@ -268,13 +271,13 @@ const Gifts: React.FC = () => {
                     </div>
                 );
             },
-            renderCell: (row: any) => {
-                return (
-                    <div>
-                        <span className={"box-status-button " + row.status.toLocaleLowerCase().replace(" ", "-")}>{row.status}</span>
-                    </div>
-                );
-            }
+            renderCell: (row: OfflineProjectRespondentData) => (
+                <StatusChip
+                    label={toProperCase(row.status ?? "")}
+                    tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
+                    tooltip={row.status_label}
+                />
+            )
         },
         {
             label: "Actions",

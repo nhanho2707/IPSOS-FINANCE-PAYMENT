@@ -79,14 +79,3 @@
 .icon-status {
   position: relative;
 }
-
-.MuiPopover-paper {
-  box-shadow: none !important;
-}
-
-.box-status-popover {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}

@@ -56,7 +56,7 @@
 }
 
 .btn-modal-submit:hover {
-  background-color: #0056b3; /* adjust darker main-color if needed */
+  background-color: var(--main-color-dark);
 }
 
 /* === Modal Content === */

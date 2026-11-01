@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════
    COMPONENTS — Shared UI utilities
-   Dùng cho: button, status badge, action menu,
+   Dùng cho: button, action menu,
              row layout, background utilities
    ════════════════════════════════════════════ */
 
@@ -48,51 +48,6 @@
 .bg-gotit-secondary  { background-color: var(--gotit-color-primary) !important; }
 .bg-vinnet-primary   { background-color: var(--vinnet-color-primary) !important; }
 
-/* ── Project status dot ─────────────────────── */
-
-.icon-status-project {
-  width: 0.9375rem;
-  height: 0.9375rem;
-  border-radius: 50%;
-  position: relative;
-  cursor: pointer;
-}
-
-.planned    { background-color: #FFA500 !important; }
-.in-coming  { background-color: #FFD700 !important; }
-.on-going   { background-color: #00BFFF !important; }
-.completed  { background-color: #32CD32 !important; }
-.on-hold    { background-color: #FF6347 !important; }
-.cancelled  { background-color: #B22222 !important; }
-
-.txt-status-project {
-  padding: 0.25rem;
-  border-radius: 0.625rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* ── Transaction status ─────────────────────── */
-
-.success    { background-color: var(--status-completed-color); }
-.pending    { background-color: var(--status-in-coming-color); }
-.suppended  { background-color: var(--status-on-hold-color); }
-.refused    { background-color: var(--status-cancelled-color); }
-.failed     { background-color: var(--status-planned-color); }
-
-.box-status-button {
-  font-size: 0.8125rem;
-  padding: 0.3125rem;
-  border-radius: 0.3125rem;
-  color: #fff;
-  font-weight: 600;
-  min-width: 0.8125rem;
-}
-
-.box-status-button:hover {
-  opacity: 0.5;
-}
-
 /* ── Row layout ─────────────────────────────── */
 
 .row {
@@ -133,7 +88,7 @@
 }
 
 .message-invalid span {
-  color: rgb(214, 67, 67);
+  color: var(--text-fifth-color);
 }
 
 /* ── Typography helpers ─────────────────────── */

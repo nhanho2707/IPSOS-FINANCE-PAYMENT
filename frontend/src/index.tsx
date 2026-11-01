@@ -10,6 +10,8 @@ import "./assets/css/table.css";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GlobalStyles, ThemeProvider } from "@mui/material";
+import { appTheme, themeCssVariables } from "./config/ThemeConfig";
 
 const queryClient = new QueryClient();
 
@@ -19,11 +21,14 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </I18nextProvider>
+    <ThemeProvider theme={appTheme}>
+      <GlobalStyles styles={{ ":root": themeCssVariables }} />
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </I18nextProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

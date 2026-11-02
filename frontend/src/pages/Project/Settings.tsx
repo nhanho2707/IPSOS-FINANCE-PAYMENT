@@ -19,7 +19,7 @@ interface SettingsData {
 
 const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <>
-        <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
+        <Typography component="dt" variant="body2" sx={{ color: "text.secondary" }}>{label}</Typography>
         <Typography component="dd" variant="body2" sx={{ m: 0, minWidth: 0, overflowWrap: "anywhere" }}>{children || "—"}</Typography>
     </>
 );
@@ -122,7 +122,7 @@ const Settings = () => {
                 <Typography id="province-prices-title" variant="h2" sx={{ mb: 0.5 }}>
                     Sample size and gift prices
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
                     Each gift is paid at the price set here for the respondent’s province and price level.
                 </Typography>
                 <ProvincePricesTable projectId={projectId} canEdit={canEdit} />

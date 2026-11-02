@@ -6,7 +6,7 @@ import axios from "axios";
 import { ApiConfig } from "../../config/ApiConfig";
 import { useTradeUnion } from "../../hook/useTradeUnion";
 import { RecipientListCellConfig } from "../../config/TradeUnionFieldsConfig";
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 
 const TradeUnionTransactions: React.FC = () => {
 
@@ -164,9 +164,9 @@ const TradeUnionTransactions: React.FC = () => {
                     <TextField
                         fullWidth
                         type="file"
-                        inputProps={{accept: ".csv,.xlsx,.xls"}}
                         onChange={handleFileChange}
                         sx={{ mb: 2 }}
+                        slotProps={{ htmlInput: {accept: ".csv,.xlsx,.xls"} }}
                     />
                     {message && (
                         <Typography variant="body2" color="error" sx = {{ mb: 2 }}>
@@ -182,9 +182,9 @@ const TradeUnionTransactions: React.FC = () => {
                         Import
                     </Button>
                 </DialogActions>
-            </Dialog>    
+            </Dialog>
         </Box>
-    )
+    );
 }
 
 export default TradeUnionTransactions;

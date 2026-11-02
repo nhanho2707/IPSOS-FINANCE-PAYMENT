@@ -3,9 +3,8 @@ import axios from "axios";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { useEffect, useState } from "react";
 import { useProjects } from "../../hook/useProjects";
-import { Autocomplete, Box, Checkbox, Grid, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Checkbox, Grid, TextField, Typography, Button } from "@mui/material";
 import { useMetadata } from "../../hook/useMetadata";
-import LoadingButton from "@mui/lab/LoadingButton";
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import { UserData } from "../../config/AccountFieldsConfig";
 import { useToast } from "../../contexts/ToastContext";
@@ -60,7 +59,7 @@ const Assignment: React.FC = () => {
     
     return (
         <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
                     Select users to assign to this project:
                 </Typography>
@@ -85,7 +84,7 @@ const Assignment: React.FC = () => {
                             )}
                         />
                     </Box>
-                    <LoadingButton
+                    <Button
                         variant="contained"
                         onClick={handleAssignUsers}
                         size="small"
@@ -95,12 +94,12 @@ const Assignment: React.FC = () => {
                         disabled={assignedUsers.length === 0}
                     >
                         <span>Assign</span>
-                    </LoadingButton>
+                    </Button>
                 </Box>
 
             </Grid>
         </Grid>
-    )
+    );
 }
 
 export default Assignment;

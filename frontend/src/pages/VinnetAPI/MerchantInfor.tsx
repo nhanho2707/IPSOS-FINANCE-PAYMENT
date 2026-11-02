@@ -12,11 +12,11 @@ import {
     CardHeader,
     CardContent,
     CardActions,
-    Divider
+    Divider,
+    Button,
 } from '@mui/material';
 
 import { VisibilityOff, Visibility } from "@mui/icons-material";
-import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
 import { ApiConfig } from '../../config/ApiConfig';
 import { useInputContext } from '../../contexts/InputContext';
@@ -115,7 +115,7 @@ const MerchantInfor = () => {
                 <Divider />
                 <CardContent>
                     <Grid container spacing={2} columns={16}>
-                        <Grid item xs={8}>
+                        <Grid size={8}>
                             <Stack spacing={1}>
                                 <InputLabel htmlFor="merchantcode">Merchant Code</InputLabel>
                                 <FormControl fullWidth variant="outlined">
@@ -135,7 +135,7 @@ const MerchantInfor = () => {
                                 </FormControl>
                             </Stack>
                         </Grid>
-                        <Grid item xs={8}>
+                        <Grid size={8}>
                             <Stack spacing={1}>
                                 <InputLabel htmlFor="merchantkey">Merchant Key</InputLabel>
                                 <FormControl fullWidth variant="outlined">
@@ -159,7 +159,7 @@ const MerchantInfor = () => {
                 </CardContent>
                 <Divider />
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
-                    <LoadingButton
+                    <Button
                         size="small"
                         onClick={handleChangeKey}
                         endIcon={<SendIcon />}
@@ -168,11 +168,11 @@ const MerchantInfor = () => {
                         variant="contained"
                         >
                         <span>Change Key</span>
-                    </LoadingButton>
+                    </Button>
                 </CardActions>
             </Card>
         </>
-    )
+    );
 }
 
 export default MerchantInfor;

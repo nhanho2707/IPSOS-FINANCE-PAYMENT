@@ -14,8 +14,7 @@ import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import useDialog from "../../hook/useDialog";
 import { useProjectContext } from "../../hook/useProjectContext";
 import { MAX_CONSECUTIVE_GIFT_FAILURES, useOfflineProjectRespondents } from "../../hook/useOfflineProjectRespondents";
-import { DeleteOutline, FileUploadOutlined, StopCircleOutlined } from "@mui/icons-material";
-import LoadingButton from '@mui/lab/LoadingButton';
+import { DeleteOutlineOutlined, FileUploadOutlined, StopCircleOutlined } from "@mui/icons-material";
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import StatusChip from "../../components/StatusChip";
 import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
@@ -280,7 +279,7 @@ const Gifts: React.FC = () => {
                     indeterminate={selectedOnPageCount > 0 && selectedOnPageCount < pendingRowsOnPage.length}
                     disabled={bulkSending || pendingRowsOnPage.length === 0}
                     onChange={handleTogglePage}
-                    inputProps={{ 'aria-label': 'Select pending respondents on this page' }}
+                    slotProps={{ input: { 'aria-label': 'Select pending respondents on this page' } }}
                 />
             ),
             renderCell: (row: OfflineProjectRespondentData) => (
@@ -289,7 +288,7 @@ const Gifts: React.FC = () => {
                     checked={Boolean(selectedRows[row.id])}
                     disabled={bulkSending || row.status !== 'pending'}
                     onChange={() => handleToggleRow(row)}
-                    inputProps={{ 'aria-label': `Select ${row.respondent_id}` }}
+                    slotProps={{ input: { 'aria-label': `Select ${row.respondent_id}` } }}
                 />
             )
         },
@@ -385,7 +384,7 @@ const Gifts: React.FC = () => {
                     <RowActions
                         menuLabel={`Actions for ${row.respondent_id}`}
                         primary={isPending && (
-                            <LoadingButton
+                            <Button
                                 onClick={() => handleSendGiftClick(row)}
                                 size="small"
                                 startIcon={<CardGiftcardIcon />}
@@ -397,12 +396,12 @@ const Gifts: React.FC = () => {
                                 sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
                                 Send gift
-                            </LoadingButton>
+                            </Button>
                         )}
                         items={[
                             {
                                 label: "Remove respondent",
-                                icon: DeleteOutline,
+                                icon: DeleteOutlineOutlined,
                                 tone: "danger",
                                 onClick: () => handleRemoveClick(row),
                                 disabled: !isPending || bulkSending,
@@ -518,9 +517,9 @@ const Gifts: React.FC = () => {
             summary={selectedTotal > 0 ? `${formatMoney(selectedTotal)} in total` : undefined}
             onClear={() => setSelectedRows({})}
             extra={
-                <LoadingButton size="small" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
+                <Button size="small" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
                     Select all pending
-                </LoadingButton>
+                </Button>
             }
             progress={bulkProgress ? {
                 value: bulkProgress.total > 0 ? (bulkProgress.done / bulkProgress.total) * 100 : 0,
@@ -589,9 +588,9 @@ const Gifts: React.FC = () => {
                     onChange: handleSearchChange,
                 }}
                 toolbarActions={selectedCount === 0 && !bulkSending && (
-                    <LoadingButton size="small" color="inherit" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
+                    <Button size="small" color="inherit" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
                         Select all pending
-                    </LoadingButton>
+                    </Button>
                 )}
                 bulkBar={bulkBar}
                 banner={(bulkOutcome || failedBanner) && (

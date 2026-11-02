@@ -113,8 +113,8 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
             const value = e.target.value as unknown as string[] | string;
             update({ teams: typeof value === "string" ? value.split(",") : value });
           }}
-          SelectProps={{ multiple: true }}
           sx={{ gridColumn: "1 / -1" }}
+          slotProps={{ select: { multiple: true } }}
         >
           {(metadata?.teams ?? []).map((team) => (
             <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>

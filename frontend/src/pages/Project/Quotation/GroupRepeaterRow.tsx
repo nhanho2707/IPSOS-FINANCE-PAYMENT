@@ -263,7 +263,7 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                 </TableCell>
                 <TableCell>
                     {groups.length === 0 && !isEditing && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                             -
                         </Typography>
                     )}

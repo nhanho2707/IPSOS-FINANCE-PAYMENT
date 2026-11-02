@@ -182,7 +182,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
 
     return (
         <Card variant="outlined">
-            <CardHeader title={title} titleTypographyProps={{ variant: 'h2' }} />
+            <CardHeader title={title} slotProps={{ title: { variant: 'h2' } }} />
             <CardContent>
                 <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
                     <svg

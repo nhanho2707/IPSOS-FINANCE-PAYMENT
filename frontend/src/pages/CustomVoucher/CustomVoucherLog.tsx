@@ -75,7 +75,7 @@ export default function CustomVoucherLog(){
                         gap: 2
                     }}
                 >
-                    <Typography variant="h6" textAlign="center">Nhập Thông Tin</Typography>
+                    <Typography variant="h6" sx={{ textAlign: "center" }}>Nhập Thông Tin</Typography>
                     <Box>
                         <Typography variant="body2" gutterBottom>
                             Mã số PVV
@@ -137,5 +137,5 @@ export default function CustomVoucherLog(){
                 )}
             </Card>
         </Box>
-    )
+    );
 }

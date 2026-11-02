@@ -41,7 +41,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ title, description, action, ico
             {title}
         </Typography>
         {description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 440, whiteSpace: "normal" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5, maxWidth: 440, whiteSpace: "normal" }}>
                 {description}
             </Typography>
         )}

@@ -42,7 +42,7 @@ const RankedFactorTable: React.FC<RankedFactorTableProps> = ({ title, data }) =>
                         const widthPct = Math.min(100, (factor.value / maxValue) * 100);
 
                         return (
-                            <Stack key={factor.label} direction="row" spacing={1.5} alignItems="center">
+                            <Stack key={factor.label} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                                 <Icon sx={{ color: UME_COLORS.magnitude, fontSize: 20, flexShrink: 0 }} />
 
                                 <Typography
@@ -72,9 +72,7 @@ const RankedFactorTable: React.FC<RankedFactorTableProps> = ({ title, data }) =>
 
                                 <Typography
                                     variant="caption"
-                                    fontWeight={700}
-                                    sx={{ color: UME_COLORS.ink, width: 24, flexShrink: 0, textAlign: 'right' }}
-                                >
+                                    sx={{ fontWeight: 700, color: UME_COLORS.ink, width: 24, flexShrink: 0, textAlign: 'right' }}>
                                     {factor.value}
                                 </Typography>
                             </Stack>

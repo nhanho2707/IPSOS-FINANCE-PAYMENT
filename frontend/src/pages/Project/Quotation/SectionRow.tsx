@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField, Tooltip, Typography } from "@mui/material";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import RadioRow from "./RadioRow";
 import RangeRow from "./RangeRow";
 import MultiSelectRow from "./MultiSelectRow";
@@ -92,7 +92,7 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                     </Typography>
                 )}
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, px: 0.5 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.25, px: 0.5 }}>
                 {entry.user_name} · {formatDateTime(entry.created_at)}
             </Typography>
         </Box>

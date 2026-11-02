@@ -50,7 +50,10 @@ const SampleProgress: React.FC<SampleProgressProps> = ({ completed, target, fiel
             <Box sx={{ minWidth: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: hideCounts ? "flex-end" : "space-between", gap: 1 }}>
                     {!hideCounts && (
-                        <Typography component="span" variant="body2" fontWeight={500} sx={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+                        <Typography
+                            component="span"
+                            variant="body2"
+                            sx={{ fontWeight: 500, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
                             {formatNumber(completed)} / {formatNumber(target)}
                         </Typography>
                     )}

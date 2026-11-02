@@ -49,7 +49,7 @@ const ProjectLayout: React.FC = () => {
   return (
     <AppShell
       mobileTitle={
-        <Typography variant="body2" fontWeight={600} noWrap>
+        <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
           {project?.project_name ?? "Project"}
         </Typography>
       }

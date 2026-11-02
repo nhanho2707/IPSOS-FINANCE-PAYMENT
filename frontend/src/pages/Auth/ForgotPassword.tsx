@@ -8,8 +8,8 @@ import {
   Typography,
   Alert,
   Link,
+  Button,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from "@mui/icons-material/Send";
 import { useNavigate } from "react-router-dom";
 import { ApiConfig } from "../../config/ApiConfig";
@@ -73,10 +73,10 @@ const ForgotPassword = () => {
           gap: 3,
         }}
       >
-        <Typography variant="h5" textAlign="center">
+        <Typography variant="h5" sx={{ textAlign: "center" }}>
           Reset Password
         </Typography>
-        <Typography variant="body2" textAlign="center" color="text.secondary">
+        <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
           Enter your email and we will send you a link to reset your password.
         </Typography>
 
@@ -96,7 +96,7 @@ const ForgotPassword = () => {
           />
         </FormControl>
 
-        <LoadingButton
+        <Button
           fullWidth
           type="submit"
           endIcon={<SendIcon />}
@@ -105,17 +105,15 @@ const ForgotPassword = () => {
           disabled={!email || !!successMessage}
         >
           Send reset link
-        </LoadingButton>
+        </Button>
 
         <Link
           component="button"
           type="button"
           variant="body2"
           underline="hover"
-          color="text.secondary"
           onClick={() => navigate("/login")}
-          sx={{ alignSelf: "center" }}
-        >
+          sx={{ color: "text.secondary", alignSelf: "center" }}>
           Back to login
         </Link>
       </Box>

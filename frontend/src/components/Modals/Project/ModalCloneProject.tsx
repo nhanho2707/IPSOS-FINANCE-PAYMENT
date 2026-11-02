@@ -124,11 +124,11 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
                   />
                 }
                 label={option.label}
-                componentsProps={{ typography: { variant: "body2" } }}
+                slotProps={{ typography: { variant: "body2" } }}
               />
             ))}
           </FormGroup>
-          <Typography variant="caption" component="p" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="caption" component="p" sx={{ color: "text.secondary", mt: 0.5 }}>
             Platform, project types and teams are always copied. Respondents, transactions, interviewers and CATI batches are not copied.
           </Typography>
         </Box>

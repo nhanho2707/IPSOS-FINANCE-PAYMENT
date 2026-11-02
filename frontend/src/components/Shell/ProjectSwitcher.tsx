@@ -55,19 +55,18 @@ const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({ projectId, project, l
                                 <>
                                     <Typography
                                         variant="body2"
-                                        fontWeight={600}
                                         sx={{
+                                            fontWeight: 600,
                                             display: "-webkit-box",
                                             WebkitLineClamp: 2,
                                             WebkitBoxOrient: "vertical",
                                             overflow: "hidden",
-                                            overflowWrap: "anywhere",
-                                        }}
-                                    >
+                                            overflowWrap: "anywhere"
+                                        }}>
                                         {name}
                                     </Typography>
                                     {meta && (
-                                        <Typography variant="caption" color="text.secondary" component="div" noWrap>
+                                        <Typography variant="caption" component="div" noWrap sx={{ color: "text.secondary" }}>
                                             {meta}
                                         </Typography>
                                     )}

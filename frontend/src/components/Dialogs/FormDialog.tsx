@@ -10,7 +10,6 @@ import {
     DialogContentText,
     DialogTitle,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 
 interface FormDialogProps {
     open: boolean;
@@ -29,7 +28,7 @@ interface FormDialogProps {
     maxWidth?: Breakpoint;
 }
 
-// A short form in a dialog. The paper is a real <form>, so Enter in a field submits it.
+// A short form in a dialog. The content is a real <form>, so Enter in a field submits it.
 const FormDialog: React.FC<FormDialogProps> = ({
     open,
     title,
@@ -50,15 +49,17 @@ const FormDialog: React.FC<FormDialogProps> = ({
         onClose={loading ? undefined : onClose}
         fullWidth
         maxWidth={maxWidth}
-        PaperProps={{
-            component: "form",
-            noValidate: true,
-            onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
+    >
+        {/* display: contents keeps the dialog's own flex layout (scrolling content, fixed actions). */}
+        <Box
+            component="form"
+            noValidate
+            onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
                 event.preventDefault();
                 if (!submitDisabled && !loading) onSubmit();
-            },
-        }}
-    >
+            }}
+            sx={{ display: "contents" }}
+        >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
             {description && (
@@ -78,7 +79,7 @@ const FormDialog: React.FC<FormDialogProps> = ({
             <Button onClick={onClose} color="inherit" disabled={loading}>
                 {cancelText}
             </Button>
-            <LoadingButton
+            <Button
                 type="submit"
                 variant="contained"
                 color={tone === "danger" ? "error" : "primary"}
@@ -86,8 +87,9 @@ const FormDialog: React.FC<FormDialogProps> = ({
                 loading={loading}
             >
                 {submitText}
-            </LoadingButton>
+            </Button>
         </DialogActions>
+        </Box>
     </Dialog>
 );
 

@@ -2,7 +2,7 @@ import { Autocomplete, Box, Button, Checkbox, Dialog, DialogActions, DialogConte
 import { memo, useMemo, useState } from "react";
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import { FieldSchema } from "../../../utils/renderFields";
 import { useInputRule } from "../../../hook/useInputRule";
 import { FeedbackThread, FeedbackThreadEntry } from "../../../config/QuotationConfig";
@@ -80,7 +80,7 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                     </Typography>
                 )}
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, px: 0.5 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.25, px: 0.5 }}>
                 {entry.user_name} · {formatDateTime(entry.created_at)}
             </Typography>
         </Box>

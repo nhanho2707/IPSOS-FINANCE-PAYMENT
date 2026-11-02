@@ -8,8 +8,8 @@ import {
   Link,
   TextField,
   Typography,
+  Button,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import { VisibilityOff, Visibility } from "@mui/icons-material";
 import { Link as RouterLink, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -111,7 +111,7 @@ const Login = () => {
             <BrandMark />
           </Box>
           <Typography component="h1" variant="h1">Sign in</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
             Use your Ipsos account.
           </Typography>
 
@@ -142,18 +142,20 @@ const Login = () => {
               value={credentials.password}
               onChange={handleChange("password")}
               sx={{ mt: 2.5 }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
 
@@ -163,7 +165,7 @@ const Login = () => {
               </Link>
             </Box>
 
-            <LoadingButton
+            <Button
               type="submit"
               variant="contained"
               fullWidth
@@ -173,7 +175,7 @@ const Login = () => {
               sx={{ mt: 3 }}
             >
               Sign in
-            </LoadingButton>
+            </Button>
           </Box>
         </Box>
       </Box>

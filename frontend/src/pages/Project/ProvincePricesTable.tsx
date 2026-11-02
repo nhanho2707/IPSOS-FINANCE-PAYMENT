@@ -2,7 +2,7 @@ import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { Alert, AlertTitle, Autocomplete, Box, Stack, TextField } from "@mui/material";
-import { DeleteOutline } from "@mui/icons-material";
+import { DeleteOutlineOutlined } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
@@ -208,7 +208,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 <RowActions
                     menuLabel={`Actions for ${row.province_name} ${row.price_type}`}
                     items={[
-                        { label: "Delete price", icon: DeleteOutline, tone: "danger", onClick: () => setRowToDelete(row) },
+                        { label: "Delete price", icon: DeleteOutlineOutlined, tone: "danger", onClick: () => setRowToDelete(row) },
                     ]}
                 />
             ),
@@ -573,8 +573,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={!provincePriceData.province || !provincePriceData.price_type}
                             value={provincePriceData.sample_size}
                             onChange={(e) => handleProvincePriceDataChange("sample_size", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
 
                         />
                         <TextField
@@ -584,8 +584,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={provincePriceData.sample_size == 0}
                             value={provincePriceData.price}
                             onChange={(e) => handleProvincePriceDataChange("price", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
                         />
                         <TextField
                             size="small"
@@ -594,8 +594,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={provincePriceData.price == 0}
                             value={provincePriceData.price_1}
                             onChange={(e) => handleProvincePriceDataChange("price_1", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
                         />
                         <TextField
                             size="small"
@@ -604,8 +604,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={provincePriceData.price_1 == 0}
                             value={provincePriceData.price_2}
                             onChange={(e) => handleProvincePriceDataChange("price_2", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
                         />
                         <TextField
                             size="small"
@@ -614,8 +614,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={provincePriceData.price_2 == 0}
                             value={provincePriceData.price_3}
                             onChange={(e) => handleProvincePriceDataChange("price_3", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
                         />
                         <TextField
                             size="small"
@@ -624,8 +624,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={provincePriceData.price_3 == 0}
                             value={provincePriceData.price_4}
                             onChange={(e) => handleProvincePriceDataChange("price_4", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
                         />
                         <TextField
                             size="small"
@@ -634,8 +634,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             disabled={provincePriceData.price_4 == 0}
                             value={provincePriceData.price_5}
                             onChange={(e) => handleProvincePriceDataChange("price_5", e.target.value)}
-                            inputProps={{ min: 0 }}
                             fullWidth
+                            slotProps={{ htmlInput: { min: 0 } }}
                         />
                     </Stack>
             </FormDialog>
@@ -650,7 +650,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                 
                 message={rowToDelete ? `Are you sure you want to delete the "${rowToDelete.price_type}" price for ${rowToDelete.province_name}?` : ""}
             />
-        </Box>  
+        </Box>
     );
 };
 

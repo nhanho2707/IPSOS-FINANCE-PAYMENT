@@ -63,7 +63,7 @@ export function useAccounts() {
             setActionState((prev) => ({
                 ...prev,
                 loading: false,
-                ...options?.silent ? {} : { message: response.data.message }
+                ...(options?.silent ? {} : { message: response.data.message })
             }));
         }catch(error: unknown){
             const message = getAccountErrorMessage(error, 'Failed to fetch Accounts.');

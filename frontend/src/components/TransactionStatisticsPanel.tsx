@@ -134,7 +134,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       align: "right",
       width: 88,
       renderCell: (row) => (
-        <Typography component="span" color="error" fontWeight={600} fontSize="inherit">
+        <Typography component="span" color="error" sx={{ fontWeight: 600, fontSize: "inherit" }}>
           {formatMinutes(row.gap_minutes)}
         </Typography>
       )
@@ -160,7 +160,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           ))}
         </TextField>
 
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
           Interview date:
         </Typography>
 
@@ -187,28 +187,28 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       )}
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label="Respondents who received a gift"
             value={formatNumber(total)}
             caption={channelBreakdown("count")}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label="Total gift value (VND)"
             value={formatNumber(statistics?.total_amount)}
             caption={channelBreakdown("amount")}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label="Median time: interview end → gift received"
             value={formatMinutes(statistics?.gap_median_minutes)}
             caption={gapExcludedCaption ? `Excludes: ${gapExcludedCaption}` : undefined}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label={`Anomalies (gift received before interview ended${toleranceText})`}
             value={anomaliesTotal}
@@ -219,21 +219,21 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       </Grid>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <HourlyHistogramChart
             title="Interview start time (Vietnam time)"
             data={toHistogramData(statistics?.interview_time_buckets)}
             valueLabel="Interviews"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <HourlyHistogramChart
             title="Gift received time (Vietnam time)"
             data={toHistogramData(statistics?.gift_time_buckets)}
             valueLabel="Gifts received"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           {/* The backend owns the bucket labels (they embed the tolerance) and sends them in display order. */}
           <HourlyHistogramChart
             title="Gap: interview end → gift received"
@@ -246,11 +246,11 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       <ReusableTable
         topToolbar={
           <Box>
-            <Typography variant="subtitle1" fontWeight={600}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               Needs review (gift received before interview ended{toleranceText})
             </Typography>
             {anomaliesTotal > anomalies.length && (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Showing the {anomalies.length}/{anomaliesTotal} largest gaps. Narrow the filters to see all.
               </Typography>
             )}

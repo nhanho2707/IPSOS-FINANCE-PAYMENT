@@ -1,8 +1,8 @@
+import { Button } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs"
 import SearchDatePicker from "./SearchDatePicker"
 import React, { useState } from "react"
 import { DateView } from '@mui/x-date-pickers/models';
-import LoadingButton from "@mui/lab/LoadingButton";
 
 interface SearchDatePickerFromToProps {
     fromValue: Dayjs | null,
@@ -47,7 +47,7 @@ const SearchDatePickerFromTo: React.FC<SearchDatePickerFromToProps> = ({
         <div style={{display: "flex", gap: "0.5rem", alignItems: "center" }}>
             <SearchDatePicker title="From:" name= "fromDate" value={fromDate} views={views} onSearchChange={handleDateChange} />
             <SearchDatePicker title="To:" name= "toDate" value={toDate} views={views} onSearchChange={handleDateChange} />
-            <LoadingButton
+            <Button
                 onClick={handleFilter}
                 size="small"
                 startIcon={buttonIcon}
@@ -57,7 +57,7 @@ const SearchDatePickerFromTo: React.FC<SearchDatePickerFromToProps> = ({
                 disabled={isApplyFilter}
                 >
                     <span>{buttonLabel ?? "Apply"}</span>
-            </LoadingButton>
+            </Button>
         </div>
     )
 }

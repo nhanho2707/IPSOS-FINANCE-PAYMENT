@@ -145,11 +145,18 @@ export const appTheme = createTheme({
         disableElevation: true,
       },
       styleOverrides: {
-        // Secondary actions: <Button variant="outlined" color="inherit">
-        outlinedInherit: {
-          borderColor: NEUTRAL[300],
-          color: NEUTRAL[700],
-          "&:hover": { borderColor: NEUTRAL[300], backgroundColor: NEUTRAL[50] },
+        root: {
+          variants: [
+            {
+              // Secondary actions: <Button variant="outlined" color="inherit">
+              props: { variant: "outlined", color: "inherit" },
+              style: {
+                borderColor: NEUTRAL[300],
+                color: NEUTRAL[700],
+                "&:hover": { borderColor: NEUTRAL[300], backgroundColor: NEUTRAL[50] },
+              },
+            },
+          ],
         },
       },
     },

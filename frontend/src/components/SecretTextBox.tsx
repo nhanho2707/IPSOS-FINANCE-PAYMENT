@@ -25,7 +25,7 @@ const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
         }
     };
 
-    return (                            
+    return (
         <div style={{ marginBottom: "1rem" }}>
             <Typography variant="body2" gutterBottom>
                 { label }
@@ -35,22 +35,24 @@ const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
                 value = { value }
                 fullWidth
                 size="small"
-                InputProps={{
-                    readOnly: true, //chỉ hiển thị, không cho sửa
-                    endAdornment:(
-                        <InputAdornment position="end">
-                            <IconButton onClick={handleToggleVisibility} aria-label={show ? "Hide value" : "Show value"}>
-                                {show ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                            <IconButton onClick={handleCopy} aria-label="Copy to clipboard">
-                                <ContentCopy />
-                            </IconButton>
-                        </InputAdornment>
-                    ) 
+                slotProps={{
+                    input: {
+                        readOnly: true, //chỉ hiển thị, không cho sửa
+                        endAdornment:(
+                            <InputAdornment position="end">
+                                <IconButton onClick={handleToggleVisibility} aria-label={show ? "Hide value" : "Show value"}>
+                                    {show ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                                <IconButton onClick={handleCopy} aria-label="Copy to clipboard">
+                                    <ContentCopy />
+                                </IconButton>
+                            </InputAdornment>
+                        ) 
+                    }
                 }}
             />
         </div>
-    )
+    );
 }
 
 export default SecretTextBox;

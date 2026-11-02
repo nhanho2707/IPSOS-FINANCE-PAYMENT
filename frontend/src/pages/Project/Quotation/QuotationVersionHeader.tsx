@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Button, MenuItem, Step, StepLabel, Stepper, TextField, Tooltip, Typography } from "@mui/material";
-import { Add, CheckCircleOutline, Close, DeleteOutline, EditOutlined, Link as LinkIcon, Send, Undo } from "@mui/icons-material";
+import { Add, CheckCircleOutlineOutlined, Close, DeleteOutlineOutlined, EditOutlined, Link as LinkIcon, Send, Undo } from "@mui/icons-material";
 import { QuotationVersionData } from "../../../config/QuotationConfig";
 import { getStatusTone, QUOTATION_STATUS_TONE } from "../../../config/ThemeConfig";
 import { formatDate, formatStatus } from "../../../utils/format";
@@ -88,13 +88,13 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
             return <Button variant="contained" startIcon={<Send />} onClick={onSubmit}>Submit for review</Button>;
         }
         if (researcherCanAct && status === "fm_confirmed" && canApprove) {
-            return <Button variant="contained" startIcon={<CheckCircleOutline />} onClick={onApprove}>Approve</Button>;
+            return <Button variant="contained" startIcon={<CheckCircleOutlineOutlined />} onClick={onApprove}>Approve</Button>;
         }
         if (!canMutate && status === "submitted") {
             return (
                 <Tooltip title={hasPendingFeedback ? "Some feedback is still open. The researcher must resolve or reject all of it before the FM review can be confirmed." : ""}>
                     <span>
-                        <Button variant="contained" startIcon={<CheckCircleOutline />} onClick={onConfirmFm} disabled={hasPendingFeedback}>
+                        <Button variant="contained" startIcon={<CheckCircleOutlineOutlined />} onClick={onConfirmFm} disabled={hasPendingFeedback}>
                             Confirm FM review
                         </Button>
                     </span>
@@ -108,7 +108,7 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
         { label: "Create new version", icon: Add, onClick: onNewVersion, disabled: isEditing },
         { label: "Withdraw to draft", icon: Undo, onClick: onWithdraw, hidden: status !== "submitted", disabled: isEditing },
         { label: "Withdraw to submitted", icon: Undo, onClick: onWithdraw, hidden: status !== "fm_confirmed", disabled: isEditing },
-        { label: "Delete draft", icon: DeleteOutline, tone: "danger", onClick: onDelete, hidden: status !== "draft", disabled: isEditing },
+        { label: "Delete draft", icon: DeleteOutlineOutlined, tone: "danger", onClick: onDelete, hidden: status !== "draft", disabled: isEditing },
     ] : [];
 
     return (
@@ -121,8 +121,8 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
                     value={selectedVersion.id}
                     disabled={isEditing}
                     onChange={(event) => onSelectVersion(versions.find(v => v.id === Number(event.target.value)) ?? null)}
-                    SelectProps={{ renderValue: () => `Version ${selectedVersion.version}` }}
                     sx={{ width: 160 }}
+                    slotProps={{ select: { renderValue: () => `Version ${selectedVersion.version}` } }}
                 >
                     {versions.map((v) => (
                         <MenuItem key={v.id} value={v.id} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
@@ -133,7 +133,9 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
                 </TextField>
                 <StatusChip label={formatStatus(status)} tone={getStatusTone(status, QUOTATION_STATUS_TONE)} />
                 {isEditing && (
-                    <Typography variant="body2" color="text.secondary">Editing: save the form below to keep your changes.</Typography>
+                    <Typography variant="body2" sx={{
+                        color: "text.secondary"
+                    }}>Editing: save the form below to keep your changes.</Typography>
                 )}
 
                 <Box sx={{ ml: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
@@ -165,7 +167,7 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
                         <Step key={step}>
                             <StepLabel
                                 optional={
-                                    <Typography variant="caption" color="text.secondary" component="div" sx={{ textAlign: "center" }}>
+                                    <Typography variant="caption" component="div" sx={{ color: "text.secondary", textAlign: "center" }}>
                                         {stepCaption(step, selectedVersion, activeStep)}
                                     </Typography>
                                 }

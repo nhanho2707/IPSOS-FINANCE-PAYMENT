@@ -60,7 +60,7 @@ export const useCATIBatch = (projectId: number) => {
             setActionState((prev) => ({
                 ...prev,
                 loading: false,
-                ...options?.silent ? {} : { message: response.data.message }
+                ...(options?.silent ? {} : { message: response.data.message })
             }));
         } catch(error:any){
             setActionState((prev) => ({

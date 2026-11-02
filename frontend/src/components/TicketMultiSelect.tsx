@@ -30,8 +30,10 @@ const TicketMultiSelect: React.FC<TicketMultiSelectProps> = ({label, titleDialog
             <TextField
                 value = { selected_items.join(", ") }
                 fullWidth
-                InputProps={{
-                    readOnly: true
+                slotProps={{
+                    input: {
+                        readOnly: true
+                    }
                 }}
             ></TextField>
 

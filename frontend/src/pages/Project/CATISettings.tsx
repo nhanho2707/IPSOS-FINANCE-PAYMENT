@@ -1,5 +1,5 @@
 import { Alert, AlertTitle, Autocomplete, Box, Button, TextField, Typography } from "@mui/material";
-import { BlockOutlined, CheckCircleOutline, DeleteOutline, FileUploadOutlined } from "@mui/icons-material";
+import { BlockOutlined, CheckCircleOutlineOutlined, DeleteOutlineOutlined, FileUploadOutlined } from "@mui/icons-material";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { CATIBatchData, CATIImportResult, CATIImportSkippedRow, CATIRespondentImportRow, CATIRespondentSheetRow, MiniCATIBatchCellConfig } from "../../config/MiniCATIFieldsConfig";
 import { CATI_BATCH_STATUS_TONE, getStatusTone } from "../../config/ThemeConfig";
@@ -106,12 +106,12 @@ const CATISettings = () => {
                     items={[
                         {
                             label: row.status === 'active' ? "Block batch" : "Activate batch",
-                            icon: row.status === 'active' ? BlockOutlined : CheckCircleOutline,
+                            icon: row.status === 'active' ? BlockOutlined : CheckCircleOutlineOutlined,
                             onClick: () => confirmStatusChange(row),
                         },
                         {
                             label: "Delete batch",
-                            icon: DeleteOutline,
+                            icon: DeleteOutlineOutlined,
                             tone: "danger",
                             onClick: () => confirmDelete(row),
                             disabled: row.to_used,
@@ -269,8 +269,8 @@ const CATISettings = () => {
                     renderOption={(props, option) => (
                         <li {...props} key={option.id}>
                             <Box>
-                                <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.name}</Typography>
+                                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                                     {formatNumber(option.total_records)} records
                                 </Typography>
                             </Box>
@@ -290,7 +290,7 @@ const CATISettings = () => {
 
             <ConfirmDialog {...dialogProps} />
         </>
-    )
+    );
 }
 
 export default CATISettings;

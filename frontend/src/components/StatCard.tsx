@@ -40,7 +40,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, caption, tone = "defa
         }}
     >
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, minHeight: 24 }}>
-            <Typography variant="body2" color="text.secondary">{label}</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>{label}</Typography>
             {action}
         </Box>
         {loading ? (
@@ -55,7 +55,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, caption, tone = "defa
             </Typography>
         )}
         {caption && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 {caption}
             </Typography>
         )}

@@ -1,6 +1,5 @@
 import React from "react";
 import { Breakpoint, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 
 interface GenericDialogProps {
     open: boolean,
@@ -38,7 +37,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={onClose} color="inherit" disabled={loading}>{cancelText}</Button>
-                <LoadingButton
+                <Button
                     onClick={onSubmit}
                     variant="contained"
                     color={tone === "danger" ? "error" : "primary"}
@@ -46,7 +45,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
                     loading={loading}
                 >
                     {submitText}
-                </LoadingButton>
+                </Button>
             </DialogActions>
         </Dialog>
     )

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Button, Chip, ListItemText, MenuItem, MenuList, Popover, Stack, Typography } from "@mui/material";
-import { AddCircleOutline, Check, Close } from "@mui/icons-material";
+import { AddCircleOutlineOutlined, Check, Close } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { NEUTRAL } from "../../config/ThemeConfig";
@@ -26,8 +26,8 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, value, onClear, children
     const close = () => setAnchorEl(null);
 
     const icon = isToggle
-        ? (active ? <Check /> : <AddCircleOutline />)
-        : (isSet ? undefined : <AddCircleOutline />);
+        ? (active ? <Check /> : <AddCircleOutlineOutlined />)
+        : (isSet ? undefined : <AddCircleOutlineOutlined />);
 
     return (
         <>
@@ -218,7 +218,7 @@ export const SelectFilter = <T extends string | number>({ label, value, options,
                                 close();
                             }}
                         >
-                            <ListItemText primaryTypographyProps={{ variant: "body2" }}>{option.label}</ListItemText>
+                            <ListItemText slotProps={{ primary: { variant: "body2" } }}>{option.label}</ListItemText>
                             {option.value === value && <Check fontSize="small" sx={{ ml: 2, color: "primary.main" }} />}
                         </MenuItem>
                     ))}

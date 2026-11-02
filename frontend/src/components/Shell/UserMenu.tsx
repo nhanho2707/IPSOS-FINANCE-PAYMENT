@@ -52,8 +52,8 @@ const UserMenu: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                     {!collapsed && (
                         <>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography variant="body2" fontWeight={600} noWrap>{name}</Typography>
-                                <Typography variant="caption" color="text.secondary" component="div" noWrap>
+                                <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>{name}</Typography>
+                                <Typography variant="caption" component="div" noWrap sx={{ color: "text.secondary" }}>
                                     {user?.role}
                                 </Typography>
                             </Box>
@@ -73,8 +73,8 @@ const UserMenu: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                 slotProps={{ paper: { sx: { minWidth: 220, mt: -0.5 } } }}
             >
                 <Box sx={{ px: 2, py: 1 }}>
-                    <Typography variant="body2" fontWeight={600} noWrap>{name}</Typography>
-                    <Typography variant="caption" color="text.secondary">{user?.role}</Typography>
+                    <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>{name}</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{user?.role}</Typography>
                 </Box>
                 <Divider />
                 <MenuItem

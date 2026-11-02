@@ -117,11 +117,11 @@ const YearComparisonBarChart: React.FC<YearComparisonBarChartProps> = ({ title, 
                     </Typography>
                 )}
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
+                    <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
                         <Box sx={{ width: 10, height: 10, borderRadius: '2px', backgroundColor: UME_COLORS.y2025 }} />
                         <Typography variant="caption" sx={{ color: UME_COLORS.ink }}>2025</Typography>
                     </Stack>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
+                    <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
                         <Box sx={{ width: 10, height: 10, borderRadius: '2px', backgroundColor: UME_COLORS.y2026 }} />
                         <Typography variant="caption" sx={{ color: UME_COLORS.ink }}>2026</Typography>
                     </Stack>

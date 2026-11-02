@@ -237,7 +237,7 @@ Dùng bội số của `0.25rem` (3.5px với base 14px):
 
 ### Button
 
-Dùng trực tiếp `Button` / `LoadingButton` của MUI, không thêm class CSS (`.btn`, `.bg-*` đã bị xoá).
+Dùng trực tiếp `Button` của MUI, không thêm class CSS (`.btn`, `.bg-*` đã bị xoá). Nút đang xử lý dùng prop `loading` của `Button` (MUI 9 đã bỏ `LoadingButton` trong `@mui/lab`).
 Nhãn nút viết hoa chữ đầu câu ("New project", "Import respondents"); theme đã tắt viết hoa toàn bộ — không gõ cứng chữ in hoa.
 
 | Loại | Code |
@@ -246,6 +246,14 @@ Nhãn nút viết hoa chữ đầu câu ("New project", "Import respondents"); t
 | Phụ (Import, Export…) | `<Button variant="outlined" color="inherit">` — viền xám trung tính từ theme |
 | Cancel / tertiary | `<Button color="inherit">` |
 | Nguy hiểm (xoá, disable) | `<Button variant="contained" color="error">` |
+
+### Bố cục và props (MUI 9)
+
+| Việc | Cách viết |
+|---|---|
+| Lưới | `<Grid container spacing={2.5}>` và con `<Grid size={{ xs: 12, md: 6 }}>`; không còn `item`, `xs`, `md` riêng lẻ. Grid dùng `gap`, nên đặt trong `Stack` vẫn thẳng hàng với tiêu đề |
+| Khoảng cách, màu chữ, độ đậm | Viết trong `sx` (`sx={{ mt: 1, color: "text.secondary", fontWeight: 600 }}`); MUI 9 bỏ system props kiểu `<Typography mt={1} fontWeight={600}>` |
+| Tuỳ chỉnh phần con của component | `slotProps` / `slots` (`slotProps={{ paper: { sx } }}`, `slotProps={{ htmlInput: { maxLength } }}`); các prop cũ như `PaperProps`, `inputProps`, `TransitionProps`, `renderTags` đã bị bỏ |
 
 ### Khung ứng dụng (AppShell)
 

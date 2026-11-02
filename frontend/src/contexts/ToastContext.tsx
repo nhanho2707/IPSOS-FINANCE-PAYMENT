@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
-import { Alert, AlertColor, Snackbar } from "@mui/material";
+import { Alert, AlertColor, Snackbar, SnackbarCloseReason } from "@mui/material";
 
 interface ToastState {
     key: number;
@@ -22,7 +22,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setOpen(true);
     }, []);
 
-    const handleClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
+    const handleClose = (_event?: React.SyntheticEvent | Event | null, reason?: SnackbarCloseReason) => {
         if (reason === "clickaway") return;
         setOpen(false);
     };

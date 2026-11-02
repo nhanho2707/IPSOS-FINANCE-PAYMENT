@@ -20,7 +20,7 @@ const CellStack: React.FC<CellStackProps> = ({ primary, secondary, title, numeri
                 {primary}
             </Typography>
             {secondary && (
-                <Typography component="span" variant="caption" color="text.secondary" sx={lineSx}>
+                <Typography component="span" variant="caption" sx={{ ...lineSx, color: "text.secondary" }}>
                     {secondary}
                 </Typography>
             )}

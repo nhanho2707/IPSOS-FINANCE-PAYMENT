@@ -128,11 +128,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
             onClose={onClose}
             fullWidth
             maxWidth="sm"
-            // autoFocus alone loses to the modal's focus trap when the palette is opened by a click.
-            TransitionProps={{ onEntered: () => inputRef.current?.focus(), onExited: () => setQuery("") }}
             sx={{ "& .MuiDialog-container": { alignItems: "flex-start" } }}
-            PaperProps={{ sx: { mt: { xs: 2, sm: "12vh" }, overflow: "hidden" } }}
-        >
+            slotProps={{
+                transition: { onEntered: () => inputRef.current?.focus(), onExited: () => setQuery("") },
+                paper: { sx: { mt: { xs: 2, sm: "12vh" }, overflow: "hidden" } }
+            }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 2, height: 52, borderBottom: 1, borderColor: "divider" }}>
                 <Search sx={{ fontSize: 20, color: "text.secondary" }} />
                 <InputBase
@@ -174,7 +174,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                             <ListItemIcon sx={{ minWidth: 0, color: "text.secondary" }}>
                                 <Icon sx={{ fontSize: 18 }} />
                             </ListItemIcon>
-                            <ListItemText primary={item.label} primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
+                            <ListItemText primary={item.label} slotProps={{ primary: { variant: "body2", sx: { fontWeight: 500 } } }} />
                         </ListItemButton>
                     );
                 })}
@@ -191,11 +191,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                             <ListItemText
                                 primary={project.project_name}
                                 secondary={[project.internal_code, project.symphony].filter(Boolean).join(" · ")}
-                                primaryTypographyProps={{ variant: "body2", fontWeight: 500, noWrap: true }}
-                                secondaryTypographyProps={{ variant: "caption", noWrap: true }}
                                 sx={{ minWidth: 0 }}
+                                slotProps={{
+                                    primary: { variant: "body2", noWrap: true, sx: { fontWeight: 500 } },
+                                    secondary: { variant: "caption", noWrap: true },
+                                }}
                             />
-                            <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                            <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
                                 {isCurrent ? "Current" : formatStatus(project.status)}
                             </Typography>
                         </ListItemButton>
@@ -207,7 +209,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                     </Typography>
                 )}
                 {showEmpty && (
-                    <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 1.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", px: 2, py: 1.5 }}>
                         {hasQuery ? `No projects match “${query.trim()}”.` : "No projects yet."}
                     </Typography>
                 )}

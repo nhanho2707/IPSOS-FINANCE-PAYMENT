@@ -1,5 +1,5 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
-import { ErrorOutline, LockOutlined, SearchOff } from "@mui/icons-material";
+import { ErrorOutlineOutlined, LockOutlined, SearchOff } from "@mui/icons-material";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import EmptyState from "../../components/EmptyState";
 import { BrandMark } from "../../components/Shell/AppShell";
@@ -28,13 +28,13 @@ const ErrorPage = () => {
 
   // Some callers send only the last digit of the HTTP status (4 for 404, 3 for 403).
   const code = errorCode < 10 ? 400 + errorCode : errorCode;
-  const { title, icon } = ERROR_TITLES[code] ?? { title: "Something went wrong", icon: ErrorOutline };
+  const { title, icon } = ERROR_TITLES[code] ?? { title: "Something went wrong", icon: ErrorOutlineOutlined };
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, px: 2, py: 6, bgcolor: "background.default" }}>
       <BrandMark />
       <Paper elevation={0} sx={{ width: "100%", maxWidth: 520, border: 1, borderColor: "divider", borderRadius: "12px" }}>
-        <Typography variant="overline" component="p" color="text.secondary" sx={{ textAlign: "center", pt: 3 }}>
+        <Typography variant="overline" component="p" sx={{ color: "text.secondary", textAlign: "center", pt: 3 }}>
           Error {code}
         </Typography>
         <EmptyState
@@ -51,7 +51,7 @@ const ErrorPage = () => {
             </>
           }
           action={
-            <Stack direction="row" spacing={1.5} justifyContent="center">
+            <Stack direction="row" spacing={1.5} sx={{ justifyContent: "center" }}>
               <Button variant="contained" component={RouterLink} to="/project-management/projects">
                 Back to projects
               </Button>

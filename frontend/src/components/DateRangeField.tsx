@@ -33,17 +33,19 @@ const DateRangeField: React.FC<DateRangeFieldProps> = ({ label, from, to, onChan
                         setAnchorEl(event.currentTarget);
                     }
                 }}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                    readOnly: true,
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <CalendarMonthOutlined fontSize="small" />
-                        </InputAdornment>
-                    ),
-                }}
-                inputProps={{ "aria-haspopup": "dialog" }}
                 sx={{ minWidth: 240, "& .MuiInputBase-root, & input": { cursor: "pointer" } }}
+                slotProps={{
+                    input: {
+                        readOnly: true,
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <CalendarMonthOutlined fontSize="small" />
+                            </InputAdornment>
+                        ),
+                    },
+                    htmlInput: { "aria-haspopup": "dialog" },
+                    inputLabel: { shrink: true },
+                }}
             />
             <Popover
                 open={Boolean(anchorEl)}

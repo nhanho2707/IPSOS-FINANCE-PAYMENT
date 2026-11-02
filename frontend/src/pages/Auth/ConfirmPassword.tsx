@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { VisibilityOff, Visibility } from "@mui/icons-material";
-import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
 
 import {
@@ -12,8 +11,9 @@ import {
     OutlinedInput,
     IconButton,
     FormControl,
-    Box
-  } from "@mui/material";
+    Box,
+    Button,
+} from "@mui/material";
 import { ApiConfig } from "../../config/ApiConfig";
 
 const useQuery = () => {
@@ -90,10 +90,10 @@ const ConfirmPassword = () => {
                     gap: 3
                 }}
             >
-                <Typography variant="h5" textAlign="center">
+                <Typography variant="h5" sx={{ textAlign: "center" }}>
                     Confirm password
                 </Typography>
-                <Typography variant="body2" textAlign="center">
+                <Typography variant="body2" sx={{ textAlign: "center" }}>
                     This is a secure area of the application. Please confirm your password before continuing.
                 </Typography>
                 {statusMessage.length !== 0 && (
@@ -129,7 +129,7 @@ const ConfirmPassword = () => {
                         label="Confirm Password"
                     />
                 </FormControl>
-                <LoadingButton
+                <Button
                     fullWidth
                     type="submit"
                     endIcon={<SendIcon />}
@@ -137,7 +137,7 @@ const ConfirmPassword = () => {
                     variant="contained"
                 >
                     Reset password
-                </LoadingButton>
+                </Button>
             </Box>
         </Box>
     );

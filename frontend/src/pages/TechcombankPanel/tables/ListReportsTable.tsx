@@ -9,7 +9,7 @@ import SlideShowModal from "../modals/SlideShowModal";
 import InputAdornment from '@mui/material/InputAdornment';
 import { MagnifyingGlass as MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import dayjs, { Dayjs } from 'dayjs';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid';
 import { DatePicker, DatePickerProps } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -31,7 +31,7 @@ const ListReportsTable: React.FC<ListReportsProps> = ({surveys}) => {
         setPage(newPage);
     }
 
-    const handleDateChange: DatePickerProps<Dayjs, false>['onChange'] = (newDate) => {
+    const handleDateChange: DatePickerProps['onChange'] = (newDate) => {
         setSelectedDate(newDate);
     };
 
@@ -75,8 +75,8 @@ const ListReportsTable: React.FC<ListReportsProps> = ({surveys}) => {
 
     return (
         <Grid container spacing={3}>
-            
-            <Grid lg={12} md={12} xs={12}>
+
+            <Grid size={{ lg: 12, md: 12, xs: 12 }}>
                 <Card sx={{ p: 2, display: "flex", flexDirection: "row", gap: 10, justifyContent: "stretch", alignItems: "center" }}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DesktopDatePicker
@@ -99,7 +99,7 @@ const ListReportsTable: React.FC<ListReportsProps> = ({surveys}) => {
                     />
                 </Card>
             </Grid>
-            <Grid lg={12} md={12} xs={12}>
+            <Grid size={{ lg: 12, md: 12, xs: 12 }}>
                 <Paper sx={{width: '100%', mb: 2}}>
                     <TableContainer component={Paper} className="table-container">
                         <Table>
@@ -192,7 +192,7 @@ const ListReportsTable: React.FC<ListReportsProps> = ({surveys}) => {
                 <SlideShowModal openModal={isModalOpen} onClose={handleCloseModal} />
             </Grid>
         </Grid>
-    )
+    );
 }
 
 export default ListReportsTable;

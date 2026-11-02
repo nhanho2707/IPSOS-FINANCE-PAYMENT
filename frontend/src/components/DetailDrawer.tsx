@@ -22,11 +22,13 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({ open, onClose, title, subti
             anchor="right"
             open={open}
             onClose={onClose}
-            PaperProps={{
-                role: "dialog",
-                "aria-modal": true,
-                "aria-labelledby": titleId,
-                sx: { width: { xs: "100%", sm: width }, maxWidth: "100%", display: "flex", flexDirection: "column" },
+            slotProps={{
+                paper: {
+                    role: "dialog",
+                    "aria-modal": true,
+                    "aria-labelledby": titleId,
+                    sx: { width: { xs: "100%", sm: width }, maxWidth: "100%", display: "flex", flexDirection: "column" },
+                }
             }}
         >
             <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, px: 3, py: 2, borderBottom: 1, borderColor: "divider" }}>
@@ -35,7 +37,7 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({ open, onClose, title, subti
                         {title}
                     </Typography>
                     {subtitle && (
-                        <Typography variant="body2" color="text.secondary" noWrap>
+                        <Typography variant="body2" noWrap sx={{ color: "text.secondary" }}>
                             {subtitle}
                         </Typography>
                     )}

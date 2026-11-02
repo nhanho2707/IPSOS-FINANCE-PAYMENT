@@ -34,11 +34,11 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({ label, summary, actions, 
             }}
         >
             <Box sx={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", columnGap: 1.25, minWidth: 0 }} aria-live="polite">
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {progress ? progress.label : label}
                 </Typography>
                 {!progress && summary && (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
                         {summary}
                     </Typography>
                 )}

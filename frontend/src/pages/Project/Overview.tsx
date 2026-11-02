@@ -48,7 +48,7 @@ const CardLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, chi
 
 const DetailRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <>
-        <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
+        <Typography component="dt" variant="body2" sx={{ color: "text.secondary" }}>{label}</Typography>
         <Typography component="dd" variant="body2" sx={{ m: 0, minWidth: 0, overflowWrap: "anywhere" }}>{children || "—"}</Typography>
     </>
 );
@@ -85,144 +85,144 @@ const Overview: React.FC = () => {
 
     return (
         <Stack spacing={2.5}>
-        <Grid container spacing={2.5}>
-            <Grid item xs={12} sm={6} lg={kpiWidth}>
-                <StatCard
-                    label="Sample"
-                    value={`${formatNumber(completed)} / ${formatNumber(target)}`}
-                    caption={target > 0 ? "Completed interviews against the target" : "No sample size set yet"}
-                    loading={!project}
-                >
-                    {project && target > 0 && (
-                        <Box sx={{ mt: 1 }}>
-                            <SampleProgress
-                                completed={completed}
-                                target={target}
-                                fieldStart={project.planned_field_start}
-                                fieldEnd={project.planned_field_end}
-                                status={project.status}
-                                hideCounts
-                            />
-                        </Box>
-                    )}
-                </StatCard>
-            </Grid>
-
-            <Grid item xs={12} sm={6} lg={kpiWidth}>
-                <StatCard
-                    label="Field period"
-                    value={formatDateRange(project?.planned_field_start, project?.planned_field_end) ?? "Not planned"}
-                    caption={formatFieldTiming(project?.planned_field_start, project?.planned_field_end, project?.status) ?? undefined}
-                    loading={!project}
-                    action={project?.status ? (
-                        <StatusChip label={formatStatus(project.status)} tone={getStatusTone(project.status, PROJECT_STATUS_TONE)} />
-                    ) : undefined}
-                />
-            </Grid>
-
-            {access.gifts && (
-                <Grid item xs={12} sm={6} lg={kpiWidth}>
+            <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
                     <StatCard
-                        label="Gifts sent"
-                        value={giftCounts ? formatNumber(giftCounts.success) : "—"}
-                        caption={giftCounts
-                            ? `${formatNumber(giftCounts.pending)} waiting · ${formatNumber(giftCounts.refused)} refused`
-                            : loading ? undefined : "Not available right now"}
-                        loading={loading && !giftCounts}
-                        action={failed > 0 ? <StatusChip label={`${formatNumber(failed)} failed`} tone="danger" /> : undefined}
+                        label="Sample"
+                        value={`${formatNumber(completed)} / ${formatNumber(target)}`}
+                        caption={target > 0 ? "Completed interviews against the target" : "No sample size set yet"}
+                        loading={!project}
                     >
-                        <CardLink to={projectNavPath(projectId, "gifts")}>{failed > 0 ? "Review gifts" : "Open gifts"}</CardLink>
+                        {project && target > 0 && (
+                            <Box sx={{ mt: 1 }}>
+                                <SampleProgress
+                                    completed={completed}
+                                    target={target}
+                                    fieldStart={project.planned_field_start}
+                                    fieldEnd={project.planned_field_end}
+                                    status={project.status}
+                                    hideCounts
+                                />
+                            </Box>
+                        )}
                     </StatCard>
                 </Grid>
-            )}
 
-            {access.statistics && (
-                <Grid item xs={12} sm={6} lg={kpiWidth}>
+                <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
                     <StatCard
-                        label="Paid out"
-                        value={statistics ? formatMoney(statistics.total_amount) : "—"}
-                        caption={statistics
-                            ? `${formatNumber(statistics.total)} gifts · Vinnet ${formatMoney(statistics.by_channel?.vinnet?.amount)} · GotIt ${formatMoney(statistics.by_channel?.gotit?.amount)}`
-                            : loading ? undefined : "Not available right now"}
-                        loading={loading && !statistics}
-                    >
-                        <CardLink to={projectNavPath(projectId, "transaction-statistics")}>Transaction statistics</CardLink>
-                    </StatCard>
-                </Grid>
-            )}
-
-            {access.quotation && (
-                <Grid item xs={12} sm={6} lg={kpiWidth}>
-                    <StatCard
-                        label="Quotation"
-                        value={latestQuotation ? `Version ${latestQuotation.version}` : loading ? "—" : "No quotation yet"}
-                        caption={latestQuotation ? describeQuotation(latestQuotation) : undefined}
-                        loading={loading && !latestQuotation}
-                        action={latestQuotation ? (
-                            <StatusChip label={formatStatus(latestQuotation.status)} tone={getStatusTone(latestQuotation.status, QUOTATION_STATUS_TONE)} />
+                        label="Field period"
+                        value={formatDateRange(project?.planned_field_start, project?.planned_field_end) ?? "Not planned"}
+                        caption={formatFieldTiming(project?.planned_field_start, project?.planned_field_end, project?.status) ?? undefined}
+                        loading={!project}
+                        action={project?.status ? (
+                            <StatusChip label={formatStatus(project.status)} tone={getStatusTone(project.status, PROJECT_STATUS_TONE)} />
                         ) : undefined}
+                    />
+                </Grid>
+
+                {access.gifts && (
+                    <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
+                        <StatCard
+                            label="Gifts sent"
+                            value={giftCounts ? formatNumber(giftCounts.success) : "—"}
+                            caption={giftCounts
+                                ? `${formatNumber(giftCounts.pending)} waiting · ${formatNumber(giftCounts.refused)} refused`
+                                : loading ? undefined : "Not available right now"}
+                            loading={loading && !giftCounts}
+                            action={failed > 0 ? <StatusChip label={`${formatNumber(failed)} failed`} tone="danger" /> : undefined}
+                        >
+                            <CardLink to={projectNavPath(projectId, "gifts")}>{failed > 0 ? "Review gifts" : "Open gifts"}</CardLink>
+                        </StatCard>
+                    </Grid>
+                )}
+
+                {access.statistics && (
+                    <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
+                        <StatCard
+                            label="Paid out"
+                            value={statistics ? formatMoney(statistics.total_amount) : "—"}
+                            caption={statistics
+                                ? `${formatNumber(statistics.total)} gifts · Vinnet ${formatMoney(statistics.by_channel?.vinnet?.amount)} · GotIt ${formatMoney(statistics.by_channel?.gotit?.amount)}`
+                                : loading ? undefined : "Not available right now"}
+                            loading={loading && !statistics}
+                        >
+                            <CardLink to={projectNavPath(projectId, "transaction-statistics")}>Transaction statistics</CardLink>
+                        </StatCard>
+                    </Grid>
+                )}
+
+                {access.quotation && (
+                    <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
+                        <StatCard
+                            label="Quotation"
+                            value={latestQuotation ? `Version ${latestQuotation.version}` : loading ? "—" : "No quotation yet"}
+                            caption={latestQuotation ? describeQuotation(latestQuotation) : undefined}
+                            loading={loading && !latestQuotation}
+                            action={latestQuotation ? (
+                                <StatusChip label={formatStatus(latestQuotation.status)} tone={getStatusTone(latestQuotation.status, QUOTATION_STATUS_TONE)} />
+                            ) : undefined}
+                        >
+                            <CardLink to={projectNavPath(projectId, "quotation")}>Open quotation</CardLink>
+                        </StatCard>
+                    </Grid>
+                )}
+
+                <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
+                    <StatCard
+                        label="Interviewers"
+                        value={formatNumber(project?.count_employees ?? 0)}
+                        caption={project?.count_employees ? "Working on this project" : "None added yet; needed before fieldwork starts"}
+                        loading={!project}
                     >
-                        <CardLink to={projectNavPath(projectId, "quotation")}>Open quotation</CardLink>
+                        {canManageInterviewers && (
+                            <CardLink to={projectNavPath(projectId, "parttime-employees")}>Manage interviewers</CardLink>
+                        )}
                     </StatCard>
                 </Grid>
-            )}
 
-            <Grid item xs={12} sm={6} lg={kpiWidth}>
-                <StatCard
-                    label="Interviewers"
-                    value={formatNumber(project?.count_employees ?? 0)}
-                    caption={project?.count_employees ? "Working on this project" : "None added yet; needed before fieldwork starts"}
-                    loading={!project}
-                >
-                    {canManageInterviewers && (
-                        <CardLink to={projectNavPath(projectId, "parttime-employees")}>Manage interviewers</CardLink>
-                    )}
-                </StatCard>
             </Grid>
 
-        </Grid>
+            <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, md: 7 }}>
+                    <Paper elevation={0} sx={{ height: "100%", border: 1, borderColor: "divider", borderRadius: "12px", p: 2.5 }}>
+                        <Typography variant="h2" component="h2" sx={{ mb: 2 }}>Project details</Typography>
+                        <Box
+                            component="dl"
+                            sx={{ m: 0, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "160px 1fr" }, columnGap: 2, rowGap: 1.25 }}
+                        >
+                            <DetailRow label="Internal code">{project?.internal_code}</DetailRow>
+                            <DetailRow label="Symphony">{project?.symphony}</DetailRow>
+                            <DetailRow label="Platform">{project?.platform}</DetailRow>
+                            <DetailRow label="Project types">{project?.project_types?.join(", ")}</DetailRow>
+                            <DetailRow label="Teams">{project?.teams?.join(", ")}</DetailRow>
+                            <DetailRow label="Owner">
+                                {owner && (
+                                    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                                        <UserAvatar name={owner} size={22} showTooltip={false} />
+                                        {owner}
+                                    </Box>
+                                )}
+                            </DetailRow>
+                            <DetailRow label="Actual field period">
+                                {formatDateRange(project?.actual_field_start, project?.actual_field_end)}
+                            </DetailRow>
+                            <DetailRow label="Objectives">{project?.project_objectives}</DetailRow>
+                        </Box>
+                    </Paper>
+                </Grid>
 
-        <Grid container spacing={2.5}>
-            <Grid item xs={12} md={7}>
-                <Paper elevation={0} sx={{ height: "100%", border: 1, borderColor: "divider", borderRadius: "12px", p: 2.5 }}>
-                    <Typography variant="h2" component="h2" sx={{ mb: 2 }}>Project details</Typography>
-                    <Box
-                        component="dl"
-                        sx={{ m: 0, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "160px 1fr" }, columnGap: 2, rowGap: 1.25 }}
-                    >
-                        <DetailRow label="Internal code">{project?.internal_code}</DetailRow>
-                        <DetailRow label="Symphony">{project?.symphony}</DetailRow>
-                        <DetailRow label="Platform">{project?.platform}</DetailRow>
-                        <DetailRow label="Project types">{project?.project_types?.join(", ")}</DetailRow>
-                        <DetailRow label="Teams">{project?.teams?.join(", ")}</DetailRow>
-                        <DetailRow label="Owner">
-                            {owner && (
-                                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                                    <UserAvatar name={owner} size={22} showTooltip={false} />
-                                    {owner}
-                                </Box>
-                            )}
-                        </DetailRow>
-                        <DetailRow label="Actual field period">
-                            {formatDateRange(project?.actual_field_start, project?.actual_field_end)}
-                        </DetailRow>
-                        <DetailRow label="Objectives">{project?.project_objectives}</DetailRow>
-                    </Box>
-                </Paper>
+                <Grid size={{ xs: 12, md: 5 }}>
+                    <ReusableTable
+                        header={<Typography variant="h2" component="h2" sx={{ px: 2.5, pt: 2.5, pb: 1.5 }}>Sample size by province</Typography>}
+                        columns={provinceColumns}
+                        data={project?.provinces ?? []}
+                        actionStatus={{ loading: !project }}
+                        emptyText="No provinces set yet"
+                        inset={false}
+                        dense
+                    />
+                </Grid>
             </Grid>
-
-            <Grid item xs={12} md={5}>
-                <ReusableTable
-                    header={<Typography variant="h2" component="h2" sx={{ px: 2.5, pt: 2.5, pb: 1.5 }}>Sample size by province</Typography>}
-                    columns={provinceColumns}
-                    data={project?.provinces ?? []}
-                    actionStatus={{ loading: !project }}
-                    emptyText="No provinces set yet"
-                    inset={false}
-                    dense
-                />
-            </Grid>
-        </Grid>
         </Stack>
     );
 };

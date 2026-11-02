@@ -48,7 +48,7 @@ const SummaryWidget:React.FC<WidgetProps> = ({ title, widget_name, diff, trend, 
             <CardContent>
                 <Stack spacing={2}>
                     {/* Hàng 1: Title + Icon */}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                         <Typography className='widget-title' variant="overline">
                         {title}
                         </Typography>
@@ -71,7 +71,7 @@ const SummaryWidget:React.FC<WidgetProps> = ({ title, widget_name, diff, trend, 
                 </Stack>
             </CardContent>
         </Card>
-    )
+    );
 }
 
 export default SummaryWidget;

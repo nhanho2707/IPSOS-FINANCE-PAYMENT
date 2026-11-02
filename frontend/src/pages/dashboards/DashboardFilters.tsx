@@ -63,16 +63,16 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
     return (
         <Card sx={{ p: 2, mb: 3 }}>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                     {renderMultiSelect('Thành phố', cityOptions, value.cities, (cities) => onChange({ ...value, cities }))}
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                     {renderMultiSelect('Users', userOptions, value.users, (users) => onChange({ ...value, users }))}
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                     {renderMultiSelect('Needstate', needstateOptions, value.needstates, (needstates) => onChange({ ...value, needstates }))}
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                     {renderMultiSelect('Weights', weightOptions, value.weights, (weights) => onChange({ ...value, weights }))}
                 </Grid>
             </Grid>

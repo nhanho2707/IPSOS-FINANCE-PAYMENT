@@ -37,11 +37,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, description, breadcrumbs
             >
                 {breadcrumbs.map((crumb, index) =>
                     crumb.to ? (
-                        <Link key={index} component={RouterLink} to={crumb.to} underline="hover" color="text.secondary" sx={crumbSx}>
+                        <Link
+                            key={index}
+                            component={RouterLink}
+                            to={crumb.to}
+                            underline="hover"
+                            sx={{ ...crumbSx, color: "text.secondary" }}>
                             {crumb.label}
                         </Link>
                     ) : (
-                        <Typography key={index} variant="caption" color="text.secondary" sx={crumbSx}>
+                        <Typography key={index} variant="caption" sx={{ ...crumbSx, color: "text.secondary" }}>
                             {crumb.label}
                         </Typography>
                     )
@@ -66,7 +71,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, description, breadcrumbs
                     {status}
                 </Box>
                 {description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                         {description}
                     </Typography>
                 )}

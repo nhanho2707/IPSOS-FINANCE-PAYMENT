@@ -17,7 +17,7 @@ import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import FormDialog from "../../components/Dialogs/FormDialog";
 import { useMetadata } from "../../hook/useMetadata";
 import { useMemo, useState } from "react";
-import { BlockOutlined, CheckCircleOutline, EditOutlined, HistoryOutlined, LockResetOutlined, PersonAddAltOutlined } from "@mui/icons-material";
+import { BlockOutlined, CheckCircleOutlineOutlined, EditOutlined, HistoryOutlined, LockResetOutlined, PersonAddAltOutlined } from "@mui/icons-material";
 import { formatDateTime } from "../../utils/format";
 
 type RoleOption = { id: number; name: string; department_id: number };
@@ -149,7 +149,7 @@ const AccountManagement = () => {
                         { label: "View history", icon: HistoryOutlined, onClick: () => setHistoryTarget(row) },
                         {
                             label: row.is_active ? "Deactivate account" : "Activate account",
-                            icon: row.is_active ? BlockOutlined : CheckCircleOutline,
+                            icon: row.is_active ? BlockOutlined : CheckCircleOutlineOutlined,
                             tone: row.is_active ? "danger" : "default",
                             onClick: () => setStatusTarget(row),
                         },

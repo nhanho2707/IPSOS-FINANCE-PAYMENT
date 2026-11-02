@@ -89,7 +89,7 @@ const NPSDonutChart: React.FC<NPSDonutChartProps> = ({ title, data }) => {
         <Card sx={{ height: '100%', overflow: 'hidden' }}>
             <DashboardCardHeader title={title} />
             <CardContent>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="center">
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ alignItems: "center" }}>
                     <Box ref={containerRef} sx={{ position: 'relative', width: SIZE, height: SIZE, flexShrink: 0 }}>
                         <svg ref={svgRef} width={SIZE} height={SIZE} />
                         <Box
@@ -103,7 +103,7 @@ const NPSDonutChart: React.FC<NPSDonutChartProps> = ({ title, data }) => {
                                 pointerEvents: 'none'
                             }}
                         >
-                            <Typography variant="h4" fontWeight={700} sx={{ color: UME_COLORS.y2026, fontFamily: UME_FONTS.heading }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, color: UME_COLORS.y2026, fontFamily: UME_FONTS.heading }}>
                                 {data.score}
                             </Typography>
                             <Typography variant="caption" sx={{ color: UME_COLORS.mutedInk }}>
@@ -131,12 +131,12 @@ const NPSDonutChart: React.FC<NPSDonutChartProps> = ({ title, data }) => {
                             const value = data[item.key as keyof NPSData] as number;
 
                             return (
-                                <Stack key={item.key} direction="row" spacing={1} alignItems="center">
+                                <Stack key={item.key} direction="row" spacing={1} sx={{ alignItems: "center" }}>
                                     <Box sx={{ width: 10, height: 10, borderRadius: '2px', backgroundColor: item.color }} />
                                     <Typography variant="body2" sx={{ color: UME_COLORS.ink, minWidth: 90 }}>
                                         {item.label}
                                     </Typography>
-                                    <Typography variant="body2" fontWeight={700} sx={{ color: UME_COLORS.ink }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 700, color: UME_COLORS.ink }}>
                                         {value}%
                                     </Typography>
                                 </Stack>

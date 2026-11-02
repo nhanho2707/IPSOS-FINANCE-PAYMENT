@@ -7,7 +7,6 @@ import {
     DialogContentText,
     DialogTitle,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 
 export type ConfirmDialogTone = "default" | "danger";
 
@@ -64,7 +63,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                     {cancelText ?? (hasConfirm ? "Cancel" : "Close")}
                 </Button>
                 {hasConfirm && (
-                    <LoadingButton
+                    <Button
                         onClick={onConfirm}
                         variant="contained"
                         color={tone === "danger" ? "error" : "primary"}
@@ -72,7 +71,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         autoFocus={tone !== "danger"}
                     >
                         {confirmText}
-                    </LoadingButton>
+                    </Button>
                 )}
             </DialogActions>
         </Dialog>

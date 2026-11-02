@@ -41,8 +41,8 @@ const NavLabel: React.FC<{ label: string; collapsed: boolean }> = ({ label, coll
     collapsed ? null : (
         <ListItemText
             primary={label}
-            primaryTypographyProps={{ variant: "body2", fontWeight: "inherit", noWrap: true }}
             sx={{ my: 0 }}
+            slotProps={{ primary: { variant: "body2", noWrap: true, sx: { fontWeight: "inherit" } } }}
         />
     );
 

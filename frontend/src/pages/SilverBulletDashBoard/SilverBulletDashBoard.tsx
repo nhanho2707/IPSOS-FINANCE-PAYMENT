@@ -76,7 +76,7 @@ function PeriodPicker({
 }) {
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <Typography variant="body2" fontWeight={600} color="text.secondary" minWidth={64}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary", minWidth: 64 }}>
                 {label}
             </Typography>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -89,7 +89,7 @@ function PeriodPicker({
                     maxDate={maxFrom}
                     sx={{ width: 160, ...pickerSx }}
                 />
-                <Typography variant="body2" color="text.secondary">—</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>—</Typography>
                 <DesktopDatePicker
                     label="To"
                     value={to}
@@ -379,7 +379,7 @@ const SilverBulletDashBoard = () => {
 
     return (
         <Box sx={{ p: 3, maxWidth: 1100, mx: 'auto' }}>
-            <Typography variant="h5" fontWeight={700} mb={3}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
                 Silver Bullet Dashboard
             </Typography>
 
@@ -387,7 +387,7 @@ const SilverBulletDashBoard = () => {
             <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant="body2" fontWeight={600} color="text.secondary" minWidth={100}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary", minWidth: 100 }}>
                             Comparison Level
                         </Typography>
                         <RadioGroup
@@ -407,7 +407,7 @@ const SilverBulletDashBoard = () => {
                     </Box>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant="body2" fontWeight={600} color="text.secondary" minWidth={100}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary", minWidth: 100 }}>
                             Project
                         </Typography>
                         <Autocomplete
@@ -428,9 +428,9 @@ const SilverBulletDashBoard = () => {
                                     {option}
                                 </li>
                             )}
-                            renderTags={(value, getTagProps) =>
+                            renderValue={(value, getItemProps) =>
                                 value.map((option, index) => (
-                                    <Chip size="small" label={option} {...getTagProps({ index })} />
+                                    <Chip size="small" label={option} {...getItemProps({ index })} />
                                 ))
                             }
                             renderInput={(params) => (
@@ -520,7 +520,7 @@ const SilverBulletDashBoard = () => {
             {/* Results */}
             {result && (
                 result.entries.length === 0 ? (
-                    <Typography mt={3} color="text.secondary">
+                    <Typography sx={{ mt: 3, color: "text.secondary" }}>
                         No data found for <strong>{focusBrand}</strong> in the selected periods.
                     </Typography>
                 ) : (
@@ -541,7 +541,7 @@ const SilverBulletDashBoard = () => {
                                     px: 3, py: 1.5,
                                     boxShadow: 1,
                                 }}>
-                                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                    <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 500 }}>
                                         Filters changed — click <strong>Calculate</strong> to update results
                                     </Typography>
                                 </Box>

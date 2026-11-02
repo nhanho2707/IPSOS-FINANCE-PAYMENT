@@ -9,8 +9,8 @@ import {
   InputAdornment,
   IconButton,
   Link,
+  Button,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -88,10 +88,10 @@ const SetPassword = () => {
           gap: 3,
         }}
       >
-        <Typography variant="h5" textAlign="center">
+        <Typography variant="h5" sx={{ textAlign: "center" }}>
           Set Your Password
         </Typography>
-        <Typography variant="body2" textAlign="center" color="text.secondary">
+        <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
           Your account is new. Please set a password before continuing.
         </Typography>
 
@@ -109,18 +109,20 @@ const SetPassword = () => {
             autoFocus
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    onClick={() => setShowPassword((v) => !v)}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onClick={() => setShowPassword((v) => !v)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }
             }}
           />
         </FormControl>
@@ -135,7 +137,7 @@ const SetPassword = () => {
           />
         </FormControl>
 
-        <LoadingButton
+        <Button
           fullWidth
           type="submit"
           endIcon={<LockResetIcon />}
@@ -143,17 +145,15 @@ const SetPassword = () => {
           variant="contained"
         >
           Set password
-        </LoadingButton>
+        </Button>
 
         <Link
           component="button"
           type="button"
           variant="body2"
           underline="hover"
-          color="text.secondary"
           onClick={logout}
-          sx={{ alignSelf: "center" }}
-        >
+          sx={{ color: "text.secondary", alignSelf: "center" }}>
           Back to login
         </Link>
       </Box>

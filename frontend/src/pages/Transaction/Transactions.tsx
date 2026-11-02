@@ -17,7 +17,6 @@ import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { LOW_BALANCE_THRESHOLDS, RECENT_SPEND_DAYS } from "../../config/FinanceConfig";
 import { getProviderStyle, NEUTRAL, STATUS_TONES } from "../../config/ThemeConfig";
 import { useMetadata } from "../../hook/useMetadata";
-import LoadingButton from "@mui/lab/LoadingButton";
 import AddIcon from '@mui/icons-material/Add';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { formatMoney } from "../../utils/format";
@@ -87,7 +86,7 @@ const SectionCard: React.FC<{ title: string; description?: string; action?: Reac
         <Box sx={{ display: "flex", alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, gap: 1.5, justifyContent: "space-between", px: 2.5, py: 1.75, borderBottom: 1, borderColor: "divider" }}>
             <Box>
                 <Typography variant="h2" component="h2">{title}</Typography>
-                {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
+                {description && <Typography variant="body2" sx={{ color: "text.secondary" }}>{description}</Typography>}
             </Box>
             {action}
         </Box>
@@ -242,7 +241,7 @@ const Transactions = () => {
             />
 
             <Grid container spacing={2.5}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <ProviderBalanceCard
                         provider="vinnet"
                         account={vinnetAccount}
@@ -250,7 +249,7 @@ const Transactions = () => {
                         recentSpend={recentSpend("vinnet")}
                     />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <ProviderBalanceCard
                         provider="gotit"
                         account={gotitAccount}
@@ -264,7 +263,7 @@ const Transactions = () => {
                     />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <SectionCard title="Export transactions" description="Excel files for reconciliation, by date or by project.">
                         {exportError && (
                             <Alert severity="error" onClose={() => setExportError("")} sx={{ mb: 2 }}>
@@ -272,8 +271,8 @@ const Transactions = () => {
                             </Alert>
                         )}
                         <Grid container spacing={3}>
-                            <Grid item xs={12} md={5}>
-                                <Typography variant="body2" fontWeight={600} sx={{ mb: 1.5 }}>By date</Typography>
+                            <Grid size={{ xs: 12, md: 5 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>By date</Typography>
                                 <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
                                     <DateRangeField
                                         label="Dates"
@@ -284,7 +283,7 @@ const Transactions = () => {
                                             setToDate(to);
                                         }}
                                     />
-                                    <LoadingButton
+                                    <Button
                                         variant="outlined"
                                         color="inherit"
                                         startIcon={<FileDownloadOutlinedIcon />}
@@ -294,11 +293,11 @@ const Transactions = () => {
                                         onClick={handleExport}
                                     >
                                         Export
-                                    </LoadingButton>
+                                    </Button>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12} md={7}>
-                                <Typography variant="body2" fontWeight={600} sx={{ mb: 1.5 }}>By project</Typography>
+                            <Grid size={{ xs: 12, md: 7 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>By project</Typography>
                                 <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
                                     <Autocomplete
                                         multiple
@@ -319,7 +318,7 @@ const Transactions = () => {
                                         )}
                                         sx={{ flex: 1, minWidth: 0 }}
                                     />
-                                    <LoadingButton
+                                    <Button
                                         variant="outlined"
                                         color="inherit"
                                         startIcon={<FileDownloadOutlinedIcon />}
@@ -330,14 +329,14 @@ const Transactions = () => {
                                         sx={{ flexShrink: 0 }}
                                     >
                                         Export
-                                    </LoadingButton>
+                                    </Button>
                                 </Box>
                             </Grid>
                         </Grid>
                     </SectionCard>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <SectionCard
                         title="Interview & gift timing"
                         description="When interviews happen and how long respondents wait for their gift."
@@ -348,7 +347,9 @@ const Transactions = () => {
                                 onChange={(_event, newValue) => setStatsProject(newValue)}
                                 getOptionLabel={projectLabel}
                                 renderInput={(params) => (
-                                    <TextField {...params} size="small" label="Project" placeholder="All projects" InputLabelProps={{ shrink: true }} />
+                                    <TextField {...params} size="small" label="Project" placeholder="All projects"
+                                        slotProps={{ ...params.slotProps, inputLabel: { ...params.slotProps.inputLabel, shrink: true } }}
+                                    />
                                 )}
                                 sx={{ width: { xs: "100%", sm: 360 } }}
                             />
@@ -379,12 +380,12 @@ const Transactions = () => {
                     fullWidth
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    inputProps={{ min: 1, step: 1000 }}
                     helperText={!isDepositInvalid ? formatMoney(depositAmount) : " "}
+                    slotProps={{ htmlInput: { min: 1, step: 1000 } }}
                 />
             </FormDialog>
         </>
-    )
+    );
 }
 
 export default Transactions;

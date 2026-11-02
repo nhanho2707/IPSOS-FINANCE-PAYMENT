@@ -94,7 +94,7 @@ export default function Codeframe() {
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                <Typography variant="h5" fontWeight={600}>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>
                     Codeframe
                 </Typography>
                 <Button
@@ -117,7 +117,7 @@ export default function Codeframe() {
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
                 <DialogTitle>Import Data</DialogTitle>
                 <DialogContent>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                         Choose an Excel file (.xlsx) with open-ended answers to start coding.
                     </Typography>
                     <Button

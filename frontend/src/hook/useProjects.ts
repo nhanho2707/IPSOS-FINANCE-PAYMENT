@@ -69,7 +69,7 @@ export function useProjects() {
             setActionState((prev) => ({
                 ...prev,
                 loading: false,
-                ...options?.silent ? {} : { message: response.data.message }
+                ...(options?.silent ? {} : { message: response.data.message })
             }));
         }catch(error: any){
             let message = 'Failed to fetch Projects';

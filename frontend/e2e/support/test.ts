@@ -55,6 +55,6 @@ export async function capture(page: Page, testInfo: TestInfo, name: string, opti
     }
 
     const file = path.join(__dirname, "..", "screenshots", testInfo.project.name, `${name}.png`);
-    await page.screenshot({ path: file, fullPage });
+    await page.screenshot({ path: file, fullPage, animations: "disabled", caret: "hide" });
     await testInfo.attach(name, { path: file, contentType: "image/png" });
 }

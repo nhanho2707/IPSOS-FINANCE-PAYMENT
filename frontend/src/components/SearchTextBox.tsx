@@ -49,27 +49,29 @@ const SearchTextBox: React.FC<SearchTextBoxProps> = ({ placeholder = "Search..."
             }}
             placeholder={placeholder}
             size="small"
-            inputProps={{ "aria-label": placeholder }}
             sx={[
                 { width: "20rem", maxWidth: "100%", "& .MuiInputBase-input": { typography: "body2" } },
                 ...(Array.isArray(sx) ? sx : [sx]),
             ]}
-            InputProps={{
-                startAdornment: (
-                    <InputAdornment position="start">
-                        <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                ),
-                endAdornment: search ? (
-                    <InputAdornment position="end">
-                        <IconButton aria-label="Clear search" size="small" edge="end" onClick={handleClear}>
-                            <CloseIcon fontSize="small" />
-                        </IconButton>
-                    </InputAdornment>
-                ) : null,
+            slotProps={{
+                input: {
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon fontSize="small" />
+                        </InputAdornment>
+                    ),
+                    endAdornment: search ? (
+                        <InputAdornment position="end">
+                            <IconButton aria-label="Clear search" size="small" edge="end" onClick={handleClear}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </InputAdornment>
+                    ) : null,
+                },
+                htmlInput: { "aria-label": placeholder },
             }}
         />
-    )
+    );
 }
 
 export default SearchTextBox;

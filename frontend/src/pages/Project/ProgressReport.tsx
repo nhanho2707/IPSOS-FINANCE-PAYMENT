@@ -50,7 +50,7 @@ const DashboardProject: React.FC = () => {
     <Box sx={{ p: 3, fontFamily: "Roboto, sans-serif" }}>
       {/* KPI Overview */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Project progress</Typography>
@@ -59,7 +59,7 @@ const DashboardProject: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Quota completed</Typography>
@@ -74,7 +74,7 @@ const DashboardProject: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Days left</Typography>
@@ -82,7 +82,7 @@ const DashboardProject: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Risks / Alerts</Typography>
@@ -97,7 +97,7 @@ const DashboardProject: React.FC = () => {
       {/* Charts Section */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {/* Line chart: tiến độ theo tuần */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle1">Weekly progress</Typography>
@@ -115,7 +115,7 @@ const DashboardProject: React.FC = () => {
         </Grid>
 
         {/* Bar chart: quota theo team */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle1">Quota theo team</Typography>

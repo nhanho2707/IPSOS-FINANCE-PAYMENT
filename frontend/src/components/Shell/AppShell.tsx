@@ -54,7 +54,7 @@ export const BrandMark: React.FC<{ showName?: boolean; inverse?: boolean }> = ({
         </Box>
         {showName && (
             <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" fontWeight={600} noWrap sx={{ color: inverse ? "common.white" : "text.primary" }}>
+                <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: inverse ? "common.white" : "text.primary" }}>
                     Finance Payment
                 </Typography>
                 <Typography variant="caption" component="div" noWrap sx={{ color: inverse ? "common.white" : "text.secondary", opacity: inverse ? 0.8 : 1 }}>
@@ -195,7 +195,7 @@ const AppShell: React.FC<AppShellProps> = ({ sidebar, mobileTitle, children }) =
                     open={mobileOpen}
                     onClose={() => setMobileOpen(false)}
                     ModalProps={{ keepMounted: true }}
-                    PaperProps={{ sx: { width: MOBILE_DRAWER_WIDTH, maxWidth: "85vw" } }}
+                    slotProps={{ paper: { sx: { width: MOBILE_DRAWER_WIDTH, maxWidth: "85vw" } } }}
                 >
                     {renderSidebar(false)}
                 </Drawer>

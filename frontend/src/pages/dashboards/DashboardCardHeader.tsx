@@ -8,7 +8,7 @@ interface DashboardCardHeaderProps {
 
 const DashboardCardHeader: React.FC<DashboardCardHeaderProps> = ({ title }) => (
     <Box sx={{ backgroundColor: UME_COLORS.y2026, color: '#fff', px: 2.5, py: 1.25 }}>
-        <Typography variant="subtitle1" fontWeight={700} sx={{ fontFamily: UME_FONTS.heading }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: UME_FONTS.heading }}>
             {title}
         </Typography>
     </Box>

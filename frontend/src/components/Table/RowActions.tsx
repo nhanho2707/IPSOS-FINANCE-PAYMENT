@@ -54,9 +54,8 @@ const RowActions: React.FC<RowActionsProps> = ({ primary, items = [], menuLabel 
                 <ListItemText
                     primary={item.label}
                     secondary={item.disabled ? item.disabledReason : undefined}
-                    primaryTypographyProps={{ variant: "body2" }}
-                    secondaryTypographyProps={{ variant: "caption" }}
                     sx={{ my: 0 }}
+                    slotProps={{ primary: { variant: "body2" }, secondary: { variant: "caption" } }}
                 />
             </MenuItem>
         );

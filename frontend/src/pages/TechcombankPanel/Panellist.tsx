@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import { ApiConfig } from '../../config/ApiConfig';
 import numeral from 'numeral';
@@ -400,40 +400,40 @@ const Panellist:React.FC = () => {
 
     return (
         <Grid container spacing={3}>
-            <Grid lg={3} sm={6} xs={12}>
+            <Grid size={{ lg: 3, sm: 6, xs: 12 }}>
                 <SummaryWidget title={t('dashboard.total_members')} widget_name="user" trend="up" avatar_color_index={0} value={dataTotalMembers} />
             </Grid>
-            <Grid lg={3} sm={6} xs={12}>
+            <Grid size={{ lg: 3, sm: 6, xs: 12 }}>
                 <SummaryWidget title={t('dashboard.number_of_surveys')} widget_name="chat" trend='down' avatar_color_index={1} value={numeral(surveys.length).format('0,000')} />
             </Grid>
-            <Grid lg={3} sm={6} xs={12}>
+            <Grid size={{ lg: 3, sm: 6, xs: 12 }}>
                 <SummaryWidget title={t('dashboard.response_rate')} widget_name="percent" trend='down' avatar_color_index={2} value={numeral(calculateAverageRespondRate(surveys)).format('0.00%')} />
             </Grid>
-            <Grid lg={3} sm={6} xs={12}>
+            <Grid size={{ lg: 3, sm: 6, xs: 12 }}>
                 <SummaryWidget title={t('dashboard.completed_qualified')} widget_name="flag" trend='up' avatar_color_index={3} value={numeral(calculateTotalSamplesize(surveys)).format('0,000')} />
             </Grid>
-            <Grid lg={6} xs={12}>
+            <Grid size={{ lg: 6, xs: 12 }}>
                 <RecruitmentWidget title={t('dashboard.number_of_panelist')} data={panellistData} />
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <DemographicWidget ageGroupData={ageGroupData} genderData={genderDistributionData} provinceData={provinceData} />
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <BarChartWidget title={t('dashboard.house_hold_income')} legend_title='Thu nhập cá nhân' data={houseHoldIncomeData} sorted={false} sortedList={['Từ 12.5 triệu đến dưới 25 triệu VND/tháng','Từ 25 triệu đến dưới 35 triệu VND/tháng','Từ 35 triệu đến dưới 45 triệu VND/tháng','Từ 45 triệu đến dưới 60 triệu VND/tháng','Từ 60 triệu đến dưới 80 triệu VND/tháng','Từ 80 triệu đến dưới 110 triệu VND/tháng']} translate={true} />
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <BarChartWidget title={t('dashboard.occupation')} legend_title='Nghề nghiệp' data={occupationData} sorted={true} translate={true}/>
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <BarChartWidget title='AUM' legend_title='AUM' data={aumData} sorted={true} translate={true} />
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <BarChartWidget title={t('dashboard.main_bank')} legend_title='Main Bank' data={mainBankData} sorted={true} />
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <BarChartWidget title={t('dashboard.products')} legend_title='Products' data={productsData} sorted={true} />
             </Grid>
-            <Grid lg={6} md={6} xs={12}>
+            <Grid size={{ lg: 6, md: 6, xs: 12 }}>
                 <BarChartWidget title={t('dashboard.channels')} legend_title='Channels' data={channelsData} sorted={true} />
             </Grid>
         </Grid>

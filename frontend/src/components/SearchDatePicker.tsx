@@ -20,9 +20,9 @@ const SearchDatePicker: React.FC<SearchDatePickerProps> = ({title="", name,  vie
         onSearchChange(name, value);
     }
 
-    return(
-        <Stack direction="row" spacing={1} alignItems="center">
-            <Typography variant='body2' color="text.secondary">{title}</Typography>
+    return (
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Typography variant='body2' sx={{ color: "text.secondary" }}>{title}</Typography>
             <DesktopDatePicker
                 views={views}
                 value={selectedDate}
@@ -31,7 +31,7 @@ const SearchDatePicker: React.FC<SearchDatePickerProps> = ({title="", name,  vie
                 sx={{ width: 176 }}
             />
         </Stack>
-    )
+    );
 }
 
 export default SearchDatePicker;

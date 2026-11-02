@@ -85,14 +85,14 @@ export const useCATIRespondents = () => {
                 setActionState((prev) => ({
                     ...prev,
                     loading: false,
-                    ...options?.silent ? {} : { message: response.data.message }
+                    ...(options?.silent ? {} : { message: response.data.message })
                 }));
             } else {
                 setActionState((prev) => ({
                     ...prev,
                     loading: false,
                     error: true,
-                    ...options?.silent ? {} : { message: response.data.error }
+                    ...(options?.silent ? {} : { message: response.data.error })
                 }));
             }
             

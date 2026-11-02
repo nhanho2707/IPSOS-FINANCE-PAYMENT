@@ -67,7 +67,7 @@ export const StatusDropdown: React.FC<Props> = ({
                             </ListItemIcon>
                             <ListItemText
                                 primary={formatStatus(status)}
-                                primaryTypographyProps={{ variant: "body2" }}
+                                slotProps={{ primary: { variant: "body2" } }}
                             />
                         </ListItemButton>
                     ))}

@@ -1,5 +1,5 @@
 import { Box, Button, Link } from "@mui/material";
-import { Add, Block, CheckCircleOutline, ContentCopy } from "@mui/icons-material";
+import { Add, Block, CheckCircleOutlineOutlined, ContentCopy } from "@mui/icons-material";
 import ResourceTable from "../../components/Table/ResourceTable";
 import CellStack from "../../components/Table/CellStack";
 import SampleProgress from "../../components/SampleProgress";
@@ -171,7 +171,7 @@ const Projects = () => {
             { label: "Clone project", icon: ContentCopy, onClick: () => setCloneTarget(row), hidden: !canClone },
             {
               label: row.disabled ? "Enable project" : "Disable project",
-              icon: row.disabled ? CheckCircleOutline : Block,
+              icon: row.disabled ? CheckCircleOutlineOutlined : Block,
               tone: row.disabled ? "default" : "danger",
               onClick: () => handleUpdateDisabled(row, !row.disabled),
               disabled: updatingId === row.id,

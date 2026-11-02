@@ -1,18 +1,21 @@
 import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { Alert, Autocomplete, Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { Alert, AlertTitle, Autocomplete, Box, Stack, TextField } from "@mui/material";
+import { DeleteOutline } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { Button } from "@mui/material";
-import ReusableTable, { ActionState } from "../../components/Table/ReusableTable";
+import { ActionState } from "../../components/Table/ReusableTable";
+import ResourceTable from "../../components/Table/ResourceTable";
+import RowActions from "../../components/Table/RowActions";
+import FormDialog from "../../components/Dialogs/FormDialog";
+import EmptyState from "../../components/EmptyState";
 import { formatNumber } from "../../utils/format";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { ApiConfig } from "../../config/ApiConfig";
-import LoadingButton from "@mui/lab/LoadingButton";
 
 interface Province {
     id: number;
@@ -199,12 +202,15 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             label: "",
             name: "actions",
             type: "menu" as const,
-            align: "center" as const,
-            width: 60,
+            align: "right" as const,
+            width: 56,
             renderAction: (row: PriceRow) => (
-                <IconButton size="small" color="error" onClick={() => setRowToDelete(row)}>
-                    <DeleteIcon fontSize="small" />
-                </IconButton>
+                <RowActions
+                    menuLabel={`Actions for ${row.province_name} ${row.price_type}`}
+                    items={[
+                        { label: "Delete price", icon: DeleteOutline, tone: "danger", onClick: () => setRowToDelete(row) },
+                    ]}
+                />
             ),
         }] : []),
     ];
@@ -457,7 +463,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
 
     return (
         <Box>
-            <ReusableTable
+            <ResourceTable
                 columns={columns}
                 data={pagedRows}
                 actionStatus={{ ...actionState, loading }}
@@ -469,15 +475,35 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                     setRowsPerPage(parseInt(event.target.value, 10));
                     setPage(0);
                 }}
-                topToolbar={
-                    <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+                banner={importErrors.length > 0 && (
+                    <Alert severity="error" onClose={() => setImportErrors([])}>
+                        <AlertTitle>Price import failed: no prices were saved</AlertTitle>
+                        Fix these rows in the file and import it again.
+                        <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+                            {importErrors.map((error, index) => (
+                                <li key={index}>{error}</li>
+                            ))}
+                        </Box>
+                    </Alert>
+                )}
+                emptyState={
+                    <EmptyState
+                        title="No province prices yet"
+                        description={canEdit
+                            ? "Add the sample size and gift prices per province, or import them from Excel."
+                            : "Prices per province appear here once they are set."}
+                    />
+                }
+                toolbarActions={
+                    <>
                         {canEdit && (
                             <Button
-                                variant="contained"
+                                variant="outlined"
+                                color="inherit"
                                 startIcon={<AddIcon />}
                                 onClick={() => setOpenCreateProvincePriceDialog(true)}
                             >
-                                {adding ? "Saving..." : "Add"}
+                                Add price
                             </Button>
                         )}
                         {canEdit && (
@@ -506,14 +532,22 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             style={{ display: "none" }}
                             onChange={handleImportFile}
                         />
-                    </Box>
+                    </>
                 }
             />
-            <Dialog open={openCreateProvincePriceDialog} onClose={handleCloseCreateProvincePriceDialog} maxWidth="sm">
-                <DialogTitle>Add province price</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2} sx={{mt: 1}}>
-                        {formError && <Alert severity="error">{formError}</Alert>}
+            <FormDialog
+                open={openCreateProvincePriceDialog}
+                title="Add province price"
+                description="Each gift price unlocks once the one before it is filled in."
+                error={formError}
+                onClose={handleCloseCreateProvincePriceDialog}
+                onSubmit={handleAddProvincePrice}
+                submitText="Add price"
+                submitDisabled={!isCreateValid}
+                loading={adding}
+                maxWidth="xs"
+            >
+                    <Stack spacing={2}>
                         <Autocomplete
                             size="small"
                             options={provinces}
@@ -521,7 +555,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             getOptionLabel={(o) => o.name}
                             isOptionEqualToValue={(o, v) => o.id === v.id}
                             onChange={(_, v) => handleProvincePriceDataChange("province", v)}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                             renderInput={(params) => <TextField {...params} label="Province" />}
                         />
                         <Autocomplete
@@ -529,7 +563,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             options={SAMPLE_TYPES}
                             value={provincePriceData.price_type}
                             onChange={(_, v) => handleProvincePriceDataChange("price_type",v)}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                             renderInput={(params) => <TextField {...params} label="Price type" />}
                         />
                         <TextField
@@ -540,7 +574,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.sample_size}
                             onChange={(e) => handleProvincePriceDataChange("sample_size", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
 
                         />
                         <TextField
@@ -551,7 +585,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price}
                             onChange={(e) => handleProvincePriceDataChange("price", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                         />
                         <TextField
                             size="small"
@@ -561,7 +595,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price_1}
                             onChange={(e) => handleProvincePriceDataChange("price_1", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                         />
                         <TextField
                             size="small"
@@ -571,7 +605,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price_2}
                             onChange={(e) => handleProvincePriceDataChange("price_2", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                         />
                         <TextField
                             size="small"
@@ -581,7 +615,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price_3}
                             onChange={(e) => handleProvincePriceDataChange("price_3", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                         />
                         <TextField
                             size="small"
@@ -591,7 +625,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price_4}
                             onChange={(e) => handleProvincePriceDataChange("price_4", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                         />
                         <TextField
                             size="small"
@@ -601,41 +635,10 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             value={provincePriceData.price_5}
                             onChange={(e) => handleProvincePriceDataChange("price_5", e.target.value)}
                             inputProps={{ min: 0 }}
-                            sx={{ minWidth: 220 }}
+                            fullWidth
                         />
                     </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseCreateProvincePriceDialog}>Cancel</Button>
-                    <LoadingButton
-                        onClick={handleAddProvincePrice}
-                        size="small"
-                        loading={adding}
-                        loadingPosition="end"
-                        variant="contained"
-                        disabled={!isCreateValid}
-                        >
-                            <span>Create</span>
-                    </LoadingButton>
-                </DialogActions>
-            </Dialog>
-
-            <Dialog open={importErrors.length > 0} onClose={() => setImportErrors([])} fullWidth maxWidth="sm">
-                <DialogTitle>Price import failed</DialogTitle>
-                <DialogContent>
-                    <Alert severity="error" sx={{ mb: 1 }}>
-                        No prices were saved. Please fix the file and import again.
-                    </Alert>
-                    <Box component="ul" sx={{ pl: 3, m: 0 }}>
-                        {importErrors.map((error, index) => (
-                            <li key={index}>{error}</li>
-                        ))}
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setImportErrors([])}>Close</Button>
-                </DialogActions>
-            </Dialog>
+            </FormDialog>
 
             <ConfirmDialog
                 open={rowToDelete !== null}

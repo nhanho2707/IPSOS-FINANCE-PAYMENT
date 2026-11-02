@@ -1,20 +1,30 @@
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Box, Button, MenuItem, Stack, TextField, Tooltip } from "@mui/material";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { AccountAuditActionLabels, AccountAuditLog, AccountCellConfig, AccountData, AccountStatusFilter, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
 import { getAccountErrorMessage, useAccounts } from "../../hook/useAccounts";
 import { useAccountAuditLogs } from "../../hook/useAccountAuditLogs";
 import ReusableTable from "../../components/Table/ReusableTable";
+import ResourceTable from "../../components/Table/ResourceTable";
+import RowActions from "../../components/Table/RowActions";
+import { SelectFilter } from "../../components/Table/FilterChip";
 import StatusChip from "../../components/StatusChip";
+import PageHeader from "../../components/PageHeader";
+import EmptyState from "../../components/EmptyState";
+import DetailDrawer from "../../components/DetailDrawer";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
+import FormDialog from "../../components/Dialogs/FormDialog";
 import { useMetadata } from "../../hook/useMetadata";
 import { useMemo, useState } from "react";
-import LoadingButton from "@mui/lab/LoadingButton";
-import { BlockOutlined, CheckCircleOutline, EditOutlined, HistoryOutlined, LockResetOutlined } from "@mui/icons-material";
+import { BlockOutlined, CheckCircleOutline, EditOutlined, HistoryOutlined, LockResetOutlined, PersonAddAltOutlined } from "@mui/icons-material";
 import { formatDateTime } from "../../utils/format";
 
 type RoleOption = { id: number; name: string; department_id: number };
 type DepartmentOption = { id: number; name: string };
 
+const STATUS_FILTER_OPTIONS: { value: Exclude<AccountStatusFilter, "">; label: string }[] = [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+];
 
 const formatAuditChanges = (log: AccountAuditLog) => {
     if (!log.changes) return "—";
@@ -71,15 +81,6 @@ const AccountManagement = () => {
 
     const [ formCreateData, setFormCreateData ] = useState<AccountData>(initialAccountData);
 
-    const actionButtonSx = {
-        backgroundColor: 'background.paper',
-        borderRadius: '8px',
-        border: '1px solid',
-        borderColor: 'divider',
-        '&:hover': { backgroundColor: 'action.hover' },
-        padding: '5px',
-    };
-
     const columns: ColumnFormat[] = [
         ...AccountCellConfig,
         {
@@ -114,49 +115,23 @@ const AccountManagement = () => {
             label: "",
             name: "action",
             type: "menu",
-            align: "center",
-            width: 172,
+            align: "right",
+            width: 56,
             renderCell: (row: AccountData) => (
-                <Stack direction="row" spacing={1} justifyContent="center">
-                    <Tooltip title="Edit Role & Department">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleOpenEditDialog(row)}
-                            sx={actionButtonSx}
-                        >
-                            <EditOutlined fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Reset Password">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleOpenResetPasswordDialog(row)}
-                            sx={actionButtonSx}
-                        >
-                            <LockResetOutlined fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title={row.is_active ? "Deactivate" : "Activate"}>
-                        <IconButton
-                            size="small"
-                            onClick={() => setStatusTarget(row)}
-                            sx={actionButtonSx}
-                        >
-                            {row.is_active
-                                ? <BlockOutlined fontSize="small" color="error" />
-                                : <CheckCircleOutline fontSize="small" color="success" />}
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="History">
-                        <IconButton
-                            size="small"
-                            onClick={() => setHistoryTarget(row)}
-                            sx={actionButtonSx}
-                        >
-                            <HistoryOutlined fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
-                </Stack>
+                <RowActions
+                    menuLabel={`Actions for ${row.email}`}
+                    items={[
+                        { label: "Edit role & department", icon: EditOutlined, onClick: () => handleOpenEditDialog(row) },
+                        { label: "Reset password", icon: LockResetOutlined, onClick: () => handleOpenResetPasswordDialog(row) },
+                        { label: "View history", icon: HistoryOutlined, onClick: () => setHistoryTarget(row) },
+                        {
+                            label: row.is_active ? "Deactivate account" : "Activate account",
+                            icon: row.is_active ? BlockOutlined : CheckCircleOutline,
+                            tone: row.is_active ? "danger" : "default",
+                            onClick: () => setStatusTarget(row),
+                        },
+                    ]}
+                />
             )
         }
     ];
@@ -173,7 +148,7 @@ const AccountManagement = () => {
             label: "Action",
             name: "action",
             type: "string",
-            width: 200,
+            width: 160,
             renderCell: (row: AccountAuditLog) => AccountAuditActionLabels[row.action] ?? row.action
         },
         {
@@ -196,7 +171,7 @@ const AccountManagement = () => {
         }
     ];
 
-    const handleChangePage = (event: unknown, newPage: number) => {
+    const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
         setPage(newPage)
     }
 
@@ -209,10 +184,6 @@ const AccountManagement = () => {
         setFilters(prev => ({ ...prev, ...patch }));
         setPage(0);
     };
-
-    const handleCloseCreateDialog = () => {
-        setOpenCreateDialog(false);
-    }
 
     const handleChange = (field: keyof AccountData, value: string | number) => {
         setFormCreateData((prev) => ({
@@ -326,9 +297,23 @@ const AccountManagement = () => {
         return data.roles.filter((r: RoleOption) => r.department_id === filters.department_id);
     }, [data.roles, filters.department_id]);
 
+    const isFiltered = Boolean(searchTerm || filters.department_id || filters.role_id || filters.status);
+
+    const createButton = (
+        <Button variant="contained" startIcon={<PersonAddAltOutlined />} onClick={handleOpenCreateDialog}>
+            Create user
+        </Button>
+    );
+
     return (
         <Box>
-            <ReusableTable
+            <PageHeader
+                title="Accounts"
+                description="Who can sign in, with which role and department."
+                actions={createButton}
+            />
+
+            <ResourceTable
                 columns={columns}
                 data={accounts}
                 actionStatus={actionState}
@@ -337,299 +322,229 @@ const AccountManagement = () => {
                 total = {total}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
-                topToolbar={
-                    <Stack
-                        direction={{ xs: "column", md: "row" }}
-                        spacing={1.5}
-                        justifyContent="space-between"
-                        alignItems={{ xs: "stretch", md: "center" }}
-                        sx={{ pt: 2, pb: 2 }}
-                    >
-                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ flex: 1 }}>
-                            <TextField
-                                label="Search name or email"
-                                variant="outlined"
-                                size="small"
-                                value={searchTerm}
-                                onChange={(event) => {
-                                    setSearchTerm(event.target.value);
-                                    setPage(0);
-                                }}
-                                sx={{ width: "100%", maxWidth: 280 }}
-                            />
-
-                            <FormControl size="small" sx={{ minWidth: 160 }}>
-                                <InputLabel id="filter-department-label">Department</InputLabel>
-                                <Select
-                                    labelId="filter-department-label"
-                                    label="Department"
-                                    value={filters.department_id}
-                                    onChange={(event) => handleFilterChange({
-                                        department_id: event.target.value === "" ? "" : Number(event.target.value),
-                                        role_id: ""
-                                    })}
-                                >
-                                    <MenuItem value="">All</MenuItem>
-                                    {data.departments.map((d: DepartmentOption) => (
-                                        <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl size="small" sx={{ minWidth: 160 }}>
-                                <InputLabel id="filter-role-label">Role</InputLabel>
-                                <Select
-                                    labelId="filter-role-label"
-                                    label="Role"
-                                    value={filters.role_id}
-                                    onChange={(event) => handleFilterChange({
-                                        role_id: event.target.value === "" ? "" : Number(event.target.value)
-                                    })}
-                                >
-                                    <MenuItem value="">All</MenuItem>
-                                    {filterRoles.map((r: RoleOption) => (
-                                        <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl size="small" sx={{ minWidth: 130 }}>
-                                <InputLabel id="filter-status-label">Status</InputLabel>
-                                <Select
-                                    labelId="filter-status-label"
-                                    label="Status"
-                                    value={filters.status}
-                                    onChange={(event) => handleFilterChange({ status: event.target.value as AccountStatusFilter })}
-                                >
-                                    <MenuItem value="">All</MenuItem>
-                                    <MenuItem value="active">Active</MenuItem>
-                                    <MenuItem value="inactive">Inactive</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Stack>
-
-                        <Button variant="contained" onClick={handleOpenCreateDialog}>
-                            Create User
-                        </Button>
-                    </Stack>
+                search={{
+                    placeholder: "Search name or email",
+                    defaultValue: searchTerm,
+                    onChange: (value) => {
+                        setSearchTerm(value);
+                        setPage(0);
+                    },
+                }}
+                filters={
+                    <>
+                        <SelectFilter
+                            label="Department"
+                            value={filters.department_id}
+                            options={data.departments.map((d: DepartmentOption) => ({ value: d.id, label: d.name }))}
+                            onChange={(value) => handleFilterChange({ department_id: value, role_id: "" })}
+                        />
+                        <SelectFilter
+                            label="Role"
+                            value={filters.role_id}
+                            options={filterRoles.map((r: RoleOption) => ({ value: r.id, label: r.name }))}
+                            onChange={(value) => handleFilterChange({ role_id: value })}
+                        />
+                        <SelectFilter
+                            label="Status"
+                            value={filters.status}
+                            options={STATUS_FILTER_OPTIONS}
+                            onChange={(value) => handleFilterChange({ status: value })}
+                        />
+                    </>
                 }
+                stickyColumns={{ last: true }}
+                emptyState={isFiltered ? (
+                    <EmptyState title="No accounts found" description="No account matches the search and filters." />
+                ) : (
+                    <EmptyState title="No accounts yet" action={createButton} />
+                )}
             />
 
-            <Dialog open={openCreateDialog} onClose={handleCloseCreateDialog} fullWidth maxWidth="sm">
-                <DialogTitle>Create New User</DialogTitle>
-                <DialogContent>
-                <Stack spacing={2} sx={{ mt: 1 }}>
-                    {dialogError && <Alert severity="error">{dialogError}</Alert>}
-
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                        <TextField
-                            label="First Name"
-                            value={formCreateData.first_name}
-                            onChange={(event) => handleChange("first_name", event.target.value)}
-                            fullWidth
-                            required
-                        />
-
-                        <TextField
-                            label="Last Name"
-                            value={formCreateData.last_name}
-                            onChange={(event) => handleChange("last_name", event.target.value)}
-                            fullWidth
-                            required
-                        />
-                    </Stack>
-
+            <FormDialog
+                open={openCreateDialog}
+                title="Create user"
+                error={dialogError}
+                onClose={() => setOpenCreateDialog(false)}
+                onSubmit={handleCreateUser}
+                submitText="Create user"
+                submitDisabled={isCreateInvalid}
+                loading={actionState.loading}
+            >
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
                     <TextField
-                        label="Username"
-                        value={formCreateData.name}
-                        onChange={(event) => handleChange("name", event.target.value)}
-                        fullWidth
+                        autoFocus
+                        size="small"
+                        label="First name"
+                        value={formCreateData.first_name}
+                        onChange={(event) => handleChange("first_name", event.target.value)}
                         required
                     />
                     <TextField
+                        size="small"
+                        label="Last name"
+                        value={formCreateData.last_name}
+                        onChange={(event) => handleChange("last_name", event.target.value)}
+                        required
+                    />
+                    <TextField
+                        size="small"
+                        label="Username"
+                        value={formCreateData.name}
+                        onChange={(event) => handleChange("name", event.target.value)}
+                        required
+                    />
+                    <TextField
+                        size="small"
                         label="Email"
                         type="email"
                         value={formCreateData.email}
                         onChange={(event) => handleChange("email", event.target.value)}
-                        fullWidth
                         required
                     />
-
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                        <TextField
-                            label="Password"
-                            type="password"
-                            value={formCreateData.password}
-                            onChange={(event) => handleChange("password", event.target.value)}
-                            error={isCreatePasswordTooShort}
-                            helperText={isCreatePasswordTooShort ? "At least 6 characters" : ""}
-                            autoComplete="new-password"
-                            fullWidth
-                            required
-                        />
-                        <TextField
-                            label="Confirm Password"
-                            type="password"
-                            value={formCreateData.password_confirmation}
-                            onChange={(event) => handleChange("password_confirmation", event.target.value)}
-                            error={isCreatePasswordMismatch}
-                            helperText={isCreatePasswordMismatch ? "Passwords do not match" : ""}
-                            autoComplete="new-password"
-                            fullWidth
-                            required
-                        />
-                    </Stack>
-
-                    <FormControl fullWidth required>
-                        <InputLabel id="department-label">Department</InputLabel>
-                        <Select
-                            labelId="department-label"
-                            label="Department"
-                            value={formCreateData.department ?? ""}
-                            onChange={(event) => {
-                                setFormCreateData((prev) => ({
-                                    ...prev,
-                                    department: String(event.target.value),
-                                    role: ""
-                                }));
-                            }}
-                        >
-                            {data.departments.map((department: DepartmentOption) => (
-                                <MenuItem key={department.id} value={String(department.id)}>
-                                    {department.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth required disabled={!formCreateData.department}>
-                        <InputLabel id="role-label">Role</InputLabel>
-                        <Select
-                            labelId="role-label"
-                            label="Role"
-                            value={formCreateData.role}
-                            onChange={(event) => handleChange("role", String(event.target.value))}
-                        >
-                            {filteredRoles.map((r: RoleOption) => (
-                                <MenuItem key={r.id} value={String(r.id)}>
-                                    {r.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseCreateDialog}>Cancel</Button>
-                    <LoadingButton
-                        onClick={handleCreateUser}
+                    <TextField
                         size="small"
-                        loading={actionState.loading}
-                        loadingPosition="end"
-                        variant="contained"
-                        disabled={isCreateInvalid}
-                        >
-                            <span>Create</span>
-                    </LoadingButton>
-                </DialogActions>
-            </Dialog>
-            <Dialog open={openEditDialog} onClose={handleCloseEditDialog} fullWidth maxWidth="xs">
-                <DialogTitle>Edit Role & Department</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2} sx={{ mt: 1 }}>
-                        {dialogError && <Alert severity="error">{dialogError}</Alert>}
-
-                        <FormControl fullWidth required>
-                            <InputLabel id="edit-department-label">Department</InputLabel>
-                            <Select
-                                labelId="edit-department-label"
-                                label="Department"
-                                value={formEditData.department || ""}
-                                onChange={(e) =>
-                                    setFormEditData({ role: 0, department: Number(e.target.value) })
-                                }
-                            >
-                                {data.departments.map((d: DepartmentOption) => (
-                                    <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-                        <FormControl fullWidth required disabled={!formEditData.department}>
-                            <InputLabel id="edit-role-label">Role</InputLabel>
-                            <Select
-                                labelId="edit-role-label"
-                                label="Role"
-                                value={formEditData.role || ""}
-                                onChange={(e) =>
-                                    setFormEditData(prev => ({ ...prev, role: Number(e.target.value) }))
-                                }
-                            >
-                                {filteredEditRoles.map((r: RoleOption) => (
-                                    <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseEditDialog}>Cancel</Button>
-                    <LoadingButton
-                        onClick={handleUpdateUser}
-                        loading={actionState.loading}
-                        variant="contained"
-                        disabled={!formEditData.role || !formEditData.department}
+                        label="Password"
+                        type="password"
+                        value={formCreateData.password}
+                        onChange={(event) => handleChange("password", event.target.value)}
+                        error={isCreatePasswordTooShort}
+                        helperText={isCreatePasswordTooShort ? "At least 6 characters" : ""}
+                        autoComplete="new-password"
+                        required
+                    />
+                    <TextField
+                        size="small"
+                        label="Confirm password"
+                        type="password"
+                        value={formCreateData.password_confirmation}
+                        onChange={(event) => handleChange("password_confirmation", event.target.value)}
+                        error={isCreatePasswordMismatch}
+                        helperText={isCreatePasswordMismatch ? "Passwords do not match" : ""}
+                        autoComplete="new-password"
+                        required
+                    />
+                    <TextField
+                        select
+                        size="small"
+                        label="Department"
+                        value={formCreateData.department ?? ""}
+                        onChange={(event) => {
+                            setFormCreateData((prev) => ({
+                                ...prev,
+                                department: String(event.target.value),
+                                role: ""
+                            }));
+                        }}
+                        required
                     >
-                        Save
-                    </LoadingButton>
-                </DialogActions>
-            </Dialog>
-            <Dialog open={openResetPasswordDialog} onClose={handleCloseResetPasswordDialog} fullWidth maxWidth="xs">
-                <DialogTitle>Reset Password</DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ mb: 2 }}>
+                        {data.departments.map((department: DepartmentOption) => (
+                            <MenuItem key={department.id} value={String(department.id)}>
+                                {department.name}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField
+                        select
+                        size="small"
+                        label="Role"
+                        value={formCreateData.role}
+                        onChange={(event) => handleChange("role", String(event.target.value))}
+                        disabled={!formCreateData.department}
+                        helperText={!formCreateData.department ? "Choose a department first" : ""}
+                        required
+                    >
+                        {filteredRoles.map((r: RoleOption) => (
+                            <MenuItem key={r.id} value={String(r.id)}>
+                                {r.name}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Box>
+            </FormDialog>
+
+            <FormDialog
+                open={openEditDialog}
+                title="Edit role & department"
+                description={editTarget?.email}
+                error={dialogError}
+                onClose={handleCloseEditDialog}
+                onSubmit={handleUpdateUser}
+                submitDisabled={!formEditData.role || !formEditData.department}
+                loading={actionState.loading}
+                maxWidth="xs"
+            >
+                <Stack spacing={2}>
+                    <TextField
+                        select
+                        size="small"
+                        label="Department"
+                        value={formEditData.department || ""}
+                        onChange={(e) => setFormEditData({ role: 0, department: Number(e.target.value) })}
+                        required
+                    >
+                        {data.departments.map((d: DepartmentOption) => (
+                            <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField
+                        select
+                        size="small"
+                        label="Role"
+                        value={formEditData.role || ""}
+                        onChange={(e) => setFormEditData(prev => ({ ...prev, role: Number(e.target.value) }))}
+                        disabled={!formEditData.department}
+                        required
+                    >
+                        {filteredEditRoles.map((r: RoleOption) => (
+                            <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
+                        ))}
+                    </TextField>
+                </Stack>
+            </FormDialog>
+
+            <FormDialog
+                open={openResetPasswordDialog}
+                title="Reset password"
+                description={
+                    <>
                         Set a temporary password for <strong>{resetPasswordTarget?.email}</strong>.
-                        The user will be signed out and must choose a new password on next login.
-                    </DialogContentText>
-                    <Stack spacing={2}>
-                        {dialogError && <Alert severity="error">{dialogError}</Alert>}
-
-                        <TextField
-                            label="New Password"
-                            type="password"
-                            value={formResetPasswordData.password}
-                            onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
-                            error={isResetPasswordTooShort}
-                            helperText={isResetPasswordTooShort ? "Password must be at least 6 characters" : ""}
-                            autoComplete="new-password"
-                            fullWidth
-                            required
-                        />
-                        <TextField
-                            label="Confirm New Password"
-                            type="password"
-                            value={formResetPasswordData.password_confirmation}
-                            onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password_confirmation: e.target.value }))}
-                            error={isResetPasswordMismatch}
-                            helperText={isResetPasswordMismatch ? "Passwords do not match" : ""}
-                            autoComplete="new-password"
-                            fullWidth
-                            required
-                        />
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseResetPasswordDialog}>Cancel</Button>
-                    <LoadingButton
-                        onClick={handleResetPassword}
-                        loading={actionState.loading}
-                        variant="contained"
-                        disabled={isResetPasswordInvalid}
-                    >
-                        Reset
-                    </LoadingButton>
-                </DialogActions>
-            </Dialog>
+                        The user is signed out and must choose a new password at the next login.
+                    </>
+                }
+                error={dialogError}
+                onClose={handleCloseResetPasswordDialog}
+                onSubmit={handleResetPassword}
+                submitText="Reset password"
+                submitDisabled={isResetPasswordInvalid}
+                loading={actionState.loading}
+                maxWidth="xs"
+            >
+                <Stack spacing={2}>
+                    <TextField
+                        autoFocus
+                        size="small"
+                        label="New password"
+                        type="password"
+                        value={formResetPasswordData.password}
+                        onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
+                        error={isResetPasswordTooShort}
+                        helperText={isResetPasswordTooShort ? "Password must be at least 6 characters" : ""}
+                        autoComplete="new-password"
+                        required
+                    />
+                    <TextField
+                        size="small"
+                        label="Confirm new password"
+                        type="password"
+                        value={formResetPasswordData.password_confirmation}
+                        onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password_confirmation: e.target.value }))}
+                        error={isResetPasswordMismatch}
+                        helperText={isResetPasswordMismatch ? "Passwords do not match" : ""}
+                        autoComplete="new-password"
+                        required
+                    />
+                </Stack>
+            </FormDialog>
 
             <ConfirmDialog
                 open={Boolean(statusTarget)}
@@ -643,27 +558,30 @@ const AccountManagement = () => {
                     : `${statusTarget?.email} will be able to log in again.`}
             />
 
-            <Dialog open={Boolean(historyTarget)} onClose={() => setHistoryTarget(null)} fullWidth maxWidth="md">
-                <DialogTitle>Account history — {historyTarget?.email}</DialogTitle>
-                <DialogContent sx={{ px: 0 }}>
-                    <ReusableTable
-                        columns={auditColumns}
-                        data={auditLogs}
-                        actionStatus={auditActionState}
-                        page={auditPage}
-                        rowsPerPage={auditRowsPerPage}
-                        total={auditTotal}
-                        onPageChange={(event, newPage) => setAuditPage(newPage)}
-                        onRowsPerPageChange={(event) => {
-                            setAuditRowsPerPage(parseInt(event.target.value, 10));
-                            setAuditPage(0);
-                        }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setHistoryTarget(null)}>Close</Button>
-                </DialogActions>
-            </Dialog>
+            <DetailDrawer
+                open={Boolean(historyTarget)}
+                onClose={() => setHistoryTarget(null)}
+                title="Account history"
+                subtitle={historyTarget?.email}
+                width={760}
+            >
+                <ReusableTable
+                    columns={auditColumns}
+                    data={auditLogs}
+                    actionStatus={auditActionState}
+                    page={auditPage}
+                    rowsPerPage={auditRowsPerPage}
+                    total={auditTotal}
+                    onPageChange={(_event, newPage) => setAuditPage(newPage)}
+                    onRowsPerPageChange={(event) => {
+                        setAuditRowsPerPage(parseInt(event.target.value, 10));
+                        setAuditPage(0);
+                    }}
+                    emptyText="No changes recorded yet"
+                    inset={false}
+                    dense
+                />
+            </DetailDrawer>
         </Box>
     )
 };

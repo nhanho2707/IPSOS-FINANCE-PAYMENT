@@ -1,8 +1,12 @@
-import { Alert, Box, Checkbox, FormControlLabel, FormGroup, LinearProgress, TextField, Typography } from "@mui/material";
+import { Box, Checkbox, FormControlLabel, FormGroup, TextField, Typography } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import GenericDialog from "../../Dialogs/GenericDialog";
+import FormDialog from "../../Dialogs/FormDialog";
 import { CloneProjectPayload, ProjectData } from "../../../config/ProjectFieldsConfig";
+import { getProjectHomePath } from "../../../config/ProjectNavConfig";
+import { useAuth } from "../../../contexts/AuthContext";
 import { useProjects } from "../../../hook/useProjects";
 
 interface ModalCloneProjectProps {
@@ -27,19 +31,22 @@ const buildInitialValues = (project: ProjectData): CloneProjectPayload => ({
   include_permissions: false,
 });
 
+const toDate = (value: string): Dayjs | null => (value ? dayjs(value) : null);
+const fromDate = (value: Dayjs | null): string => (value?.isValid() ? value.format("YYYY-MM-DD") : "");
+
 const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { cloneProject, actionState } = useProjects();
 
   const [formValues, setFormValues] = useState<CloneProjectPayload>(() => buildInitialValues(project));
 
   const isCloning = actionState.type === 'add' && actionState.loading;
-  const cloneError = actionState.type === 'add' && actionState.error;
+  const cloneError = actionState.type === 'add' && actionState.error ? actionState.message : null;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormValues((prev) => ({ ...prev, [name]: value }));
-  };
+  const start = toDate(formValues.planned_field_start);
+  const end = toDate(formValues.planned_field_end);
+  const endBeforeStart = Boolean(start && end && end.isBefore(start, "day"));
 
   const handleOptionChange = (key: CloneOptionKey) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = e.target;
@@ -52,52 +59,52 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
     try {
       const newProject = await cloneProject(project.id, formValues);
       onClose();
-      navigate(`/project-management/projects/${newProject.id}/quotation`);
+      navigate(getProjectHomePath(newProject.id ?? 0, user?.role));
     } catch {
-      // actionState.error + actionState.message đã được set trong hook
+      // useProjects already exposes the error through actionState
     }
   };
 
   return (
-    <GenericDialog
+    <FormDialog
       open
-      title={`Clone project ${project.internal_code ?? ''}`}
+      title={`Clone project ${project.internal_code ?? ''}`.trim()}
+      error={cloneError}
       onClose={onClose}
       onSubmit={handleSubmit}
       submitText="Clone"
+      submitDisabled={!formValues.project_name.trim() || endBeforeStart}
+      loading={isCloning}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-        {isCloning && <LinearProgress />}
-        {cloneError && <Alert severity="error">{actionState.message}</Alert>}
-
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
+          autoFocus
+          required
           size="small"
-          label="Project Name"
-          name="project_name"
+          label="Project name"
           value={formValues.project_name}
-          onChange={handleInputChange}
+          onChange={(e) => setFormValues((prev) => ({ ...prev, project_name: e.target.value }))}
           fullWidth
         />
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <TextField
-            size="small"
-            type="date"
-            label="Planned Field Start"
-            name="planned_field_start"
-            value={formValues.planned_field_start}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1, minWidth: 180 }}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <DatePicker
+            label="Field start (planned)"
+            value={start}
+            onChange={(value) => setFormValues((prev) => ({ ...prev, planned_field_start: fromDate(value) }))}
+            slotProps={{ textField: { size: "small" } }}
           />
-          <TextField
-            size="small"
-            type="date"
-            label="Planned Field End"
-            name="planned_field_end"
-            value={formValues.planned_field_end}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1, minWidth: 180 }}
+          <DatePicker
+            label="Field end (planned)"
+            value={end}
+            minDate={start ?? undefined}
+            onChange={(value) => setFormValues((prev) => ({ ...prev, planned_field_end: fromDate(value) }))}
+            slotProps={{
+              textField: {
+                size: "small",
+                error: endBeforeStart,
+                helperText: endBeforeStart ? "Ends before it starts" : undefined,
+              },
+            }}
           />
         </Box>
 
@@ -117,6 +124,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
                   />
                 }
                 label={option.label}
+                componentsProps={{ typography: { variant: "body2" } }}
               />
             ))}
           </FormGroup>
@@ -125,7 +133,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
           </Typography>
         </Box>
       </Box>
-    </GenericDialog>
+    </FormDialog>
   );
 };
 

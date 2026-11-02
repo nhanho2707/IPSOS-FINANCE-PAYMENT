@@ -9,7 +9,7 @@ export interface EmployeeData {
     vinnet_total: number,
     gotit_total: number,
     other_total: number,
-    transaction_count: number
+    transaction_total: number
 };
 
 export const EmployeeCellConfig: ColumnFormat[] = [

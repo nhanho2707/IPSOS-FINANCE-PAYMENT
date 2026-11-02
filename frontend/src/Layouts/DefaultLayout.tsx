@@ -1,27 +1,30 @@
-import { useState } from "react";
-import Sidebar from "../components/Sidebar/Sidebar";
-import MobileNavToggle, { isMobileViewport } from "../components/Sidebar/MobileNavToggle";
+import React from "react";
 import { Outlet } from "react-router-dom";
+import AppShell, { SidebarSearchButton } from "../components/Shell/AppShell";
+import SidebarNav, { SidebarNavGroup } from "../components/Shell/SidebarNav";
+import { getAppNavGroupsForRole } from "../config/AppNavConfig";
+import { useAuth } from "../contexts/AuthContext";
 
 const DefaultLayout: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => !isMobileViewport());
+  const { user } = useAuth();
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const groups: SidebarNavGroup[] = getAppNavGroupsForRole(user?.role).map((group) => ({
+    key: group.label,
+    label: group.label,
+    items: group.items.map((item) => ({ key: item.to, label: item.label, to: item.to, icon: item.icon })),
+  }));
 
   return (
-    <>
-      <div className="wrapper">
-        <MobileNavToggle open={isSidebarOpen} onOpen={toggleSidebar} />
-        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <div className="content">
-          <div className="content-detail">
-            <Outlet />
-          </div>
-        </div>
-      </div>
-    </>
+    <AppShell
+      sidebar={({ collapsed, openPalette }) => (
+        <>
+          <SidebarSearchButton collapsed={collapsed} onClick={() => openPalette("search")} />
+          <SidebarNav ariaLabel="Main" groups={groups} collapsed={collapsed} />
+        </>
+      )}
+    >
+      <Outlet />
+    </AppShell>
   );
 };
 

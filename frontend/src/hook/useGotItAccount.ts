@@ -44,7 +44,8 @@ export function useGotItAccount(accountType: string){
         }
     }
     
-    const addDeposit = async (amount: string) => {
+    // Resolves to false when the deposit was not saved, so the form can stay open and say so.
+    const addDeposit = async (amount: string): Promise<boolean> => {
         try{
             setError(false);
             setLoading(true);
@@ -61,8 +62,10 @@ export function useGotItAccount(accountType: string){
             });
 
             setGotItAccount(res.data);
+            return true;
         } catch(error){
             setError(true);
+            return false;
         } finally {
             setLoading(false);
         }

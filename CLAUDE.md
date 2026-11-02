@@ -43,10 +43,11 @@ IPSOS-FINANCE-PAYMENT/
 │       │   └── AccountFieldsConfig.ts
 │       ├── hook/               # Custom hooks: data fetching + state
 │       ├── components/         # Shared UI components
-│       │   ├── Dialogs/        # GenericDialog, ConfirmDialog, RejectDialog
-│       │   ├── Table/          # ReusableTable
+│       │   ├── Shell/          # AppShell: sidebar nav, user menu, project switcher, ⌘K palette
+│       │   ├── Dialogs/        # FormDialog, ConfirmDialog, GenericDialog, RejectDialog
+│       │   ├── Table/          # ResourceTable, ReusableTable, FilterChip, BulkActionBar, RowActions
 │       │   ├── Modals/
-│       │   └── Sidebar/
+│       │   └── Sidebar/        # Techcombank sidebar only
 │       ├── pages/              # Route-level pages
 │       ├── Layouts/            # DefaultLayout, ProjectLayout, TechcombankLayout
 │       └── routes/
@@ -98,7 +99,7 @@ const [actionState, setActionState] = useState<ActionState>({
 - Visibility is configured in `frontend/src/config/RoleConfig.ts` via `BaseVisibility` + per-role `override` objects.
 - Use `buildVisibility(role)` (or the `useVisibility()` hook) to get a merged visibility object; never check roles inline with string comparisons in JSX.
 - Action/page permissions live in `ROLE_ACCESS` (mirrors `ensureUserHasRole` in `backend/routes/api.php`); check them with `hasRole(user?.role, ROLE_ACCESS.x)`.
-- Routes: wrap pages with `<ProtectedRoute allowedRoles>` / `<RoleGate allowedRoles>`. Project sub-pages take their roles from `ProjectNavConfig.ts`, which also drives the project sidebar.
+- Routes: wrap pages with `<ProtectedRoute allowedRoles>` / `<RoleGate allowedRoles>`. Project sub-pages take their roles from `ProjectNavConfig.ts`, which also drives the project sidebar; top-level pages are listed in `AppNavConfig.ts`.
 - Backend roles: `Admin`, `Finance`, `Scripter`, `Researcher`, `Field Manager`.
 
 ### UI Language
@@ -107,12 +108,13 @@ const [actionState, setActionState] = useState<ActionState>({
 
 ### Component Rules
 - Use **MUI v5** components (`@mui/material`). Do not introduce a second UI library.
-- Shared dialogs: `GenericDialog` for custom content, `ConfirmDialog` for yes/no, `RejectDialog` for rejection with reason.
+- Shared dialogs: `FormDialog` for short forms, `ConfirmDialog` for yes/no, `DetailDrawer` for details and long forms, `GenericDialog` for other custom content, `RejectDialog` for rejection with reason.
   Open `ConfirmDialog` through `useDialog()` (`<ConfirmDialog {...dialogProps} />`); use `tone: "danger"` plus an explicit `confirmText` for destructive actions. Never use `alert()` / `window.confirm()`.
-- Non-blocking feedback: `useToast().showToast(message, severity)` from `contexts/ToastContext.tsx`.
+- Feedback: never open a dialog only to show a message. Short confirmations and errors go to `useToast().showToast(message, severity)` from `contexts/ToastContext.tsx`; results the user needs to read (bulk send, skipped import rows) go in an inline `Alert`, e.g. `ResourceTable`'s `banner`.
 - Buttons: plain MUI `variant="contained"` / `color="inherit"`; colors come from the theme in `config/ThemeConfig.ts`. Do not add CSS button classes.
-- Project sub-pages: the header and breadcrumbs come from `ProjectLayout`; read project data with `useProjectContext()` and register new pages in `config/ProjectNavConfig.ts`.
-- Table: use `ReusableTable` — pass columns config and data. Do not write one-off `<Table>` implementations.
+- Page headers: top-level pages start with `<PageHeader title description actions />` (at most one contained button in `actions`).
+- Project sub-pages: the header and breadcrumbs come from `ProjectLayout`, with title and description from `config/ProjectNavConfig.ts` (register new pages there, with their `group`); put page actions in `<ProjectPageActions>` and read project data with `useProjectContext()`.
+- Lists: use `ResourceTable` (search, `FilterChip` filters, `BulkActionBar`, `banner`, `EmptyState`, `onRowClick`) with `RowActions` for per-row actions; it wraps `ReusableTable`, which is used directly only for tables inside other components. Do not write one-off `<Table>` implementations.
 - Icons: prefer `@mui/icons-material` or `@phosphor-icons/react`.
 
 ### State Management

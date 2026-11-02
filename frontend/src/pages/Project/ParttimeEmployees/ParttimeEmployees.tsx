@@ -1,71 +1,54 @@
-import { Alert, Box, Button, IconButton, Paper, Snackbar } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useParams } from "react-router-dom";
+import { Button } from "@mui/material";
+import { PersonAddAltOutlined, PersonRemoveOutlined } from "@mui/icons-material";
 import { useState } from "react";
 import { EmployeeCellConfig, EmployeeData } from "../../../config/EmployeeFieldsConfig";
 import useDialog from "../../../hook/useDialog";
 import UniversalInputDialog from "../../../components/Dialogs/UniversalInputDialog";
 import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
-import SearchTextBox from "../../../components/SearchTextBox";
 import { useEmployees } from "../../../hook/useEmployees";
-import ReusableTable from "../../../components/Table/ReusableTable";
+import { useProjectContext } from "../../../hook/useProjectContext";
+import ResourceTable from "../../../components/Table/ResourceTable";
+import RowActions from "../../../components/Table/RowActions";
+import EmptyState from "../../../components/EmptyState";
+import ProjectPageActions from "../../../components/ProjectPageActions";
 import { ColumnFormat } from "../../../config/ColumnConfig";
 
 const ParttimeEmployees = () => {
-    const { id } = useParams<{id: string}>();
-    const projectId = Number(id) || 0;
+    const { projectId } = useProjectContext();
 
-    const { employees, meta, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading: loadingEmployees, error: errorEmployees, message: messageEmployees, addEmployees, removeEmployee } = useEmployees(projectId);
-    
-    const [ employeeCellConfig, setEmployeeCellConfig ] = useState(EmployeeCellConfig)
-    const { open, title, message, showConfirmButton, openDialog, closeDialog, confirmDialog } = useDialog();
-    const [ selectedEmployee, setSelectedEmployee ] = useState<EmployeeData | null>(null);
-    
+    const { employees, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading: loadingEmployees, error: errorEmployees, message: messageEmployees, addEmployees, removeEmployee } = useEmployees(projectId);
+
+    const { openDialog, dialogProps } = useDialog();
+    const [ openImportEmployeesDialog, setOpenImportEmployeesDialog ] = useState(false);
+
     const handleRemoveClick = (employee: EmployeeData) => {
-        setSelectedEmployee(employee);
         openDialog({
-            title: "Delete Employee",
-            message: "Are you sure that you want to remove " + employee.employee_id + " from this project?",
-            showConfirmButton: true
+            title: "Remove interviewer",
+            tone: "danger",
+            confirmText: "Remove",
+            message: `Remove ${employee.employee_id} from this project?`,
+            showConfirmButton: true,
+            onConfirm: async () => {
+                try {
+                    await removeEmployee(projectId, employee.id);
+                } catch (error) {
+                    console.error('Failed to remove employee', error);
+                }
+            }
         });
     };
 
-    const handleCancel = () => {
-        closeDialog();
-        setSelectedEmployee(null);
-    }
-
-    const handleConfirm = async () => {
-        if(!selectedEmployee || !id) return
-
-        try{
-            await removeEmployee(parseInt(id), selectedEmployee.id);
-        } catch(error){
-            console.error('Failed to remove employee', error);
-        }finally{
-            closeDialog();
-            setSelectedEmployee(null);
-        }
-    }
-
-    const [openImportEmployeesDialog, setOpenImportEmployeesDialog ] = useState(false);
-        
-    const handleImportEmployeesCancel = () => {
-        setOpenImportEmployeesDialog(false);
-    }
-
     const handleImportEmployees = async (value: string) => {
-        
-        if (!id || !value){
+        if (!projectId || !value){
             setOpenImportEmployeesDialog(false);
             return;
-        } 
-        
+        }
+
         setPage(0);
 
         const employee_ids = value.split("\n").map(x => x.trim().replace(/[^a-zA-Z0-9]/g, "")).filter(Boolean);
-        
-        await addEmployees(parseInt(id), employee_ids.join(','));
+
+        await addEmployees(projectId, employee_ids.join(','));
 
         setOpenImportEmployeesDialog(false);
     }
@@ -76,7 +59,7 @@ const ParttimeEmployees = () => {
     }
 
     const columns: ColumnFormat[] = [
-        ...employeeCellConfig,
+        ...EmployeeCellConfig,
         {
             label: "Transactions",
             name: "transactions",
@@ -89,68 +72,58 @@ const ParttimeEmployees = () => {
                     (Vinnet / Gotit / Refuse / Total)
                 </div>
             ),
-            renderCell: (row : any) => {
+            renderCell: (row: EmployeeData) => {
                 return `${row.vinnet_total ?? 0} / ${row.gotit_total ?? 0} / ${row.other_total ?? 0} / ${row.transaction_total ?? 0}`;
             }
         },
         {
-            label: "Actions",
+            label: "",
             name: "actions",
             type: "menu",
-            align: "center",
-            flex: 1,
-            renderAction: (row: any) => {
-                const disabled = loadingEmployees || row.transaction_total > 0;
+            align: "right",
+            width: 56,
+            renderAction: (row: EmployeeData) => {
+                const hasTransactions = (row.transaction_total ?? 0) > 0;
 
                 return (
-                    <IconButton
-                        color="error"
-                        size="small"
-                        disabled={disabled}
-                        onClick={() => handleRemoveClick(row)}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
+                    <RowActions
+                        menuLabel={`Actions for ${row.employee_id}`}
+                        items={[
+                            {
+                                label: "Remove from project",
+                                icon: PersonRemoveOutlined,
+                                tone: "danger",
+                                onClick: () => handleRemoveClick(row),
+                                disabled: loadingEmployees || hasTransactions,
+                                disabledReason: hasTransactions ? "Interviewers with transactions stay on the project" : undefined,
+                            },
+                        ]}
+                    />
                 )
             }
         }
     ];
-    
-    const handleChangePage = (event: any, newPage: number) => {
+
+    const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
         setPage(newPage)
     }
 
-    const handleChangeRowsPerPage = (event: any) => {
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
 
+    const addButton = (
+        <Button variant="contained" startIcon={<PersonAddAltOutlined />} onClick={() => setOpenImportEmployeesDialog(true)}>
+            Add interviewers
+        </Button>
+    );
 
     return (
-        <Box>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 2 }}>
+        <>
+            <ProjectPageActions>{addButton}</ProjectPageActions>
 
-                {/* Add Employee Button */}
-                    <Button variant="contained" color="primary" onClick={() => setOpenImportEmployeesDialog(true)}>
-                        Add / Import Employees
-                    </Button>
-                </Box>
-            <Box
-                sx={{
-                    p: 2,
-                    mb: 2,
-                    borderRadius: 2,
-                    backgroundColor: "background.paper",
-                    border: 1,
-                    borderColor: "divider",
-                    display: "flex",
-                    gap: 2,
-                    flexWrap: "wrap"
-                }}
-            >
-                <SearchTextBox placeholder="Search id, name,..." onSearchChange={handleSearchChange} />
-            </Box>
-            <ReusableTable
+            <ResourceTable
                 columns={columns}
                 data={employees}
                 actionStatus={{
@@ -164,62 +137,34 @@ const ParttimeEmployees = () => {
                 total = {total}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
+                search={{
+                    placeholder: "Search interviewer ID or name",
+                    defaultValue: searchTerm,
+                    onChange: handleSearchChange,
+                }}
+                emptyState={searchTerm ? (
+                    <EmptyState title="No interviewers found" description={`Nothing matches “${searchTerm}”.`} />
+                ) : (
+                    <EmptyState
+                        title="No interviewers yet"
+                        description="Add the interviewer IDs working on this project. The project needs interviewers before it can go into field."
+                        action={addButton}
+                    />
+                )}
             />
 
-            <ConfirmDialog
-                open={open}
-                onClose={handleCancel}
-                onConfirm={handleConfirm}
-                showConfirmButton={showConfirmButton}
-                tone="danger"
-                confirmText="Remove"
-                title={title}
-                message={message}
-            />
+            <ConfirmDialog {...dialogProps} />
 
             <UniversalInputDialog
                 open={openImportEmployeesDialog}
-                onClose={handleImportEmployeesCancel}
+                onClose={() => setOpenImportEmployeesDialog(false)}
                 onSubmit={handleImportEmployees}
-                title="Add Employees"
-                label="Import Employee IDs"
-                placeholder="Paste codes here"
+                title="Add interviewers"
+                label="Interviewer IDs, one per line"
+                placeholder="Paste interviewer IDs here"
+                submitText="Add"
             />
-        </Box>
-        // <Box className="box-table">
-        //     <div className="filter">
-        //         <div className="filter-left">
-        //             <div className="project-info">
-        //                 <div>
-        //                     <strong>Project Name:</strong> {projectSelected?.project_name}
-        //                 </div>
-        //                 <div>
-        //                     <strong>Symphony:</strong> {projectSelected?.symphony}
-        //                 </div>
-        //             </div>
-        //         </div>
-        //         <div className="filter-right">
-        //         {canView("employees.functions.visible_import_employees") && (
-        //             <Button className="btn btn-primary" onClick={() => setOpenImportEmployeesDialog(true)}>
-        //                 Import New Employees
-        //             </Button>
-        //         )}
-        //         </div>
-        //     </div>
-        //     <div className="filter">
-        //         {/* LEFT: Add button */}
-        //         <div className="filter-left">
-                    
-        //         </div>
-    
-        //         {/* RIGHT: Search + Date filter */}
-        //         <div className="filter-right">
-        //             <SearchTextBox placeholder="Search id, name,..." onSearchChange={handleSearchChange} />
-        //         </div>
-        //     </div>
-           
-            
-        // </Box>
+        </>
     )
 }
 

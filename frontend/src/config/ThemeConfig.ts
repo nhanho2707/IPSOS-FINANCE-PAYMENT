@@ -64,6 +64,11 @@ export const QUOTATION_STATUS_TONE: Record<string, StatusTone> = {
   "approved": "success",
 };
 
+export const CATI_BATCH_STATUS_TONE: Record<string, StatusTone> = {
+  "active": "success",
+  "blocked": "warning",
+};
+
 export const FEEDBACK_STATUS_TONE: Record<string, StatusTone> = {
   "pending": "warning",
   "resolved": "success",

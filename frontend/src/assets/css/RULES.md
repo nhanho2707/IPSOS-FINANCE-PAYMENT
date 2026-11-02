@@ -7,10 +7,10 @@
 | File | Dùng cho | Import ở đâu |
 |---|---|---|
 | `global.css` | CSS variables (`:root`), font import | `index.tsx` |
-| `layout.css` | App shell: `.wrapper`, `.content`, `.content-detail` | `index.tsx` |
+| `layout.css` | Khung cũ `.wrapper`, `.content`, `.content-detail`, chỉ còn `TechcombankLayout` dùng; app nội bộ dùng `AppShell` (MUI `sx`) | `index.tsx` |
 | `components.css` | Shared utilities: `.row`, action menu, typography helpers | `index.tsx` |
 | `features.css` | Widget, welcome section, legend, chart, subtotal | `index.tsx` |
-| `table.css` | Table, filter bar, pagination | `index.tsx` |
+| `table.css` | `.table-container`, `.table-cell` cho bảng Techcombank; bảng nội bộ dùng `ResourceTable` / `ReusableTable` | `index.tsx` |
 | `modal.css` | Modal box, modal footer, modal buttons | Import trực tiếp trong component dùng modal |
 | `techcombank.css` | Techcombank panel layout, màu sắc riêng | Import trong `TechcombankLayout.tsx` |
 
@@ -60,7 +60,7 @@ color: var(--text-color);
 | `--canvas-color` | `#f6f7f9` (sinh từ `ThemeConfig.ts`) | Nền khung app (`.wrapper`) |
 | `--body-color` | `rgb(238,242,246)` | Nền phụ (icon button, khối nhỏ) |
 | `--main-color` | `#007a79` (sinh từ `ThemeConfig.ts`) | Brand color, chữ màu brand, button primary |
-| `--sidebar-expanded` | `15.625rem` | Width sidebar mở |
+| `--sidebar-expanded` | `15.625rem` | Width sidebar mở (chỉ sidebar Techcombank; AppShell khai báo width trong `AppShell.tsx`) |
 | `--sidebar-collapsed` | `5.5rem` | — | Width sidebar đóng |
 | `--transition-02` | `all 0.2s ease` | — | Transition nhanh |
 

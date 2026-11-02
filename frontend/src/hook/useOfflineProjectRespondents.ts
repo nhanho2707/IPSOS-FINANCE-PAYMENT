@@ -301,11 +301,7 @@ export function useOfflineProjectRespondents(projectId: number) {
 
         await fetchProjectRespondents(page, rowsPerPage, searchTerm);
 
-        const successCount = results.filter(r => r.success).length;
-
-        setError(successCount < results.length);
-        setMessage(`Gifts sent successfully to ${successCount}/${results.length} respondents.`);
-
+        // The caller reports the outcome (Gifts shows a result banner with every failure).
         return { results, stoppedOnFailures };
     }, [sendOfflineTransaction, fetchProjectRespondents, page, rowsPerPage, searchTerm]);
 

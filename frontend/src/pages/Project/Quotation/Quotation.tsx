@@ -445,53 +445,65 @@ const Quotation: React.FC = () => {
                             {canMutate && canEdit && (
                                 <>
                                     <Tooltip title={!isEditing ? "Edit" : "Cancel Edit"}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => {
-                                                if(isEditing){
-                                                    handleCancel();
-                                                } else {
-                                                    setOpenAlert(false);
-                                                    setIsEditing(true);
-                                                }
-                                            }}
-                                            disabled={!(selectedVersion.status === 'draft')}
-                                        >
-                                            {isEditing ? <CloseIcon/> : <EditIcon/>}
-                                        </IconButton>
+                                        <span>
+                                            <IconButton
+                                                size="small"
+                                                aria-label={!isEditing ? "Edit" : "Cancel edit"}
+                                                onClick={() => {
+                                                    if(isEditing){
+                                                        handleCancel();
+                                                    } else {
+                                                        setOpenAlert(false);
+                                                        setIsEditing(true);
+                                                    }
+                                                }}
+                                                disabled={!(selectedVersion.status === 'draft')}
+                                            >
+                                                {isEditing ? <CloseIcon/> : <EditIcon/>}
+                                            </IconButton>
+                                        </span>
                                     </Tooltip>
 
                                     <Tooltip title={"Delete Draft"}>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => handleRemove()}
-                                            disabled={isEditing || (!isEditing && !(selectedVersion.status === 'draft'))}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        <span>
+                                            <IconButton
+                                                color="error"
+                                                aria-label="Delete draft"
+                                                onClick={() => handleRemove()}
+                                                disabled={isEditing || (!isEditing && !(selectedVersion.status === 'draft'))}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </span>
                                     </Tooltip>
                                     
                                     {(selectedVersion.status === 'draft') && (
                                         <Tooltip title="Submit Version">
-                                            <IconButton
-                                                color="warning"
-                                                onClick={handleSubmit}
-                                                disabled={isEditing}
-                                            >
-                                                <SendIcon />
-                                            </IconButton>
+                                            <span>
+                                                <IconButton
+                                                    color="warning"
+                                                    aria-label="Submit version"
+                                                    onClick={handleSubmit}
+                                                    disabled={isEditing}
+                                                >
+                                                    <SendIcon />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
                                     )}
 
                                     {selectedVersion.status === 'submitted' && (
                                         <Tooltip title="Withdraw">
-                                            <IconButton
-                                                color="error"
-                                                onClick={handleWithdraw}
-                                                disabled={isEditing}
-                                            >
-                                                <UndoIcon />
-                                            </IconButton>
+                                            <span>
+                                                <IconButton
+                                                    color="error"
+                                                    aria-label="Withdraw"
+                                                    onClick={handleWithdraw}
+                                                    disabled={isEditing}
+                                                >
+                                                    <UndoIcon />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
                                     )}
 
@@ -499,36 +511,45 @@ const Quotation: React.FC = () => {
                                         <>
                                             {canApprove && (
                                                 <Tooltip title="Approve Version">
-                                                    <IconButton
-                                                        color="success"
-                                                        onClick={handleApprove}
-                                                        disabled={isEditing}
-                                                    >
-                                                        <CheckCircleIcon />
-                                                    </IconButton>
+                                                    <span>
+                                                        <IconButton
+                                                            color="success"
+                                                            aria-label="Approve version"
+                                                            onClick={handleApprove}
+                                                            disabled={isEditing}
+                                                        >
+                                                            <CheckCircleIcon />
+                                                        </IconButton>
+                                                    </span>
                                                 </Tooltip>
                                             )}
 
                                             <Tooltip title="Withdraw back to submitted">
-                                                <IconButton
-                                                    color="error"
-                                                    onClick={handleWithdraw}
-                                                    disabled={isEditing}
-                                                >
-                                                    <UndoIcon />
-                                                </IconButton>
+                                                <span>
+                                                    <IconButton
+                                                        color="error"
+                                                        aria-label="Withdraw back to submitted"
+                                                        onClick={handleWithdraw}
+                                                        disabled={isEditing}
+                                                    >
+                                                        <UndoIcon />
+                                                    </IconButton>
+                                                </span>
                                             </Tooltip>
                                         </>
                                     )}
 
                                     <Tooltip title="Create new version">
-                                        <IconButton
-                                            color="success"
-                                            onClick={handleOpenCloneNewVersionDialog}
-                                            disabled={isEditing}
-                                        >
-                                            <AddIcon />
-                                        </IconButton>
+                                        <span>
+                                            <IconButton
+                                                color="success"
+                                                aria-label="Create new version"
+                                                onClick={handleOpenCloneNewVersionDialog}
+                                                disabled={isEditing}
+                                            >
+                                                <AddIcon />
+                                            </IconButton>
+                                        </span>
                                     </Tooltip>
 
                                 </>

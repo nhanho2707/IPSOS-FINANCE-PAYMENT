@@ -20,8 +20,9 @@ export function useProjects() {
     const [ rowsPerPage, setRowsPerPage ] = useState(10);
     const [ searchTerm, setSearchTerm ] = useState("");
 
-    const [ searchFromDate, setSearchFromDate ] = useState<Dayjs>(dayjs().startOf("year"));
-    const [ searchToDate, setSearchToDate ] = useState<Dayjs>(dayjs().endOf("year"));
+    // null on both ends means any field start date.
+    const [ searchFromDate, setSearchFromDate ] = useState<Dayjs | null>(dayjs().startOf("year"));
+    const [ searchToDate, setSearchToDate ] = useState<Dayjs | null>(dayjs().endOf("year"));
 
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0); //Tổng số projects từ backend
@@ -49,8 +50,10 @@ export function useProjects() {
                     page: page + 1,        // Laravel dùng page = 1,2,3...
                     perPage: rowsPerPage,
                     searchTerm: searchTerm,
-                    searchFromDate: searchFromDate.format("YYYY-MM-DD"),
-                    searchToDate: searchToDate.format("YYYY-MM-DD")
+                    ...(searchFromDate && searchToDate && {
+                        searchFromDate: searchFromDate.format("YYYY-MM-DD"),
+                        searchToDate: searchToDate.format("YYYY-MM-DD")
+                    })
                 },
             });
 
@@ -178,10 +181,13 @@ export function useProjects() {
             },
         });
 
-        setProjects(prev => prev.filter(p => p.id !== id));
+        // With disabled projects listed, the row stays and just changes state; otherwise it leaves the list.
+        setProjects(prev => showDisabled
+            ? prev.map(p => p.id === id ? { ...p, disabled } : p)
+            : prev.filter(p => p.id !== id));
 
         return response.data;
-    }, []);
+    }, [showDisabled]);
 
     const assignUsers = async(id: number, user_ids: number[]) => {
         

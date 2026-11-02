@@ -1,150 +1,148 @@
-import { Autocomplete, Box, Button, IconButton, TextField, Typography } from "@mui/material";
+import { Alert, AlertTitle, Autocomplete, Box, Button, TextField, Typography } from "@mui/material";
+import { BlockOutlined, CheckCircleOutline, DeleteOutline, FileUploadOutlined } from "@mui/icons-material";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { CATIBatchData, CATIImportResult, CATIImportSkippedRow, CATIRespondentImportRow, CATIRespondentSheetRow, MiniCATIBatchCellConfig } from "../../config/MiniCATIFieldsConfig";
+import { CATI_BATCH_STATUS_TONE, getStatusTone } from "../../config/ThemeConfig";
 import { useCATIBatch } from "../../hook/useCATIBatch";
-import { useParams } from "react-router-dom";
-import ReusableTable from "../../components/Table/ReusableTable";
+import { useProjectContext } from "../../hook/useProjectContext";
+import ResourceTable from "../../components/Table/ResourceTable";
+import RowActions from "../../components/Table/RowActions";
+import EmptyState from "../../components/EmptyState";
+import StatusChip from "../../components/StatusChip";
+import ProjectPageActions from "../../components/ProjectPageActions";
+import FormDialog from "../../components/Dialogs/FormDialog";
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import useDialog from "../../hook/useDialog";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
-import UploadIcon from "@mui/icons-material/Upload";
-import DeleteIcon from "@mui/icons-material/Delete";
-import BlockIcon from "@mui/icons-material/Block";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle"
+import { useToast } from "../../contexts/ToastContext";
+import { formatNumber, formatStatus } from "../../utils/format";
 
 const MAX_ROWS_SHOWN_PER_REASON = 30;
 
+const REQUIRED_COLUMNS = [
+    "ID", "Phone", "Name", "Link", "Filter_1", "Filter_2", "Filter_3", "Filter_4"
+];
+
+const SkippedRowsBanner: React.FC<{ result: CATIImportResult; onClose: () => void }> = ({ result, onClose }) => {
+    const grouped = result.skipped.reduce((acc: Record<string, number[]>, item: CATIImportSkippedRow) => {
+        acc[item.reason] = acc[item.reason] || [];
+        acc[item.reason].push(item.row);
+        return acc;
+    }, {});
+
+    return (
+        <Alert severity="warning" onClose={onClose}>
+            <AlertTitle>
+                {formatNumber(result.skipped.length)} {result.skipped.length === 1 ? "row was" : "rows were"} skipped
+            </AlertTitle>
+            <Box component="ul" sx={{ m: 0, pl: 2.5, typography: "body2" }}>
+                {Object.entries(grouped).map(([reason, rowNumbers]) => {
+                    const shown = rowNumbers.slice(0, MAX_ROWS_SHOWN_PER_REASON).join(", ");
+                    const more = rowNumbers.length > MAX_ROWS_SHOWN_PER_REASON ? `, … (+${rowNumbers.length - MAX_ROWS_SHOWN_PER_REASON})` : "";
+                    return (
+                        <li key={reason}>
+                            {reason}: {formatNumber(rowNumbers.length)} (rows {shown}{more})
+                        </li>
+                    );
+                })}
+            </Box>
+        </Alert>
+    );
+};
+
 const CATISettings = () => {
-
-    const { id } = useParams<{id: string}>();
-    const projectId = Number(id) || 0;
-
+    const { projectId } = useProjectContext();
+    const { showToast } = useToast();
     const { openDialog, dialogProps } = useDialog();
 
-    
-
-    const { batches, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, fetchCATIBatches, importCATIBatch, destroyBatch, updateStatus } = useCATIBatch(projectId);
+    const { batches, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, importCATIBatch, destroyBatch, updateStatus } = useCATIBatch(projectId);
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [ importOpen, setImportOpen ] = useState(false);
     const [ batchName, setBatchName ] = useState<string>("");
     const [ selectedBatch, setSelectedBatch ] = useState<CATIBatchData | null>(null);
-    
-    const handleRemoveClick = async (batch: CATIBatchData) => {
-        await destroyBatch(batch.id);
-    }
+    const [ importResult, setImportResult ] = useState<CATIImportResult | null>(null);
 
-    const handleBlockClick = async (batch: CATIBatchData) => {
-        await updateStatus(batch.id, batch.status === 'active' ? 'blocked' : 'active');
-    }
+    const confirmDelete = (batch: CATIBatchData) => openDialog({
+        title: "Delete batch",
+        tone: "danger",
+        confirmText: "Delete",
+        message: `Delete the batch "${batch.name}" and its ${formatNumber(batch.total_records)} respondents?`,
+        showConfirmButton: true,
+        onConfirm: () => destroyBatch(batch.id)
+    });
+
+    const confirmStatusChange = (batch: CATIBatchData) => {
+        const blocking = batch.status === 'active';
+
+        openDialog({
+            title: blocking ? "Block batch" : "Activate batch",
+            confirmText: blocking ? "Block" : "Activate",
+            message: blocking
+                ? `Interviewers will no longer get respondents from "${batch.name}" until it is activated again.`
+                : `Interviewers will get respondents from "${batch.name}" again.`,
+            showConfirmButton: true,
+            onConfirm: () => updateStatus(batch.id, blocking ? 'blocked' : 'active')
+        });
+    };
 
     const columns: ColumnFormat[] = [
-        ...MiniCATIBatchCellConfig,
+        ...MiniCATIBatchCellConfig.map((col): ColumnFormat => col.name !== "status" ? col : {
+            ...col,
+            renderCell: (row: CATIBatchData) => (
+                <StatusChip label={formatStatus(row.status)} tone={getStatusTone(row.status, CATI_BATCH_STATUS_TONE)} />
+            )
+        }),
         {
             label: "",
             name: "actions",
             type: "menu",
-            align: "center",
-            flex: 1,
-            renderAction: (row: CATIBatchData) => {
-                const disabled = row.to_used;
-
-                return (
-                    <Box sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1
-                    }}>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            disabled={disabled}
-                            startIcon={ <DeleteIcon /> }
-                            onClick={() => openDialog({
-                                title: "Delete Batch",
-                                tone: "danger",
-                                confirmText: "Delete",
-                                message: "Are you sure you want to delete this batch?",
-                                showConfirmButton: true,
-                                onConfirm: () => handleRemoveClick(row)
-                            })}
-                        >
-                            Delete
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color={ row.status === 'active' ? "secondary" : "info" }
-                            size="small"
-                            // disabled={disabled}
-                            startIcon={ row.status === 'active' ? <BlockIcon /> : <CheckCircleIcon /> }
-                            onClick={() => openDialog({
-                                title: "Block Batch",
-                                tone: "danger",
-                                confirmText: "Block",
-                                message: `Are you sure you want to ${row.status === 'active' ? "block" : "activate" } this batch?`,
-                                showConfirmButton: true,
-                                onConfirm: () => handleBlockClick(row)
-                            })}
-                        >
-                            { row.status === 'active' ? "Blocked" : "Activate" }
-                        </Button>
-                    </Box>
-                    
-                )
-            }
+            align: "right",
+            width: 56,
+            renderAction: (row: CATIBatchData) => (
+                <RowActions
+                    menuLabel={`Actions for ${row.name}`}
+                    items={[
+                        {
+                            label: row.status === 'active' ? "Block batch" : "Activate batch",
+                            icon: row.status === 'active' ? BlockOutlined : CheckCircleOutline,
+                            onClick: () => confirmStatusChange(row),
+                        },
+                        {
+                            label: "Delete batch",
+                            icon: DeleteOutline,
+                            tone: "danger",
+                            onClick: () => confirmDelete(row),
+                            disabled: row.to_used,
+                            disabledReason: row.to_used ? "Interviewers have already used this batch" : undefined,
+                        },
+                    ]}
+                />
+            )
         }
     ];
 
-    const handleChangePage = (event: any, newPage: number) => {
+    const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
         setPage(newPage)
     }
 
-    const handleChangeRowsPerPage = (event: any) => {
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
-    };
-
-    const showImportResult = (result: CATIImportResult) => {
-        if (result.skipped.length === 0 && result.error === null) return;
-
-        const grouped = result.skipped.reduce((acc: Record<string, number[]>, item: CATIImportSkippedRow) => {
-            acc[item.reason] = acc[item.reason] || [];
-            acc[item.reason].push(item.row);
-            return acc;
-        }, {});
-
-        const details = Object.entries(grouped).map(([reason, rowNumbers]) => {
-            const shown = rowNumbers.slice(0, MAX_ROWS_SHOWN_PER_REASON).join(", ");
-            const more = rowNumbers.length > MAX_ROWS_SHOWN_PER_REASON ? `, ... (+${rowNumbers.length - MAX_ROWS_SHOWN_PER_REASON})` : "";
-            return `❌ ${reason}: ${rowNumbers.length} row(s) (rows ${shown}${more})`;
-        });
-
-        const lines = [
-            `Imported ${result.imported}/${result.total} respondents.`,
-            ...(result.error !== null ? [`⚠️ Import stopped: ${result.error}`] : []),
-            ...(details.length > 0 ? ["", `Skipped ${result.skipped.length} rows:`, ...details] : [])
-        ];
-
-        openDialog({
-            title: result.error !== null ? "Import Batch Failed" : "Import Batch Completed",
-            message: lines.join("\n"),
-            showConfirmButton: false
-        });
     };
 
     const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        try 
+        setImportOpen(false);
+        setImportResult(null);
+
+        try
         {
             if (!batchName.trim()) {
-                openDialog({
-                    title: "Import Batch Failed",
-                    message: 'Please enter a batch name before importing.',
-                    showConfirmButton: false
-                });
+                showToast("Enter a batch name before importing.", "warning");
                 return;
             }
 
@@ -158,30 +156,18 @@ const CATISettings = () => {
             });
 
             if (!jsonData.length) {
-                openDialog({
-                    title: "Import Batch Failed",
-                    message: 'The file has no data.',
-                    showConfirmButton: false
-                });
+                showToast("Import failed: the file has no respondent rows.", "error");
                 return;
             }
 
-            const REQUIRED_COLUMNS = [
-                "ID", "Phone", "Name", "Link", "Filter_1", "Filter_2", "Filter_3", "Filter_4"
-            ]
-
-            const hearders = Object.keys(jsonData[0]);
+            const headers = Object.keys(jsonData[0]);
 
             const missingColumns = REQUIRED_COLUMNS.filter(
-                col => !hearders.includes(col)
+                col => !headers.includes(col)
             );
 
             if(missingColumns.length > 0){
-                openDialog({
-                    title: "Import Batch Failed",
-                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
-                    showConfirmButton: false
-                });
+                showToast(`Import failed: the file is missing these columns: ${missingColumns.join(", ")}.`, "error");
                 return;
             }
 
@@ -197,10 +183,12 @@ const CATISettings = () => {
                 filter_3: String(r.Filter_3).trim(),
                 filter_4: String(r.Filter_4).trim()
             }));
-            
+
             const result = await importCATIBatch(rows, batchName.trim());
 
-            showImportResult(result);
+            // The summary (imported / stopped at row) is the hook's message above the table;
+            // the banner lists which rows were skipped and why.
+            if (result.skipped.length > 0) setImportResult(result);
 
             setSelectedBatch(null);
             setBatchName("");
@@ -211,10 +199,24 @@ const CATISettings = () => {
         }
     };
 
-    
+    const importButton = (
+        <Button variant="contained" startIcon={<FileUploadOutlined />} onClick={() => setImportOpen(true)}>
+            Import batch
+        </Button>
+    );
+
     return (
-        <Box>
-            <ReusableTable
+        <>
+            <ProjectPageActions>{importButton}</ProjectPageActions>
+            <input
+                type="file"
+                accept=".xlsx,.xls"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleImportFile}
+            />
+
+            <ResourceTable
                 columns={columns}
                 data={batches}
                 actionStatus={actionState}
@@ -223,87 +225,71 @@ const CATISettings = () => {
                 total = {total}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
-                topToolbar={
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            p: 2,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: 2,
-                            backgroundColor: "background.default"
-                        }}
-                    >
-                        <Typography variant="h2">
-                            Batches
-                        </Typography>
-                        <Box sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 2
-                        }}>
-                            <Autocomplete
-                                freeSolo
-                                size="small"
-                                options={batches || []}
-                                value={selectedBatch}
-                                inputValue={batchName}
-                                sx={{
-                                    minWidth: 250
-                                }}
-                                getOptionLabel={(option) => 
-                                    typeof option === "string" ? option : option.name
-                                }
-                                onInputChange={(event, value) => {
-                                    setBatchName(value)
-                                    setSelectedBatch(null);
-                                }}
-                                onChange={(event, value) => {
-                                    if(typeof value === "string"){
-                                        setBatchName(value);
-                                        setSelectedBatch(null);
-                                    } else {
-                                        setSelectedBatch(value);
-                                        setBatchName(value?.name || "");
-                                    }
-                                }}
-                                renderOption={(props, option) => (
-                                    <li {...props}>
-                                        <Box>
-                                            <strong>{option.name}</strong>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {option.total_records} records
-                                            </Typography>
-                                        </Box>
-                                    </li>
-                                )}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Batch name" />
-                                )}
-                            />
-                            <Button 
-                                variant="contained"
-                                startIcon={<UploadIcon />}
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                Import Batch
-                            </Button>
-                            <input
-                                type="file"
-                                accept=".xlsx,.xls"
-                                ref={fileInputRef}
-                                style={{ display: "none" }}
-                                onChange={handleImportFile}
-                            />
-                        </Box>
-                    </Box>
+                banner={importResult && <SkippedRowsBanner result={importResult} onClose={() => setImportResult(null)} />}
+                emptyState={
+                    <EmptyState
+                        title="No batches yet"
+                        description="Import an Excel file of respondents to give interviewers numbers to call."
+                        action={importButton}
+                    />
                 }
             />
-            
+
+            {/* Choosing the file is the submit step: the click on the submit button lets the browser open the file picker. */}
+            <FormDialog
+                open={importOpen}
+                title="Import batch"
+                description={`The Excel file needs these columns: ${REQUIRED_COLUMNS.join(", ")}.`}
+                onClose={() => setImportOpen(false)}
+                onSubmit={() => fileInputRef.current?.click()}
+                submitText="Choose Excel file…"
+                submitDisabled={!batchName.trim()}
+            >
+                <Autocomplete
+                    freeSolo
+                    options={batches || []}
+                    value={selectedBatch}
+                    inputValue={batchName}
+                    getOptionLabel={(option) =>
+                        typeof option === "string" ? option : option.name
+                    }
+                    onInputChange={(_event, value) => {
+                        setBatchName(value)
+                        setSelectedBatch(null);
+                    }}
+                    onChange={(_event, value) => {
+                        if(typeof value === "string"){
+                            setBatchName(value);
+                            setSelectedBatch(null);
+                        } else {
+                            setSelectedBatch(value);
+                            setBatchName(value?.name || "");
+                        }
+                    }}
+                    renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                            <Box>
+                                <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {formatNumber(option.total_records)} records
+                                </Typography>
+                            </Box>
+                        </li>
+                    )}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            autoFocus
+                            size="small"
+                            label="Batch name"
+                            helperText="Pick an existing batch to add respondents to it, or type a new name."
+                        />
+                    )}
+                />
+            </FormDialog>
+
             <ConfirmDialog {...dialogProps} />
-        </Box>
+        </>
     )
 }
 

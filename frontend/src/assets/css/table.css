@@ -3,79 +3,9 @@
   box-shadow: none !important;
   background-color: var(--background-color) !important;
 }
-.box-table {
-  background-color: var(--background-color);
-  padding: 10px;
-  border-radius: 13px;
-}
 .table-cell {
   white-space: nowrap !important;
   height: 44px !important;
   font-size: 0.8125rem !important;
   color: var(--text-color) !important;
-}
-
-.filter {
-  display: flex;
-  justify-content: space-between; /* Add left | Right */
-  align-items: center;
-  padding: 0.75rem 0; /* ~12px top-bottom */
-}
-
-.filter-left {
-  display: flex;
-  align-items: center;
-}
-
-.filter-right {
-  display: flex;
-  gap: 0.75rem; /* 12px */
-  align-items: center;
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-}
-
-.filter-title {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.project-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px; 
-}
-
-.input-search-table .MuiInputBase-root {
-  height: 30px !important;
-}
-.input-search-table span {
-  color: var(--text-color);
-}
-.search-table-input {
-  color: var(--text-color) !important;
-}
-
-.search-table-input
-  .MuiOutlinedInput-root.Mui-focused
-  .MuiOutlinedInput-notchedOutline {
-  border-color: var(--body-color) !important;
-}
-
-.search-table-input .MuiFormLabel-root.Mui-focused {
-  color: var(--body-color) !important;
-  color: var(--text-color) !important;
-}
-/* .MuiTableRow-root.table-row .table-cell {
-  font-size: 14px;
-  padding: 0 auto !important;
-} */
-
-
-.icon-status {
-  position: relative;
 }

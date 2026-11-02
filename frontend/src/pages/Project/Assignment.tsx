@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import axios from "axios";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { useEffect, useState } from "react";
 import { useProjects } from "../../hook/useProjects";
@@ -7,8 +8,7 @@ import { useMetadata } from "../../hook/useMetadata";
 import LoadingButton from "@mui/lab/LoadingButton";
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import { UserData } from "../../config/AccountFieldsConfig";
-import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
-import useDialog from "../../hook/useDialog";
+import { useToast } from "../../contexts/ToastContext";
 
 const Assignment: React.FC = () => {
     const { id } = useParams<{id: string}>();
@@ -20,26 +20,27 @@ const Assignment: React.FC = () => {
 
     const { actionState, getProject, assignUsers } = useProjects();
     const { data, isLoading } = useMetadata();
-    const { openDialog, dialogProps } = useDialog();
+    const { showToast } = useToast();
 
     const handleAssignUsers = async () => {
         try
         {
             const user_ids = assignedUsers.map(u => u.id);
 
+            setLoadingAssignUsers(true);
+
             const response = await assignUsers(projectId, user_ids);
 
-            openDialog({
-                title : 'Permissions',
-                message : response.status_code === 400 ? response.error : response.message,
-                showConfirmButton: false
-            });
-        } catch(error: any){
-            openDialog({
-                title : 'Permissions',
-                message : error.response.data.error || 'Assignment failed.',
-                showConfirmButton: false
-            });
+            if (response.status_code === 400) {
+                showToast(response.error || 'Assignment failed.', 'error');
+            } else {
+                showToast(response.message || 'Assignment saved.');
+            }
+        } catch(error){
+            const message = axios.isAxiosError(error) ? error.response?.data?.error : undefined;
+            showToast(message || 'Assignment failed.', 'error');
+        } finally {
+            setLoadingAssignUsers(false);
         }
     }
 
@@ -90,14 +91,13 @@ const Assignment: React.FC = () => {
                         size="small"
                         startIcon={<PersonAddAltOutlinedIcon />}
                         loading={loadingAssignUsers}
-                        loadingPosition="end"
+                        loadingPosition="start"
                         disabled={assignedUsers.length === 0}
                     >
                         <span>Assign</span>
                     </LoadingButton>
                 </Box>
 
-                <ConfirmDialog {...dialogProps} />
             </Grid>
         </Grid>
     )

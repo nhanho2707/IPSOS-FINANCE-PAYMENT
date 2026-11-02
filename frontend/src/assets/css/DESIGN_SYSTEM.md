@@ -99,7 +99,7 @@ Button MUI: dùng `variant="contained"` (tự lấy màu primary), không overri
 
 | Variable | Giá trị | Dùng cho |
 |---|---|---|
-| `--canvas-color` | `#f6f7f9` (sinh từ `ThemeConfig.ts`) | Nền khung app (`.wrapper`): card trắng nổi trên nền xám nhạt |
+| `--canvas-color` | `#f6f7f9` (sinh từ `ThemeConfig.ts`) | Nền khung app (AppShell dùng `background.default` cùng giá trị): card trắng nổi trên nền xám nhạt |
 | `--background-color` | `#ffffff` | Card, modal, sidebar, input |
 | `--body-color` | `rgb(238,242,246)` | Nền phụ (icon button, khối nhỏ); code mới dùng `NEUTRAL` |
 
@@ -238,7 +238,7 @@ Dùng bội số của `0.25rem` (3.5px với base 14px):
 ### Button
 
 Dùng trực tiếp `Button` / `LoadingButton` của MUI, không thêm class CSS (`.btn`, `.bg-*` đã bị xoá).
-Nhãn nút viết dạng thường ("Add New Project"), theme đã tắt viết hoa — không gõ cứng chữ in hoa.
+Nhãn nút viết hoa chữ đầu câu ("New project", "Import respondents"); theme đã tắt viết hoa toàn bộ — không gõ cứng chữ in hoa.
 
 | Loại | Code |
 |---|---|
@@ -247,17 +247,50 @@ Nhãn nút viết dạng thường ("Add New Project"), theme đã tắt viết 
 | Cancel / tertiary | `<Button color="inherit">` |
 | Nguy hiểm (xoá, disable) | `<Button variant="contained" color="error">` |
 
-### Dialog
+### Khung ứng dụng (AppShell)
+
+`src/components/Shell/AppShell.tsx` dựng khung cho `DefaultLayout` và `ProjectLayout`: sidebar trắng bên trái, nội dung trên nền `background.default`, tối đa 1600px.
+
+| Phần | Quy định |
+|---|---|
+| Sidebar | 248px; thu gọn còn 64px chỉ có icon + tooltip. Trạng thái thu gọn lưu trong `localStorage` (`ipsos.sidebar.collapsed`) |
+| Điện thoại (< 768px) | Sidebar thành `Drawer` tạm thời, mở từ thanh trên cùng (nút menu, tên trang/dự án, nút tìm kiếm); đóng khi chuyển trang |
+| Nhóm menu | Nhãn `overline` màu `NEUTRAL[500]`. Mục đang mở: nền `NEUTRAL[100]`, chữ `text.primary` 600, icon `primary.main`. Mục thường: chữ `NEUTRAL[600]`, icon `NEUTRAL[500]`, icon 18px |
+| Tìm kiếm ⌘K / Ctrl K | `CommandPalette`: nhảy tới trang (theo nhãn và `keywords`) hoặc dự án (tên, internal code, Symphony). ↑↓ để chọn, Enter để mở |
+| Người dùng | `UserMenu` ở chân sidebar: avatar chữ cái đầu, tên, vai trò; menu có Log out |
+
+Menu khai báo trong config, không viết trong component:
+
+- Trang cấp app: `src/config/AppNavConfig.ts` (nhóm Work, Admin; `allowedRoles` lấy từ `ROLE_ACCESS`).
+- Trang trong dự án: `src/config/ProjectNavConfig.ts`, mỗi mục có `group` (`plan`, `field`, `payments`, hoặc `bottom` cho Settings), `description` và `title` nếu nhãn sidebar quá ngắn.
+
+### Đầu trang (PageHeader)
+
+`<PageHeader title description actions breadcrumbs status />` ở đầu mọi trang nội bộ: tiêu đề `h1` (22px), một câu mô tả `body2`, các nút ở bên phải. Trong `actions` chỉ có **một** nút `variant="contained"`; nút khác là outlined/text hoặc nằm trong menu ⋯.
+
+### Trang trong dự án
+
+`ProjectLayout` vẽ header cho mọi trang con: breadcrumb "Projects › tên dự án", tiêu đề và mô tả lấy từ `ProjectNavConfig`. Tên, mã và trạng thái dự án nằm ở bộ chuyển dự án (`ProjectSwitcher`) trên sidebar; bấm vào đó mở ⌘K ở chế độ chuyển dự án và giữ nguyên trang con đang xem.
+
+- Nút của trang (Import, Add…) đặt trong `<ProjectPageActions>`: component này portal nút vào header của layout, nút vẫn dùng state và handler của trang.
+- Cần dữ liệu dự án thì dùng `useProjectContext()` (`projectId`, `project`, `refreshProject`); trang con không tự hiển thị lại tên dự án.
+- Dự án bị disable: header hiện `Alert` thông tin.
+
+### Dialog, drawer và thông báo
 
 | Nhu cầu | Component |
 |---|---|
-| Xác nhận có/không, thông báo | `ConfirmDialog` — dùng qua `useDialog()`: `openDialog({ title, message, showConfirmButton, onConfirm, tone, confirmText })` rồi render `<ConfirmDialog {...dialogProps} />` |
-| Nội dung tuỳ biến (form) | `GenericDialog` (`submitDisabled`, `loading`, `tone`) |
+| Xác nhận có/không | `ConfirmDialog` qua `useDialog()`: `openDialog({ title, message, showConfirmButton: true, onConfirm, tone, confirmText })` rồi render `<ConfirmDialog {...dialogProps} />` |
+| Form ngắn | `FormDialog` (`src/components/Dialogs/FormDialog.tsx`): paper là `<form>` nên Enter gửi form; `error` hiện `Alert` phía trên các field; `loading`, `submitDisabled`, `tone` |
+| Chi tiết, lịch sử, form dài | `DetailDrawer` (`src/components/DetailDrawer.tsx`): panel bên phải, header và footer cố định, thân cuộn |
+| Nội dung tuỳ biến khác | `GenericDialog` |
 | Nhập một đoạn text | `UniversalInputDialog` |
 | Từ chối kèm lý do | `RejectDialog` |
 
+- **Không mở dialog chỉ để báo tin.** Báo thành công/lỗi ngắn: toast `const { showToast } = useToast(); showToast("Saved", "success")`. Kết quả cần đọc kỹ (gửi quà hàng loạt, dòng bị bỏ qua khi import): `Alert` ngay trong trang, qua prop `banner` của `ResourceTable`.
 - Thao tác xoá / chặn / disable: `tone: "danger"` và `confirmText` ghi rõ hành động ("Delete", "Disable"), không dùng "Confirm" chung chung.
 - `onConfirm` trả về Promise thì dialog tự hiện loading và chỉ đóng khi xong.
+- Field trong `FormDialog`: `TextField size="small"` có nhãn; form hai cột dùng `Box` grid `{ xs: "1fr", sm: "1fr 1fr" }`; ngày dùng `DatePicker`.
 - Không dùng `alert()` / `window.confirm()` của trình duyệt.
 
 ### Số, tiền, ngày
@@ -275,26 +308,24 @@ Dùng hàm trong `src/utils/format.ts`; không gọi `numeral`, `toLocaleString`
 
 `DD MMM YYYY` không bị đọc nhầm giữa thói quen dd/mm và mm/dd. Date picker của MUI X dùng chung định dạng này qua `LocalizationProvider` trong `index.tsx`; không bọc thêm `LocalizationProvider` trong component. Ngày gửi lên API vẫn là `YYYY-MM-DD`.
 
-### Toast
+### Trang danh sách (ResourceTable)
 
-Thông báo ngắn, không chặn thao tác: `const { showToast } = useToast(); showToast("Saved", "success")` (`src/contexts/ToastContext.tsx`).
+Trang danh sách dùng `ResourceTable` (`src/components/Table/ResourceTable.tsx`): một card gồm tab trạng thái, toolbar, thanh thao tác hàng loạt, banner kết quả, bảng và phân trang. `ResourceTable` bọc `ReusableTable`; chỉ dùng `ReusableTable` trực tiếp cho bảng nằm trong component khác (drawer, panel thống kê). Không viết `<Table>` one-off.
 
-### Trang trong dự án
+| Prop | Dùng cho |
+|---|---|
+| `tabs`, `tab`, `onTabChange` | Tab trạng thái có số đếm; `alert: true` tô đỏ số cần chú ý |
+| `search` | Ô tìm kiếm; giá trị chỉ được báo khi người dùng ngừng gõ 300ms |
+| `filters` | `FilterChip`: chip nét đứt "+ Label" khi chưa đặt, "Label: giá trị ×" khi đã đặt. Có sẵn `DateRangeFilter` (khoảng ngày + preset năm) và `SelectFilter` (chọn một); bộ lọc bật/tắt dùng `FilterChip active onClick` |
+| `toolbarActions` | Nút cấp bảng ở bên phải toolbar (Export, Select all pending…) |
+| `bulkBar` | `BulkActionBar` khi có dòng được chọn: số dòng, một nút chính, "Clear selection", và thanh tiến độ khi đang chạy |
+| `banner` | `Alert` kết quả cần đọc |
+| `emptyState` | `EmptyState` với tiêu đề, mô tả và đúng một hành động để thoát trạng thái trống ("Import respondents", "Search all start dates") |
+| `onRowClick` | Bấm vào dòng để mở; click trên nút, link, checkbox, menu và popover mở từ ô không kích hoạt |
+| `stickyColumns` | `{ first, last }` giữ cột chọn / cột hành động khi bảng cuộn ngang |
 
-`ProjectLayout` đã hiển thị breadcrumbs và header dự án (tên, trạng thái, internal code, symphony, thời gian field).
-Trang con không tự hiển thị lại "Project Name / Symphony"; cần dữ liệu dự án thì dùng `useProjectContext()` (`projectId`, `project`, `refreshProject`).
-Thêm trang mới trong dự án: khai báo trong `src/config/ProjectNavConfig.ts` để sidebar và breadcrumbs cùng nhận.
+Hành động trên từng dòng: `RowActions` ở cột cuối (`type: "menu"`, `align: "right"`). Tối đa một nút nhẹ hiển thị sẵn (`primary`, ví dụ "Send gift" outlined), còn lại vào menu ⋯ có nhãn; mục nguy hiểm `tone: "danger"` nằm cuối menu sau đường kẻ; mục bị khoá ghi lý do bằng `disabledReason`.
 
-### Form input
-
-```css
-font-size: 0.875rem;   /* = base */
-width: 100%;           /* .textfield-add */
-```
-
-### Table
-
-Tất cả bảng dùng component `ReusableTable` — không viết `<Table>` one-off.
 Màu và cỡ chữ của header, ô, hover lấy từ theme (`MuiTableCell`, `MuiTableRow` trong `ThemeConfig.ts`). Trong `ReusableTable` chỉ còn padding, chiều rộng cột và cách xử lý tràn chữ.
 
 | Phần | Quy định |
@@ -306,25 +337,16 @@ Màu và cỡ chữ của header, ô, hover lấy từ theme (`MuiTableCell`, `M
 | Hover dòng | `<TableRow hover>` → nền `NEUTRAL[50]` |
 | `dense` | Bảng nhiều cột (Gifts, Transactions của dự án): chữ 12px, `px: 1`, dùng tới khi bảng được thiết kế lại với ô hai dòng |
 
-#### Toolbar (topToolbar prop)
-
-- Render **bên ngoài** `TableContainer` để không cuộn theo bảng
-- Wrap trong `<Box sx={{ px: 2, py: 1.25 }}>` + `<Divider />` bên dưới
-- Dùng `topToolbar` prop của `ReusableTable` — không thêm JSX trực tiếp vào component
-
-#### Empty state
-
-Tự động render khi `data.length === 0`: icon `InboxOutlinedIcon` (opacity 0.5) và `emptyText` màu `text.secondary`.
-
 #### Loading state
 
 Lần tải đầu hiện 5 dòng `Skeleton`; tải lại khi đã có dữ liệu hiện `LinearProgress` 3px trên đầu bảng.
 
 #### Pagination
 
-- Nằm trong card, ngăn cách bởi `<Divider />`
+- Nằm trong card, ngăn cách bởi `<Divider />`; ẩn khi `total` bằng 0
 - `rowsPerPageOptions`: `[10, 25, 50, 100]`
 - Luôn truyền `total`, `page`, `onPageChange`. Dữ liệu tải một lần (ví dụ bảng giá tỉnh) thì cắt trang ở client và truyền `total = rows.length`
+- Đổi từ khoá tìm kiếm hoặc bộ lọc thì đưa về trang đầu (`setPage(0)`)
 
 #### Quy tắc chung
 
@@ -335,15 +357,6 @@ Lần tải đầu hiện 5 dòng `Skeleton`; tải lại khi đã có dữ li�
 | `tableLayout: "fixed"` + `width` trên column | Ngăn layout shift khi data load |
 | `stickyHeader` luôn bật | Header luôn visible khi scroll dọc |
 | `maxHeight: calc(100vh - 240px)` | Giữ bảng trong viewport, tránh page scroll |
-
-### Active nav item (sidebar)
-
-```css
-background-color: rgba(0,157,156, 0.12);
-color: var(--main-color);
-font-weight: 600;
-/* icon wrap: rgba(0,157,156, 0.18) */
-```
 
 ---
 

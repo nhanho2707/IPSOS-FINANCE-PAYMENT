@@ -1,6 +1,8 @@
 import { Alert, Autocomplete, Box, Button, Checkbox, Dialog, DialogTitle, Divider, Grid, Table, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { useVinnetAccount } from "../../hook/useVinnetAccount";
-import GenericDialog from "../../components/Dialogs/GenericDialog";
+import FormDialog from "../../components/Dialogs/FormDialog";
+import PageHeader from "../../components/PageHeader";
+import { useToast } from "../../contexts/ToastContext";
 import { useState } from "react";
 import axios from "axios";
 import { ApiConfig } from "../../config/ApiConfig";
@@ -19,8 +21,10 @@ import TransactionStatisticsPanel from "../../components/TransactionStatisticsPa
 const Transactions = () => {
     const { loading: vinnetLoading, vinnetAccount } = useVinnetAccount();
     const { gotitAccount, addDeposit, loading: gotitLoading } = useGotItAccount('gotit');
+    const { showToast } = useToast();
     const [ open, setOpen ] = useState(false);
     const [ amount, setAmount ] = useState("");
+    const [ depositError, setDepositError ] = useState<string | null>(null);
 
     const [ fromDate, setFromDate ] = useState<Dayjs | null>(null);
     const [ toDate, setToDate ] = useState<Dayjs | null>(null);
@@ -38,12 +42,26 @@ const Transactions = () => {
 
     const token = localStorage.getItem("authToken");
 
-    const handleAddDeposit = async () => {
-        await addDeposit(amount);
-
+    const openDepositDialog = () => {
         setAmount("");
-        setOpen(false);
+        setDepositError(null);
+        setOpen(true);
     }
+
+    const handleAddDeposit = async () => {
+        const saved = await addDeposit(amount);
+
+        if (!saved) {
+            setDepositError("The deposit was not saved. Check the amount and try again.");
+            return;
+        }
+
+        setOpen(false);
+        showToast(`Deposit of ${formatMoney(amount)} added to the GotIt account.`);
+    }
+
+    const depositAmount = Number(amount);
+    const isDepositInvalid = !amount || !Number.isFinite(depositAmount) || depositAmount <= 0;
 
     const saveBlob = (data: Blob, fileName: string) => {
         const url = window.URL.createObjectURL(new Blob([data]));
@@ -131,6 +149,11 @@ const Transactions = () => {
     }
     
     return (
+        <>
+        <PageHeader
+            title="Finance"
+            description="Provider balances, GotIt deposits and transaction exports."
+        />
         <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
                 <Box
@@ -221,7 +244,7 @@ const Transactions = () => {
                             sx={{
                                 mb: 2
                             }}
-                            onClick={() => setOpen(true)}
+                            onClick={openDepositDialog}
                         >
                             Add deposit
                         </Button>
@@ -369,31 +392,32 @@ const Transactions = () => {
                 <TransactionStatisticsPanel projectId={statsProject?.id ?? 0} />
             </Grid>
 
-            <GenericDialog
+            <FormDialog
                 open={open}
-                title="Add deposit"
-                onClose = {() => setOpen(false)}
-                onSubmit={() => handleAddDeposit()}
+                title="Add GotIt deposit"
+                description="Record money transferred to the GotIt account. The balance updates right away."
+                error={depositError}
+                onClose={() => setOpen(false)}
+                onSubmit={handleAddDeposit}
+                submitText="Add deposit"
+                submitDisabled={isDepositInvalid}
+                loading={gotitLoading}
+                maxWidth="xs"
             >
-                <Box 
-                    sx={{ 
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
-                        mt: 1
-                    }}
-                >
-                    <TextField
-                        label="Amount (VND)"
-                        type="number"
-                        fullWidth
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                </Box>
-            </GenericDialog>
+                <TextField
+                    autoFocus
+                    size="small"
+                    label="Amount (VND)"
+                    type="number"
+                    fullWidth
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    inputProps={{ min: 1, step: 1000 }}
+                    helperText={!isDepositInvalid ? formatMoney(depositAmount) : " "}
+                />
+            </FormDialog>
         </Grid>
+        </>
     )
 }
 

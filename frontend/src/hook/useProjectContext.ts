@@ -5,6 +5,8 @@ export interface ProjectOutletContext {
     projectId: number;
     project: ProjectData | null;
     refreshProject: () => Promise<void>;
+    // The project header's action area; pages fill it through <ProjectPageActions>.
+    headerActionsEl: HTMLElement | null;
 }
 
 export const useProjectContext = () => useOutletContext<ProjectOutletContext>();

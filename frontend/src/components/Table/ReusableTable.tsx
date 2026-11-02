@@ -103,7 +103,7 @@ const ReusableTable = <T extends object>({
             {openAlert && actionStatus.message && (
                 <Alert
                     severity={actionStatus.error ? "error" : "success"}
-                    sx={{ mb: 1.5, borderRadius: "8px", fontSize: "0.875rem" }}
+                    sx={{ mb: 1.5, borderRadius: "8px", fontSize: "0.875rem", whiteSpace: "pre-line" }}
                     action={
                         <IconButton
                             aria-label="Close"

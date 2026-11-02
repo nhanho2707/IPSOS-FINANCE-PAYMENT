@@ -14,6 +14,8 @@ use App\Constants\TransactionStatus;
 
 class ProjectRespondentTokenService
 {
+    private array $offlineBatchTokenHashes = [];
+
     private function generate_formated_uuid()
     {
         // Generate a UUID using Laravel's Str::uuid() method
@@ -133,12 +135,14 @@ class ProjectRespondentTokenService
 
         $public = $this->generate_formated_uuid();
 
-        $secret = Str::random(40);
+        // Offline tokens are verified by public id + batch id, never by secret, so the hash is a placeholder.
+        // Hashing once per batch matters: a bcrypt per row made large imports exceed the request time limit.
+        $this->offlineBatchTokenHashes[$batchId] ??= Hash::make(Str::random(40));
 
         $projectRespondent->token()->create([
             'project_respondent_id' => $projectRespondent->id,
             'token_public' => $public,
-            'token_hash' => Hash::make($secret),
+            'token_hash' => $this->offlineBatchTokenHashes[$batchId],
             'attempts' => 0, 
             'expires_at' => now()->addHours(24),
             'status' => 'active',

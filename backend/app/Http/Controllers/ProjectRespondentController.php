@@ -85,26 +85,54 @@ class ProjectRespondentController extends Controller
         }
     }
 
-    private function checkImportData(array $rows, $project): array
+    private function checkImportData(array $rows, $project, array &$provinceIds, array &$employeeIds): array
     {
         $errors = [];
-        $duplicateKeys = [];
-
-        Log::info('Data Import: ', $rows);
+        $respondentIdRows = [];
+        $phoneNumberRows = [];
 
         foreach($rows as $index => $row){
-            
+
+            $rowNumber = $index + 2;
             $respondentId = $row['shell_chainid'] . '-' . $row['instance_id'];
+
+            if(isset($respondentIdRows[$respondentId])){
+                $errors[] = [
+                    'row' => $rowNumber,
+                    'type' => 'DUPLICATE_IN_FILE',
+                    'respondent_id' => $respondentId
+                ];
+            } else {
+                $respondentIdRows[$respondentId] = $rowNumber;
+            }
 
             $exists = $project->projectRespondents()->where('respondent_id', $respondentId)
                                         ->exists();
             
             if($exists){
                 $errors[] = [
-                    'row' => $index + 2,
+                    'row' => $rowNumber,
                     'type' => 'DUPLICATE',
                     'respondent_id' => $respondentId
                 ];
+            }
+
+            // Both columns usually hold the same number for one respondent, so only another row reusing it is a duplicate.
+            $rowPhoneNumbers = array_unique([$row['respondent_phone_number'], $row['phone_number']]);
+
+            foreach($rowPhoneNumbers as $phoneNumber){
+                if(isset($phoneNumberRows[$phoneNumber])){
+                    $errors[] = [
+                        'row' => $rowNumber,
+                        'type' => 'DUPLICATE_PHONE_NUMBER_IN_FILE',
+                        'respondent_id' => $respondentId
+                    ];
+                    break;
+                }
+            }
+
+            foreach($rowPhoneNumbers as $phoneNumber){
+                $phoneNumberRows[$phoneNumber] ??= $rowNumber;
             }
 
             $exists = $project->projectRespondents()
@@ -118,27 +146,31 @@ class ProjectRespondentController extends Controller
             
             if($exists){
                 $errors[] = [
-                    'row' => $index + 2,
+                    'row' => $rowNumber,
                     'type' => 'DUPLICATE_PHONE_NUMBER',
                     'respondent_id' => $respondentId
                 ];
             }
 
-            Log::info('Checking province: ' . $row['province_name']);
+            if(!array_key_exists($row['province_name'], $provinceIds)){
+                $provinceIds[$row['province_name']] = Province::where('name', $row['province_name'])->value('id');
+            }
 
-            if(!Province::where('name', $row['province_name'])->exists()){
+            if($provinceIds[$row['province_name']] === null){
                 $errors[] = [
-                    'row' => $index + 2,
+                    'row' => $rowNumber,
                     'type' => 'PROVINCE_NOT_FOUND',
                     'respondent_id' => $respondentId
                 ];
             }
 
-            Log::info('Checking employee: ' . $row['employee_id']);
+            if(!array_key_exists($row['employee_id'], $employeeIds)){
+                $employeeIds[$row['employee_id']] = Employee::where('employee_id', $row['employee_id'])->value('id');
+            }
 
-            if(!Employee::where('employee_id', $row['employee_id'])->exists()){
+            if($employeeIds[$row['employee_id']] === null){
                 $errors[] = [
-                    'row' => $index + 2,
+                    'row' => $rowNumber,
                     'type' => 'EMPLOYEE_NOT_FOUND',
                     'respondent_id' => $respondentId
                 ];
@@ -178,22 +210,23 @@ class ProjectRespondentController extends Controller
 
             $validatedRequest = $request->validated();
 
-            $errors = $this->checkImportData($validatedRequest['project_respondents'], $project);
+            $provinceIds = [];
+            $employeeIds = [];
 
-            Log::error("Import Data Fails: ", $errors);
+            $errors = $this->checkImportData($validatedRequest['project_respondents'], $project, $provinceIds, $employeeIds);
 
             if(!empty($errors)){
+                Log::error("Import Data Fails: ", $errors);
+
                 return response()->json([
                     'status_code' => 422,
                     'message' => 'Import failed. Please fix the errors and try again.',
                     'error_count' => count($errors),
                     'errors' => $errors
-                ], 442);
+                ], 422);
             }
 
             $projectRespondentData = $validatedRequest['project_respondents'];
-
-            Log::info($projectRespondentData);
 
             $batchId = "IMPORT_" . now()->format('dmYHis');
 
@@ -220,11 +253,8 @@ class ProjectRespondentController extends Controller
                                 $environment = 'test';
                             }
                     
-                    $province = Province::where('name', $row['province_name'])->first();
-                    $employee = Employee::where('employee_id', $row['employee_id'])->first();
-
-                    $province_id = $province->id;
-                    $employee_id = $employee->id;
+                    $province_id = $provinceIds[$row['province_name']];
+                    $employee_id = $employeeIds[$row['employee_id']];
 
                     $projectRespondent = $project->createProjectRespondents([
                         'project_id' => $projectId,

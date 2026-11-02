@@ -1,16 +1,27 @@
 import { ColumnFormat } from "./ColumnConfig";
 
-export interface OfflineProjectRespondentImportData {
-    InstanceID: string,
-    Shell_ChainID: string, 
-    SamplePoint: string,
-    Province: string,
-    InterviewerID: string, 
-    RespondentPhoneNumber: string, 
-    PhoneNumber: string,
-    Email: string,
-    PriceLevel: string,
-    Channel: string
+export const OFFLINE_RESPONDENT_IMPORT_COLUMNS = [
+    "InstanceID", "Shell_ChainID", "SamplePoint", "Province", "InterviewerID", "RespondentPhoneNumber", "PhoneNumber", "Email", "PriceLevel", "Channel"
+] as const;
+
+export type OfflineProjectRespondentImportData = Record<typeof OFFLINE_RESPONDENT_IMPORT_COLUMNS[number], string>;
+
+export const toImportRow = (sheetRow: Record<string, unknown>): OfflineProjectRespondentImportData =>
+    Object.fromEntries(
+        OFFLINE_RESPONDENT_IMPORT_COLUMNS.map(col => [col, String(sheetRow[col] ?? "").trim()])
+    ) as OfflineProjectRespondentImportData;
+
+export interface OfflineProjectRespondentImportPayload {
+    instance_id: string,
+    shell_chainid: string,
+    location_id: string,
+    province_name: string,
+    employee_id: string,
+    respondent_phone_number: string,
+    phone_number: string,
+    email: string,
+    price_level: string,
+    channel: string
 }
 
 export interface OfflineProjectRespondentData {

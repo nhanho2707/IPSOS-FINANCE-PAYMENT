@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData } from "../config/OfflineProjectRespondentFieldsConfig";
+import { OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload } from "../config/OfflineProjectRespondentFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
@@ -9,6 +9,58 @@ interface ImportErrorDetail {
     type: string,
     respondent_id: string
 }
+
+interface ImportErrorResponse {
+    message?: string,
+    error_count?: number,
+    // Row checks return a list; Laravel's FormRequest validation returns field-keyed messages.
+    errors?: ImportErrorDetail[] | Record<string, string[]>
+}
+
+const MAX_ERROR_ROWS_SHOWN = 20;
+
+const formatRowList = (rows: number[]) => {
+    const sorted = Array.from(new Set(rows)).sort((a, b) => a - b);
+    const shown = sorted.slice(0, MAX_ERROR_ROWS_SHOWN).join(", ");
+    return sorted.length > MAX_ERROR_ROWS_SHOWN ? `${shown}, …` : shown;
+};
+
+const formatImportErrors = (data: ImportErrorResponse | undefined): string => {
+    const errors = data?.errors;
+
+    if (!errors) {
+        return data?.message ?? "Import failed.";
+    }
+
+    const grouped: Record<string, number[]> = {};
+
+    if (Array.isArray(errors)) {
+        errors.forEach(e => {
+            (grouped[e.type] ??= []).push(e.row);
+        });
+    } else {
+        Object.entries(errors).forEach(([key, messages]) => {
+            const match = key.match(/^project_respondents\.(\d+)\.(\w+)$/);
+
+            if (!match) {
+                grouped[messages[0] ?? key] ??= [];
+                return;
+            }
+
+            // Payload index 0 is spreadsheet row 2 (row 1 is the header).
+            const label = `${match[2].toUpperCase()}_INVALID`;
+            (grouped[label] ??= []).push(Number(match[1]) + 2);
+        });
+    }
+
+    const invalidRows = new Set(Object.values(grouped).flat()).size;
+
+    const lines = Object.entries(grouped).map(([type, rows]) =>
+        rows.length ? `❌ ${type}: ${rows.length} row(s) (${formatRowList(rows)})` : `❌ ${type}`
+    );
+
+    return [`There are ${invalidRows} invalid rows.`, "", ...lines].join("\n");
+};
 
 // 900: gift sent, 996: test environment (marked as received without calling the provider).
 const GIFT_SUCCESS_STATUS_CODES = [900, 996];
@@ -69,7 +121,7 @@ export function useOfflineProjectRespondents(projectId: number) {
         }
     }, [projectId, page, rowsPerPage, searchTerm]);
 
-    const importOfflineProjectRespondents = useCallback(async(payload: any) => {
+    const importOfflineProjectRespondents = useCallback(async(payload: OfflineProjectRespondentImportPayload[]) => {
         try
         {
             setLoading(true);
@@ -98,28 +150,9 @@ export function useOfflineProjectRespondents(projectId: number) {
             setError(true);
 
             if (axios.isAxiosError(error)) {
-                if(error.response?.status == 442){
-                    const errors = error.response.data.errors ?? [];
-
-                    const grouped = errors.reduce((acc: Record<string, any[]>, e: ImportErrorDetail) => {
-                        acc[e.type] = acc[e.type] || [];
-                        acc[e.type].push(e);
-                        return acc;
-                    }, {});
-
-                    const groupText = (Object.entries(grouped) as [string, ImportErrorDetail[]][]).map(([type, items]) => {
-                        const rows = items.map((i: any) => i.row).join(", ");
-                        const label = type;
-                        return `❌ ${label}: ${items.length} row(s) (${rows})`;
-                    })
-                    .join("<br/>");
-
-                    setMessage(
-                        `There are ${error.response.data.error_count} invalid rows.<br/><br/>${groupText}`
-                    );
-                } else {
-                    setMessage(error.response?.data.message ?? error.message);
-                }
+                setMessage(error.response?.status === 422
+                    ? formatImportErrors(error.response.data)
+                    : (error.response?.data?.message ?? error.message));
             } else {
                 setMessage(error.message);
             }

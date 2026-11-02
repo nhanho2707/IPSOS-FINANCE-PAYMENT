@@ -1,6 +1,7 @@
 import { Autocomplete, TableCell, TableRow, TextField } from "@mui/material";
 import { memo, useState } from "react";
 import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
+import { Theme } from "@mui/material/styles";
 
 type Option = { value: string | number; label: string; parent?: string | number };
 
@@ -62,17 +63,17 @@ const SingleSelectRow = memo(({ row, isEditing, isDisabled, onChange, confirmMes
         <>
             <TableRow
                 sx={{
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                    "&:hover": { backgroundColor: "action.hover" },
                     "&:last-child td": { border: 0 },
                 }}
             >
                 <TableCell
                     width={200}
-                    sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-color)" }}
+                    sx={{ fontWeight: 600 }}
                 >
                     {row.label}
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                <TableCell>
                     <Autocomplete
                         fullWidth
                         options={row.options}
@@ -85,7 +86,7 @@ const SingleSelectRow = memo(({ row, isEditing, isDisabled, onChange, confirmMes
                             <TextField {...params} size="small" placeholder={row.placeholder} />
                         )}
                         sx={{
-                            "& .Mui-disabled": { WebkitTextFillColor: "#000", opacity: 0.9 },
+                            "& .Mui-disabled": { WebkitTextFillColor: (theme: Theme) => theme.palette.text.primary, opacity: 0.9 },
                         }}
                     />
                 </TableCell>

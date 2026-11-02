@@ -1,4 +1,5 @@
 import { ColumnFormat } from "../config/ColumnConfig";
+import { formatDateTime, formatMoney } from "../utils/format";
 
 export interface TransactionData {
     id: string,
@@ -52,13 +53,15 @@ export const TransactionCellConfig: ColumnFormat[] = [
         label: "Interview Start",
         name: "interview_start",
         type: "string",
-        flex: 1.8
+        flex: 1.8,
+        renderCell: (row: TransactionData) => formatDateTime(row.interview_start)
     },
     {
         label: "Interview End",
         name: "interview_end",
         type: "string",
-        flex: 1.8
+        flex: 1.8,
+        renderCell: (row: TransactionData) => formatDateTime(row.interview_end)
     },
     {
         label: "Shell_ChainID",
@@ -97,6 +100,7 @@ export const TransactionCellConfig: ColumnFormat[] = [
         name: "amount",
         type: "number",
         flex: 1,
-        align: "right"
+        align: "right",
+        renderCell: (row: TransactionData) => formatMoney(row.amount)
     }
 ];

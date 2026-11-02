@@ -8,6 +8,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { Button } from "@mui/material";
 import ReusableTable, { ActionState } from "../../components/Table/ReusableTable";
+import { formatNumber } from "../../utils/format";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { ApiConfig } from "../../config/ApiConfig";
@@ -157,42 +158,42 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
             name: "price",
             type: "number",
             flex: 1,
-            renderCell: (row: PriceRow) => row.price.toLocaleString("vi-VN"),
+            renderCell: (row: PriceRow) => formatNumber(row.price),
         },
         {
             label: "Price 1 (VND)",
             name: "price_1",
             type: "number",
             flex: 1,
-            renderCell: (row: PriceRow) => row.price_1.toLocaleString("vi-VN"),
+            renderCell: (row: PriceRow) => formatNumber(row.price_1),
         },
         {
             label: "Price 2 (VND)",
             name: "price_2",
             type: "number",
             flex: 1,
-            renderCell: (row: PriceRow) => row.price_2.toLocaleString("vi-VN"),
+            renderCell: (row: PriceRow) => formatNumber(row.price_2),
         },
         {
             label: "Price 3 (VND)",
             name: "price_3",
             type: "number",
             flex: 1,
-            renderCell: (row: PriceRow) => row.price_3.toLocaleString("vi-VN"),
+            renderCell: (row: PriceRow) => formatNumber(row.price_3),
         },
         {
             label: "Price 4 (VND)",
             name: "price_4",
             type: "number",
             flex: 1,
-            renderCell: (row: PriceRow) => row.price_4.toLocaleString("vi-VN"),
+            renderCell: (row: PriceRow) => formatNumber(row.price_4),
         },
         {
             label: "Price 5 (VND)",
             name: "price_5",
             type: "number",
             flex: 1,
-            renderCell: (row: PriceRow) => row.price_5.toLocaleString("vi-VN"),
+            renderCell: (row: PriceRow) => formatNumber(row.price_5),
         },
         ...(canEdit ? [{
             label: "",

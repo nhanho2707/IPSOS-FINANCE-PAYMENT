@@ -1,5 +1,6 @@
 import { UserData } from "./AccountFieldsConfig";
 import { ColumnFormat } from "./ColumnConfig";
+import { formatDate } from "../utils/format";
 
 export const ProjectCellConfig: ColumnFormat[] = [
   {
@@ -23,13 +24,15 @@ export const ProjectCellConfig: ColumnFormat[] = [
     label: "Field Start",
     name: "planned_field_start",
     type: "date",
-    width: 108
+    width: 108,
+    renderCell: (row: ProjectData) => formatDate(row.planned_field_start)
   },
   {
     label: "Field End",
     name: "planned_field_end",
     type: "date",
-    width: 108
+    width: 108,
+    renderCell: (row: ProjectData) => formatDate(row.planned_field_end)
   },
 ];
 

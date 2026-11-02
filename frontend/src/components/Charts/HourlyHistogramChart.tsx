@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import { Card, CardContent, CardHeader } from '@mui/material';
-import { BRAND } from '../../config/ThemeConfig';
+import { alpha } from '@mui/material/styles';
+import { BRAND, NEUTRAL } from '../../config/ThemeConfig';
 
 interface HistogramDatum {
     name: string;
@@ -78,7 +79,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
                 .attr('x', innerWidth / 2)
                 .attr('y', innerHeight / 2)
                 .attr('text-anchor', 'middle')
-                .attr('fill', 'var(--text-primary-color)')
+                .attr('fill', NEUTRAL[600])
                 .style('font-size', `${AXIS_FONT_SIZE}px`)
                 .text('No data');
 
@@ -109,7 +110,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
             .attr('x2', innerWidth)
             .attr('y1', d => yScale(d))
             .attr('y2', d => yScale(d))
-            .attr('stroke', 'var(--text-primary-color)')
+            .attr('stroke', NEUTRAL[600])
             .attr('stroke-opacity', 0.15)
             .attr('stroke-width', 1);
 
@@ -122,7 +123,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
             .attr('y', d => yScale(d))
             .attr('dy', '0.32em')
             .attr('text-anchor', 'end')
-            .attr('fill', 'var(--text-primary-color)')
+            .attr('fill', NEUTRAL[600])
             .style('font-size', `${AXIS_FONT_SIZE}px`)
             .text(d => d);
 
@@ -174,7 +175,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
             .attr('x', d => (xScale(d.name) || 0) + xScale.bandwidth() / 2)
             .attr('y', innerHeight + 20)
             .attr('text-anchor', 'middle')
-            .attr('fill', 'var(--text-primary-color)')
+            .attr('fill', NEUTRAL[600])
             .style('font-size', `${AXIS_FONT_SIZE}px`)
             .text(d => d.name);
     }, [data, valueLabel, width]);
@@ -194,13 +195,13 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
                         ref={tooltipRef}
                         style={{
                             position: 'absolute',
-                            background: 'var(--background-color)',
-                            color: 'var(--text-color)',
-                            border: '1px solid rgba(0,0,0,0.08)',
+                            background: NEUTRAL[0],
+                            color: NEUTRAL[900],
+                            border: `1px solid ${NEUTRAL[200]}`,
                             borderRadius: 8,
                             padding: '6px 10px',
                             fontSize: 12,
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                            boxShadow: `0 4px 16px ${alpha(NEUTRAL[900], 0.12)}`,
                             pointerEvents: 'none',
                             minWidth: 130,
                             zIndex: 1

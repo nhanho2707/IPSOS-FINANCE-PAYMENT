@@ -138,7 +138,7 @@ const GroupForm: React.FC<GroupFormProps> = ({ item, fields, isEditing, onUpdate
             sx={{
                 mb: 1.5,
                 border: "1px solid",
-                borderColor: "var(--body-color)",
+                borderColor: "divider",
                 borderRadius: "8px",
                 overflow: "hidden",
             }}
@@ -150,10 +150,10 @@ const GroupForm: React.FC<GroupFormProps> = ({ item, fields, isEditing, onUpdate
                     px: 2,
                     py: 1.25,
                     cursor: "pointer",
-                    backgroundColor: "rgba(0, 157, 156, 0.07)",
+                    backgroundColor: "background.default",
                     borderBottom: expanded ? "1px solid" : "none",
-                    borderBottomColor: "var(--body-color)",
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.12)" },
+                    borderBottomColor: "divider",
+                    "&:hover": { backgroundColor: "action.hover" },
                 }}
                 onClick={() => setExpanded(!expanded)}
             >
@@ -168,8 +168,6 @@ const GroupForm: React.FC<GroupFormProps> = ({ item, fields, isEditing, onUpdate
                     sx={{
                         flexGrow: 1,
                         fontWeight: 600,
-                        fontSize: "0.875rem",
-                        color: "var(--text-color)",
                     }}
                 >
                     {item.group_name}
@@ -249,7 +247,7 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
         <>
             <TableRow
                 sx={{
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                    "&:hover": { backgroundColor: "action.hover" },
                     "&:last-child td": { border: 0 },
                 }}
             >
@@ -257,15 +255,13 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                     width={200}
                     sx={{
                         fontWeight: 600,
-                        fontSize: "0.8125rem",
-                        color: "var(--text-color)",
                         verticalAlign: "top",
                         pt: 2,
                     }}
                 >
                     {row.label}
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                <TableCell>
                     {groups.length === 0 && !isEditing && (
                         <Typography variant="body2" color="text.secondary">
                             -

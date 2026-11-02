@@ -1,6 +1,6 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, Popover } from "@mui/material";
 import React, { useState } from "react";
-import { toProperCase } from "../../utils/format";
+import { formatStatus } from "../../utils/format";
 import { getStatusTone, PROJECT_STATUS_TONE, StatusTone } from "../../config/ThemeConfig";
 import StatusChip, { StatusDot } from "../StatusChip";
 
@@ -37,7 +37,7 @@ export const StatusDropdown: React.FC<Props> = ({
     return (
         <>
             <StatusChip
-                label={toProperCase(value)}
+                label={formatStatus(value)}
                 tone={getStatusTone(value, toneMap)}
                 onClick={options.length > 0 ? handleOpen : undefined}
                 showCaret={options.length > 0}
@@ -66,8 +66,8 @@ export const StatusDropdown: React.FC<Props> = ({
                                 <StatusDot tone={getStatusTone(status, toneMap)} />
                             </ListItemIcon>
                             <ListItemText
-                                primary={toProperCase(status)}
-                                primaryTypographyProps={{ fontSize: "0.8125rem" }}
+                                primary={formatStatus(status)}
+                                primaryTypographyProps={{ variant: "body2" }}
                             />
                         </ListItemButton>
                     ))}

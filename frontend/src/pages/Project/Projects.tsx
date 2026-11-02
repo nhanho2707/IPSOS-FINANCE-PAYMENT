@@ -20,7 +20,8 @@ import ModalAddProject from "../../components/Modals/Project/ModalAddProject";
 import ModalCloneProject from "../../components/Modals/Project/ModalCloneProject";
 import { Dayjs } from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
-import { toProperCase } from "../../utils/format";
+import { formatStatus } from "../../utils/format";
+import { NEUTRAL } from "../../config/ThemeConfig";
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -46,12 +47,12 @@ const Projects = () => {
   };
 
   const actionIconSx = {
-    backgroundColor: 'var(--body-color)',
+    backgroundColor: 'background.paper',
     borderRadius: '8px',
     border: '1px solid',
     borderColor: 'divider',
     '&:hover': {
-      backgroundColor: 'rgba(0, 157, 156, 0.08)',
+      backgroundColor: 'action.hover',
     },
     padding: '5px',
   };
@@ -73,7 +74,7 @@ const Projects = () => {
       align: "left",
       width: 56,
       renderCell: (row: ProjectData) => (
-        <Typography component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
+        <Typography component="span" variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
           #{row.id}
         </Typography>
       )
@@ -110,14 +111,14 @@ const Projects = () => {
         return (
           <Tooltip title={target > 0 ? `${percent}% of target` : "No sample size set"}>
             <Box>
-              <Typography component="span" sx={{ fontSize: '0.8125rem', fontVariantNumeric: 'tabular-nums' }}>
+              <Typography component="span" variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                 {completed} / {target}
               </Typography>
               <LinearProgress
                 variant="determinate"
                 value={percent}
                 aria-label="Sample progress"
-                sx={{ mt: 0.5, height: 4, borderRadius: 2, backgroundColor: 'var(--body-color)' }}
+                sx={{ mt: 0.5, height: 4, borderRadius: 2, backgroundColor: NEUTRAL[100] }}
               />
             </Box>
           </Tooltip>
@@ -181,7 +182,7 @@ const Projects = () => {
                   onClick={() => setCloneTarget(row)}
                   sx={actionIconSx}
                 >
-                  <ContentCopyIcon sx={{ fontSize: '0.875rem' }} />
+                  <ContentCopyIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               </Tooltip>
             )}
@@ -193,7 +194,7 @@ const Projects = () => {
                 }
                 sx={actionIconSx}
               >
-                <ArrowForwardIosIcon sx={{ fontSize: '0.875rem' }} />
+                <ArrowForwardIosIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Tooltip>
           </Box>
@@ -266,18 +267,18 @@ const Projects = () => {
   const handleUpdateStatus = async (project: ProjectData, status: string) => {
     if(status === STATUS.IN_COMING && !project.has_submitted_quotation){
       return showError(
-        'Please submit the quotation before moving the project to "In Coming".'
+        `Please submit the quotation before moving the project to "${formatStatus(STATUS.IN_COMING)}".`
       );
     }
 
     if(project.count_employees === 0 && status === STATUS.ON_GOING){
       return showError(
-        'Please add interviewers before moving the project to "On Going".'
+        `Please add interviewers before moving the project to "${formatStatus(STATUS.ON_GOING)}".`
       );
     }
 
     const confirmed = await showConfirm(
-      `Are you sure you want to change the project status to "${toProperCase(status)}"?`
+      `Are you sure you want to change the project status to "${formatStatus(status)}"?`
     )
 
     if(!confirmed) return;
@@ -345,7 +346,7 @@ const Projects = () => {
           topToolbar={(
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography sx={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-color)' }}>
+                <Typography variant="h2">
                   Projects
                 </Typography>
                 <Button variant="contained" onClick={() => setOpenModalAdd(true)}>
@@ -365,7 +366,7 @@ const Projects = () => {
                         />
                       }
                       label="Show disabled projects"
-                      sx={{ m: 0, gap: 0.5, '& .MuiFormControlLabel-label': { fontSize: '0.8125rem', color: 'text.secondary' } }}
+                      sx={{ m: 0, gap: 0.5, '& .MuiFormControlLabel-label': { typography: 'body2', color: 'text.secondary' } }}
                     />
                   )}
                 </Box>

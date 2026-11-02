@@ -1,12 +1,12 @@
 import React from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
-import { Alert, Box, Breadcrumbs, Button, Chip, Link, Skeleton, Typography } from "@mui/material";
+import { Alert, Box, Breadcrumbs, Button, Link, Skeleton, Typography } from "@mui/material";
 import { NavigateNext } from "@mui/icons-material";
 import { ProjectData } from "../config/ProjectFieldsConfig";
 import { findProjectNavItem, getProjectHomePath } from "../config/ProjectNavConfig";
 import { useAuth } from "../contexts/AuthContext";
 import { getStatusTone, PROJECT_STATUS_TONE } from "../config/ThemeConfig";
-import { toProperCase } from "../utils/format";
+import { formatDateRange, formatStatus } from "../utils/format";
 import StatusChip from "./StatusChip";
 
 interface ProjectHeaderProps {
@@ -21,7 +21,7 @@ const MetaItem: React.FC<{ label: string; value?: string | null }> = ({ label, v
     if (!value) return null;
 
     return (
-        <Typography component="span" sx={{ fontSize: "0.8125rem", color: "text.secondary" }}>
+        <Typography component="span" variant="body2" color="text.secondary">
             {label}:{" "}
             <Box component="span" sx={{ color: "text.primary", fontWeight: 500 }}>
                 {value}
@@ -36,16 +36,14 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loadi
     const currentPage = findProjectNavItem(location.pathname);
     const projectName = project?.project_name || `Project #${projectId}`;
 
-    const fieldPeriod = project?.planned_field_start && project?.planned_field_end
-        ? `${project.planned_field_start} → ${project.planned_field_end}`
-        : null;
+    const fieldPeriod = formatDateRange(project?.planned_field_start, project?.planned_field_end);
 
     return (
         <Box component="header" sx={{ mb: 2.5, pb: 2, borderBottom: 1, borderColor: "divider" }}>
             <Breadcrumbs
-                separator={<NavigateNext sx={{ fontSize: "1rem" }} />}
+                separator={<NavigateNext sx={{ fontSize: 14 }} />}
                 aria-label="breadcrumb"
-                sx={{ fontSize: "0.8125rem", "& .MuiBreadcrumbs-li": { minWidth: 0 } }}
+                sx={{ typography: "caption", "& .MuiBreadcrumbs-li": { minWidth: 0 } }}
             >
                 <Link component={RouterLink} to="/project-management/projects" underline="hover" color="text.secondary">
                     Projects
@@ -73,30 +71,30 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loadi
             {error && !project ? (
                 <Alert
                     severity="error"
-                    sx={{ mt: 1.5, fontSize: "0.875rem" }}
+                    sx={{ mt: 1.5 }}
                     action={<Button color="inherit" size="small" onClick={onRetry}>Retry</Button>}
                 >
                     Could not load project details.
                 </Alert>
             ) : loading && !project ? (
                 <Box sx={{ mt: 1 }}>
-                    <Skeleton variant="text" width={280} sx={{ fontSize: "1.25rem" }} />
-                    <Skeleton variant="text" width={420} sx={{ fontSize: "0.8125rem" }} />
+                    <Skeleton variant="text" width={280} sx={{ typography: "h1" }} />
+                    <Skeleton variant="text" width={420} sx={{ typography: "body2" }} />
                 </Box>
             ) : (
                 <>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", mt: 1 }}>
-                        <Typography component="h1" sx={{ fontSize: "1.25rem", fontWeight: 600, color: "text.primary", lineHeight: 1.3 }}>
+                        <Typography component="h1" variant="h1">
                             {projectName}
                         </Typography>
                         {project?.status && (
                             <StatusChip
-                                label={toProperCase(project.status)}
+                                label={formatStatus(project.status)}
                                 tone={getStatusTone(project.status, PROJECT_STATUS_TONE)}
                             />
                         )}
                         {project?.disabled && (
-                            <Chip size="small" label="Disabled" color="error" variant="outlined" sx={{ height: 24, fontSize: "0.75rem" }} />
+                            <StatusChip label="Disabled" tone="neutral" />
                         )}
                     </Box>
                     <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2.5, rowGap: 0.5, mt: 0.75 }}>

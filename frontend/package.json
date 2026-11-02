@@ -57,6 +57,53 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/Layouts/**/*.tsx",
+          "src/components/**/*.tsx",
+          "src/pages/AccountManagement/**/*.tsx",
+          "src/pages/Auth/**/*.tsx",
+          "src/pages/Codeframe/**/*.tsx",
+          "src/pages/ErrorPage/**/*.tsx",
+          "src/pages/Project/**/*.tsx",
+          "src/pages/Transaction/**/*.tsx"
+        ],
+        "excludedFiles": [
+          "src/components/Charts/BarChartComponent.tsx",
+          "src/components/Charts/PieChartComponent.tsx",
+          "src/components/Charts/ProgressBarChartComponent.tsx",
+          "src/components/Charts/StackedBarChartComponent.tsx",
+          "src/components/Charts/StackedBarChartPercentageComponent.tsx",
+          "src/components/Charts/VennChartComponent.tsx",
+          "src/components/Directional/**",
+          "src/components/Navbar/TechcombankNavbar.tsx",
+          "src/components/Sidebar/TechcombankSidebar.tsx",
+          "src/components/Widgets/**"
+        ],
+        "rules": {
+          "no-restricted-syntax": [
+            "warn",
+            {
+              "selector": "Literal[value=/^#[0-9a-fA-F]{3,8}$/]",
+              "message": "Use palette tokens (\"text.secondary\", \"divider\", \"primary.main\") or BRAND/NEUTRAL from config/ThemeConfig.ts instead of hex colors."
+            },
+            {
+              "selector": "Literal[value=/rgba?\\(/]",
+              "message": "Use palette tokens or alpha(BRAND.accent, ...) instead of rgba() literals."
+            },
+            {
+              "selector": "Literal[value=/var\\(--/]",
+              "message": "Use MUI palette tokens in TSX; CSS variables are for the legacy CSS files."
+            },
+            {
+              "selector": "Property[key.name='fontSize'] > Literal[value=/^[0-9.]+(rem|px|em)$/]",
+              "message": "Use a typography variant (variant=\"body2\" or sx={{ typography: \"caption\" }}). A numeric fontSize is only for icons."
+            }
+          ]
+        }
+      }
     ]
   },
   "browserslist": {

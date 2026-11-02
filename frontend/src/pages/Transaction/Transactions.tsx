@@ -137,9 +137,9 @@ const Transactions = () => {
                     sx={{
                         p: 3,
                         borderRadius: 2,
-                        boxShadow: 3,
                         bgcolor: "background.paper",
-                        border: "1px solid #ddd",
+                        border: 1,
+                        borderColor: "divider",
                     }}
                 >
                     <Typography 
@@ -196,9 +196,9 @@ const Transactions = () => {
                     sx={{
                         p: 3,
                         borderRadius: 2,
-                        boxShadow: 3,
                         bgcolor: "background.paper",
-                        border: "1px solid #ddd",
+                        border: 1,
+                        borderColor: "divider",
                     }}
                 >
                     <Box
@@ -276,7 +276,7 @@ const Transactions = () => {
             )}
             <Grid item xs={12}>
                 <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                    Choose a date range to export transactions (e.g. 01/01/2026 - 01/31/2026)
+                    Choose a date range to export transactions
                 </Typography>
                 <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="Export Excel" buttonIcon={<FileDownloadOutlinedIcon />} loadingButton={loadingExport} onSearchChange={handleExport} />
                 <Divider sx={{ mt: 2 }} />

@@ -28,7 +28,7 @@ Variant `h4`–`h6` và `subtitle1/2` giữ cách render cũ để không đổi
 
 ### Font scale
 
-Dùng variant của MUI (`<Typography variant="body2">` hoặc `sx={{ typography: "caption" }}`). Code mới không gõ `fontSize` bằng tay.
+Dùng variant của MUI (`<Typography variant="body2">` hoặc `sx={{ typography: "caption" }}`). Không gõ `fontSize` dạng chuỗi (`"0.8125rem"`, `"14px"`) cho chữ; `fontSize` dạng số (`sx={{ fontSize: 20 }}`) chỉ dành cho icon. ESLint cảnh báo các trường hợp vi phạm ở trang nội bộ (xem `RULES.md`).
 
 | Variant | Cỡ / chiều cao dòng | Weight | Dùng cho |
 |---|---|---|---|
@@ -140,7 +140,18 @@ Màu trạng thái chia thành 6 **tone**. Mỗi tone có 3 màu: `bg` (nền ch
 | on hold | warning | suppended | neutral |
 | cancelled | danger | | |
 
-Hiển thị trạng thái bằng `<StatusChip label tone />` (`src/components/StatusChip.tsx`), dùng `getStatusTone(status, map)` để lấy tone. Không dùng chữ trắng trên nền màu trạng thái.
+| Quotation (`QUOTATION_STATUS_TONE`) | Tone | Góp ý quotation (`FEEDBACK_STATUS_TONE`) | Tone |
+|---|---|---|---|
+| draft | neutral | pending | warning |
+| submitted | info | resolved | success |
+| fm_confirmed | brand | rejected | danger |
+| approved | success | | |
+
+Tài khoản: Active = `success`, Inactive = `neutral`, Temp password = `warning`. Dự án bị disable: chip "Disabled" tone `neutral`.
+
+Mọi trạng thái hiển thị bằng `<StatusChip label tone />` (`src/components/StatusChip.tsx`), dùng `getStatusTone(status, map)` để lấy tone. Không dùng `Chip` của MUI với `color=...` cho trạng thái, không dùng chữ trắng trên nền màu trạng thái.
+
+Nhãn lấy từ `formatStatus(status)` (`src/utils/format.ts`): viết hoa chữ đầu và đổi tên vài giá trị backend cho dễ hiểu: `in coming` → "Upcoming", `on going` → "In field", `fm_confirmed` → "FM confirmed", `suppended` → "Suspended". Giá trị gửi lên backend giữ nguyên.
 
 CSS có thể dùng biến `--status-<tone>-bg|fg|dot` (được sinh từ `ThemeConfig.ts` qua `GlobalStyles`).
 
@@ -248,6 +259,21 @@ Nhãn nút viết dạng thường ("Add New Project"), theme đã tắt viết 
 - Thao tác xoá / chặn / disable: `tone: "danger"` và `confirmText` ghi rõ hành động ("Delete", "Disable"), không dùng "Confirm" chung chung.
 - `onConfirm` trả về Promise thì dialog tự hiện loading và chỉ đóng khi xong.
 - Không dùng `alert()` / `window.confirm()` của trình duyệt.
+
+### Số, tiền, ngày
+
+Dùng hàm trong `src/utils/format.ts`; không gọi `numeral`, `toLocaleString` hay `dayjs().format()` để hiển thị.
+
+| Hàm | Ví dụ | Dùng cho |
+|---|---|---|
+| `formatMoney(v)` | `500,000,000 ₫` | Số tiền (mọi số tiền trong app là VND) |
+| `formatNumber(v)` | `1,834` | Số lượng; cột tiền mà tiêu đề đã ghi "(VND)" |
+| `formatPercent(r)` | `2.1%` | Tỷ lệ |
+| `formatDate(v)` | `02 Nov 2026` | Ngày |
+| `formatDateTime(v)` | `02 Nov 2026, 14:05` | Ngày giờ |
+| `formatDateRange(a, b)` | `1 Oct – 30 Nov 2026` | Khoảng thời gian, ví dụ thời gian field |
+
+`DD MMM YYYY` không bị đọc nhầm giữa thói quen dd/mm và mm/dd. Date picker của MUI X dùng chung định dạng này qua `LocalizationProvider` trong `index.tsx`; không bọc thêm `LocalizationProvider` trong component. Ngày gửi lên API vẫn là `YYYY-MM-DD`.
 
 ### Toast
 

@@ -5,6 +5,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import { formatNumber } from "../../../utils/format";
+import { alpha } from "@mui/material/styles";
+import { BRAND } from "../../../config/ThemeConfig";
 
 export interface EstimateCostItemData {
     type: 'item';
@@ -62,11 +65,7 @@ const newGroup = (): EstimateCostGroupData => ({
     type: 'group', id: uid(), label: 'New Group', children: []
 });
 
-const fmt = (val: number | ''): string => {
-    if (val === '' || val === null || val === undefined) return '-';
-    const n = Number(val);
-    return isNaN(n) ? '-' : n.toLocaleString('vi-VN');
-};
+const fmt = (val: number | ''): string => formatNumber(val === '' ? null : val);
 
 const calcTotal = (nodes: EstimateCostNode[]): { amount: number; actual: number } =>
     nodes.reduce((acc, node) => {
@@ -132,17 +131,13 @@ interface Props {
 
 const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
     const nodes = value || [];
-    const cellSx = { fontSize: "0.8125rem", padding: "4px 10px", color: "var(--text-color)" };
+    const cellSx = { padding: "4px 10px" };
 
     const renderNodes = (nodeList: EstimateCostNode[], depth: number): React.ReactNode[] =>
         nodeList.flatMap(node => {
             if (node.type === 'group') {
                 const { amount: subAmt, actual: subActual } = calcTotal(node.children);
-                const bg = depth === 0
-                    ? 'rgba(0,157,156,0.1)'
-                    : depth === 1
-                    ? 'rgba(0,157,156,0.06)'
-                    : 'rgba(0,157,156,0.03)';
+                const bg = alpha(BRAND.accent, depth === 0 ? 0.1 : depth === 1 ? 0.06 : 0.03);
                 return [
                     <TableRow key={node.id} sx={{ backgroundColor: bg }}>
                         <TableCell
@@ -151,17 +146,16 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                 ...cellSx,
                                 paddingLeft: `${10 + depth * 20}px`,
                                 fontWeight: 700,
-                                borderBottom: "1px solid rgba(0,157,156,0.2)"
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <FolderOpenIcon sx={{ fontSize: "1rem", color: "var(--main-color)", flexShrink: 0 }} />
+                                <FolderOpenIcon color="primary" sx={{ fontSize: 16, flexShrink: 0 }} />
                                 {isEditing ? (
                                     <TextField
                                         size="small"
                                         value={node.label}
                                         onChange={e => onChange(updateGroupLabel(nodes, node.id, e.target.value))}
-                                        sx={{ "& .MuiInputBase-input": { fontSize: "0.8125rem", padding: "2px 6px", fontWeight: 700 } }}
+                                        sx={{ "& .MuiInputBase-input": { typography: "body2", padding: "2px 6px", fontWeight: 700 } }}
                                     />
                                 ) : (
                                     <span>{node.label}</span>
@@ -177,12 +171,12 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                             <TableCell sx={{ padding: "2px 4px", whiteSpace: "nowrap" }}>
                                 <Tooltip title="Add sub-group">
                                     <IconButton size="small" onClick={() => onChange(addToGroup(nodes, node.id, newGroup()))}>
-                                        <CreateNewFolderIcon fontSize="small" sx={{ color: "var(--main-color)" }} />
+                                        <CreateNewFolderIcon fontSize="small" color="primary" />
                                     </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Add item">
                                     <IconButton size="small" onClick={() => onChange(addToGroup(nodes, node.id, newItem()))}>
-                                        <PostAddIcon fontSize="small" sx={{ color: "var(--main-color)" }} />
+                                        <PostAddIcon fontSize="small" color="primary" />
                                     </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete group">
@@ -198,7 +192,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
             }
 
             return [
-                <TableRow key={node.id} sx={{ "&:hover": { backgroundColor: "rgba(0,157,156,0.04)" } }}>
+                <TableRow key={node.id} sx={{ "&:hover": { backgroundColor: "action.hover" } }}>
                     {ITEM_COLS.map(col => (
                         <TableCell
                             key={col.key}
@@ -213,15 +207,15 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                     type={col.type}
                                     value={node[col.key] ?? ''}
                                     onChange={e => onChange(updateItemField(nodes, node.id, col.key, e.target.value))}
-                                    sx={{ "& .MuiInputBase-input": { fontSize: "0.8125rem", padding: "4px 8px" } }}
+                                    sx={{ "& .MuiInputBase-input": { typography: "body2", padding: "4px 8px" } }}
                                     fullWidth
                                 />
                             ) : (
-                                <span style={{ color: (col.readOnly && isEditing) ? "var(--text-secondary-color)" : undefined }}>
+                                <Box component="span" sx={{ color: (col.readOnly && isEditing) ? "secondary.main" : undefined }}>
                                     {col.type === 'number'
                                         ? fmt(node[col.key] as number | '')
                                         : ((node[col.key] as string) || '-')}
-                                </span>
+                                </Box>
                             )}
                         </TableCell>
                     ))}
@@ -240,27 +234,27 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
 
     return (
         <Box>
-            <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, mb: 1, color: "var(--text-color)" }}>
+            <Typography variant="h3" sx={{ mb: 1 }}>
                 Estimate Cost
             </Typography>
             <Paper
                 elevation={0}
                 sx={{
                     border: "1px solid",
-                    borderColor: "var(--body-color)",
+                    borderColor: "divider",
                     borderRadius: "8px",
                     overflow: "hidden",
-                    backgroundColor: "var(--background-color)"
+                    backgroundColor: "background.paper"
                 }}
             >
                 <TableContainer>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ backgroundColor: "var(--body-color)" }}>
+                            <TableRow>
                                 {ITEM_COLS.map(col => (
                                     <TableCell
                                         key={col.key}
-                                        sx={{ fontWeight: 600, fontSize: "0.75rem", width: col.width, whiteSpace: "nowrap", color: "var(--text-color)" }}
+                                        sx={{ width: col.width, whiteSpace: "nowrap" }}
                                     >
                                         {col.label}
                                     </TableCell>
@@ -273,7 +267,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                 <TableRow>
                                     <TableCell
                                         colSpan={ITEM_COLS.length}
-                                        sx={{ textAlign: "center", color: "var(--text-secondary-color)", fontSize: "0.8125rem", py: 3 }}
+                                        sx={{ textAlign: "center", color: "text.secondary", py: 3 }}
                                     >
                                         No data
                                     </TableCell>
@@ -284,17 +278,18 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
 
                             {nodes.length > 0 && (
                                 <TableRow sx={{
-                                    backgroundColor: "rgba(0,157,156,0.07)",
-                                    borderTop: "2px solid rgba(0,157,156,0.25)"
+                                    backgroundColor: alpha(BRAND.accent, 0.07),
+                                    borderTop: "2px solid",
+                                    borderTopColor: alpha(BRAND.accent, 0.25)
                                 }}>
-                                    <TableCell colSpan={4} sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                                    <TableCell colSpan={4} sx={{ fontWeight: 700 }}>
                                         Total
                                     </TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-color)" }}>
-                                        {grandTotal.amount.toLocaleString('vi-VN')}
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                        {formatNumber(grandTotal.amount)}
                                     </TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-color)" }}>
-                                        {grandTotal.actual > 0 ? grandTotal.actual.toLocaleString('vi-VN') : '-'}
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                        {grandTotal.actual > 0 ? formatNumber(grandTotal.actual) : '—'}
                                     </TableCell>
                                     <TableCell />
                                     {isEditing && <TableCell />}
@@ -311,7 +306,6 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                         startIcon={<CreateNewFolderIcon />}
                         size="small"
                         onClick={() => onChange([...nodes, newGroup()])}
-                        sx={{ fontSize: "0.75rem", color: "var(--main-color)", textTransform: "none" }}
                     >
                         Add Group
                     </Button>
@@ -319,7 +313,6 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                         startIcon={<AddIcon />}
                         size="small"
                         onClick={() => onChange([...nodes, newItem()])}
-                        sx={{ fontSize: "0.75rem", color: "var(--main-color)", textTransform: "none" }}
                     >
                         Add Item
                     </Button>

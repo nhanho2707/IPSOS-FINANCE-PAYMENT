@@ -94,6 +94,7 @@ Dùng đúng breakpoint đã định nghĩa. **Không hardcode pixel** trong med
 
 ## Những điều không được làm
 
+- **Không viết tay màu hex, `rgba()`, `var(--…)` hay cỡ chữ dạng chuỗi trong TSX** ở các trang nội bộ. `no-restricted-syntax` trong `eslintConfig` của `package.json` sẽ cảnh báo; dùng palette của theme (`"text.secondary"`, `"divider"`, `"primary.main"`), `BRAND`/`NEUTRAL` từ `ThemeConfig.ts` và variant typography. Trang đáp viên, MiniCATI và dashboard khách hàng nằm ngoài phạm vi luật này.
 - **Không dùng `!important`** trừ khi override MUI (MUI inject style sau nên đôi khi cần thiết — ghi comment lý do)
 - **Không hardcode màu** ngoài `global.css` — dùng variable
 - **Không tạo thêm CSS file** ngoài các file đã có

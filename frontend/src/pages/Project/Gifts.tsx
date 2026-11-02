@@ -15,7 +15,7 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import StopIcon from '@mui/icons-material/Stop';
 import StatusChip from "../../components/StatusChip";
 import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
-import { toProperCase } from "../../utils/format";
+import { formatStatus } from "../../utils/format";
 
 const MAX_FAILURES_SHOWN = 30;
 
@@ -271,7 +271,7 @@ const Gifts: React.FC = () => {
             },
             renderCell: (row: OfflineProjectRespondentData) => (
                 <StatusChip
-                    label={toProperCase(row.status ?? "")}
+                    label={formatStatus(row.status)}
                     tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
                     tooltip={row.status_label}
                 />
@@ -294,32 +294,10 @@ const Gifts: React.FC = () => {
                             startIcon={<CardGiftcardIcon />}
                             loading={(loadingRowId === row.respondent_id)}
                             loadingPosition="start"
-                            variant="contained"
+                            variant="outlined"
+                            color="inherit"
                             disabled={disabled || bulkSending}
-                            sx={{
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                                backgroundColor: 'var(--vinnet-color-primary)',
-                                color: '#fff',
-                                fontSize: '0.8125rem',
-                                fontWeight: 600,
-                                textTransform: 'none',
-                                letterSpacing: '0.02em',
-                                borderRadius: '0.625rem',
-                                px: 2,
-                                py: 0.625,
-                                boxShadow: 'none',
-                                transition: 'var(--transition-02)',
-                                '&:hover': {
-                                    backgroundColor: 'var(--vinnet-color-primary)',
-                                    filter: 'brightness(1.1)',
-                                    boxShadow: '0 0.25rem 0.75rem rgba(0, 122, 255, 0.35)',
-                                },
-                                '&.Mui-disabled': {
-                                    backgroundColor: 'rgba(0, 122, 255, 0.3)',
-                                    color: '#fff',
-                                },
-                            }}
+                            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
                                 Send gift
                         </LoadingButton>

@@ -13,6 +13,7 @@ import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { getProjectNavItemsForRole, ProjectNavItem, projectNavPath } from "../../config/ProjectNavConfig";
 import { useAuth } from "../../contexts/AuthContext";
 import { MOBILE_MEDIA_QUERY } from "./MobileNavToggle";
+import { BRAND, NEUTRAL } from "../../config/ThemeConfig";
 
 interface ProjectSidebarProps {
   projectId: number;
@@ -48,7 +49,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
       <li className="nav-link">
         <NavLink to={projectNavPath(projectId, item.path)} onClick={handleClick}>
           <span className="nav-icon-wrap">
-            <item.icon style={{ fontSize: "20px" }} />
+            <item.icon sx={{ fontSize: 20 }} />
           </span>
           <span className="text nav-text">{item.label}</span>
         </NavLink>
@@ -65,8 +66,8 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
             onClick={toggleSidebar}
             size="small"
             sx={{
-              bgcolor: "var(--body-color)",
-              "&:hover": { bgcolor: "rgba(0, 157, 156, 0.12)" },
+              bgcolor: NEUTRAL[100],
+              "&:hover": { bgcolor: BRAND.soft },
               flexShrink: 0,
             }}
           >
@@ -85,7 +86,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
             <li className="nav-link">
               <NavLink to="/project-management/projects" end onClick={handleClick}>
                 <span className="nav-icon-wrap">
-                  <HomeOutlined style={{ fontSize: "20px" }} />
+                  <HomeOutlined sx={{ fontSize: 20 }} />
                 </span>
                 <span className="text nav-text">All Projects</span>
               </NavLink>

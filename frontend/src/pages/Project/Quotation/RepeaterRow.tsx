@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
 import { memo, useMemo, useState } from "react";
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -6,6 +6,9 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import { FieldSchema } from "../../../utils/renderFields";
 import { useInputRule } from "../../../hook/useInputRule";
 import { FeedbackThread, FeedbackThreadEntry } from "../../../config/QuotationConfig";
+import { formatDateTime, formatStatus } from "../../../utils/format";
+import StatusChip from "../../../components/StatusChip";
+import { FEEDBACK_STATUS_TONE, getStatusTone } from "../../../config/ThemeConfig";
 
 export interface RepeaterRowData {
     [key: string]: any
@@ -30,6 +33,11 @@ function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolve
     const last = thread[thread.length - 1];
     if (last.type === 'feedback') return 'pending';
     return last.status ?? 'none';
+}
+
+function rejectionTooltip(thread: FeedbackThread): string {
+    const lastRejection = [...thread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
+    return lastRejection?.content ? `Reason: ${lastRejection.content}` : 'Rejected';
 }
 
 function statusColor(status: ReturnType<typeof getThreadStatus>): string {
@@ -62,12 +70,9 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                 }}
             >
                 {!isFeedback && entry.status && (
-                    <Chip
-                        label={entry.status === 'resolved' ? 'Resolved' : 'Rejected'}
-                        size="small"
-                        color={entry.status === 'resolved' ? 'success' : 'error'}
-                        sx={{ mb: 0.5 }}
-                    />
+                    <Box sx={{ mb: 0.5 }}>
+                        <StatusChip label={formatStatus(entry.status)} tone={getStatusTone(entry.status, FEEDBACK_STATUS_TONE)} />
+                    </Box>
                 )}
                 {entry.content && (
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -76,7 +81,7 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                 )}
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, px: 0.5 }}>
-                {entry.user_name} · {new Date(entry.created_at).toLocaleString()}
+                {entry.user_name} · {formatDateTime(entry.created_at)}
             </Typography>
         </Box>
     );
@@ -217,22 +222,23 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
         const gridTemplate = `${fields.map(() => "1fr").join(" ")} auto`;
         const cellStyle = {
             padding: "8px 12px",
-            BorderRight: "1px solid #e0e0e0",
+            borderRight: "1px solid",
+            borderRightColor: "divider",
             display: "flex",
             alignItems: "center",
             minHeight: 40
         };
 
         return (isEditing || repeaterRows.length > 0) ? (
-            <Box sx={{ border: "1px solid", borderColor: "var(--body-color)", borderRadius: "8px", overflow: "hidden" }}>
-                <Box sx={{ display: "grid", gridTemplateColumns: gridTemplate, backgroundColor: "var(--body-color)", borderBottom: "1px solid", borderBottomColor: "rgba(0, 157, 156, 0.2)" }}>
+            <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: "8px", overflow: "hidden" }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: gridTemplate, backgroundColor: "background.default", borderBottom: "1px solid", borderBottomColor: "divider" }}>
                     {fields.map((subField) => (
                         <Box key={subField.name} sx={cellStyle}>{subField.label}</Box>
                     ))}
                     <Box sx={{ textAlign: "center", width: 120, padding: "8px 12px", minHeight: 40 }}>Actions</Box>
                 </Box>
                 {repeaterRows.map((rowItem, rowIndex) => (
-                    <Box key={rowIndex} sx={{ display: "grid", gridTemplateColumns: gridTemplate, borderBottom: "1px solid #e0e0e0", '&:hover': {backgroundColor: '#fafafa'}, '& > div:last-child': { borderRight: 'none' } }}>
+                    <Box key={rowIndex} sx={{ display: "grid", gridTemplateColumns: gridTemplate, borderBottom: "1px solid", borderBottomColor: "divider", '&:hover': { backgroundColor: "action.hover" }, '& > div:last-child': { borderRight: 'none' } }}>
                         {row.fields.map((subField) => renderSavedField(subField, rowItem, cellStyle))}
                         <Box sx={{...cellStyle, justifyContent: "center", width: 120}}>
                             <IconButton color="error" disabled={!isEditing} onClick={() => handleDelete(rowIndex)}>
@@ -263,13 +269,13 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
         <>
             <TableRow
                 sx={{
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                    "&:hover": { backgroundColor: "action.hover" },
                     "&:last-child td": { border: 0 },
                 }}
             >
                 <TableCell
                     width={200}
-                    sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-color)" }}
+                    sx={{ fontWeight: 600 }}
                 >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: 'wrap' }}>
                         <span>{row.label}</span>
@@ -284,44 +290,17 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                                 </IconButton>
                             </Tooltip>
                         )}
-                        {threadStatus === 'resolved' && (
-                            <Chip
-                                label="Resolved"
-                                size="small"
-                                color="success"
-                                variant="outlined"
+                        {threadStatus !== 'none' && (
+                            <StatusChip
+                                label={formatStatus(threadStatus)}
+                                tone={getStatusTone(threadStatus, FEEDBACK_STATUS_TONE)}
+                                tooltip={threadStatus === 'rejected' ? rejectionTooltip(safeThread) : undefined}
                                 onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
-                            />
-                        )}
-                        {threadStatus === 'rejected' && (() => {
-                            const lastResponse = [...safeThread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
-                            return (
-                                <Tooltip title={lastResponse?.content ? `Reason: ${lastResponse.content}` : 'Rejected'} placement="top">
-                                    <Chip
-                                        label="Rejected"
-                                        size="small"
-                                        color="error"
-                                        variant="outlined"
-                                        onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                        sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
-                                    />
-                                </Tooltip>
-                            );
-                        })()}
-                        {threadStatus === 'pending' && (
-                            <Chip
-                                label="Pending"
-                                size="small"
-                                color="warning"
-                                variant="outlined"
-                                onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
                             />
                         )}
                     </Box>
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                <TableCell>
                     { renderMiniTable(row.fields) }
                 </TableCell>
             </TableRow>

@@ -13,6 +13,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GlobalStyles, ThemeProvider } from "@mui/material";
 import { appTheme, themeCssVariables } from "./config/ThemeConfig";
 import { ToastProvider } from "./contexts/ToastContext";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DATE_FORMAT } from "./utils/format";
 
 const queryClient = new QueryClient();
 
@@ -23,14 +26,20 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={appTheme}>
-      <GlobalStyles styles={{ ":root": themeCssVariables }} />
-      <ToastProvider>
-        <I18nextProvider i18n={i18n}>
-          <QueryClientProvider client={queryClient}>
-            <App />
-          </QueryClientProvider>
-        </I18nextProvider>
-      </ToastProvider>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        dateFormats={{ keyboardDate: DATE_FORMAT }}
+        localeText={{ fieldMonthPlaceholder: ({ contentType }) => (contentType === "letter" ? "MMM" : "MM") }}
+      >
+        <GlobalStyles styles={{ ":root": themeCssVariables }} />
+        <ToastProvider>
+          <I18nextProvider i18n={i18n}>
+            <QueryClientProvider client={queryClient}>
+              <App />
+            </QueryClientProvider>
+          </I18nextProvider>
+        </ToastProvider>
+      </LocalizationProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

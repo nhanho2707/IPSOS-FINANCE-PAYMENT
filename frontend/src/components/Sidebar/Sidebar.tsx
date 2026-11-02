@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, FolderOpen, Logout, ManageAccounts, Payments
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole, Role, ROLE_ACCESS } from "../../config/RoleConfig";
 import { MOBILE_MEDIA_QUERY } from "./MobileNavToggle";
+import { BRAND, NEUTRAL } from "../../config/ThemeConfig";
 
 interface SideBarProps {
   isOpen: boolean;
@@ -73,8 +74,8 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
             onClick={toggleSidebar}
             size="small"
             sx={{
-              bgcolor: "var(--body-color)",
-              "&:hover": { bgcolor: "rgba(0, 157, 156, 0.12)" },
+              bgcolor: NEUTRAL[100],
+              "&:hover": { bgcolor: BRAND.soft },
               flexShrink: 0,
             }}
           >
@@ -104,7 +105,7 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
                   }}
                 >
                   <span className="nav-icon-wrap">
-                    <nav.icon style={{ fontSize: "20px" }} />
+                    <nav.icon sx={{ fontSize: 20 }} />
                   </span>
                   <span className="text nav-text">{nav.label}</span>
                 </NavLink>
@@ -124,11 +125,10 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
               variant="body2"
               sx={{
                 fontWeight: 600,
-                fontSize: "0.875rem",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                color: "var(--text-primary-color)",
+                color: "text.secondary",
                 mb: 0.75,
               }}
             >
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
           )}
           <Tooltip title="Log out" placement="right" disableHoverListener={isOpen}>
             <button className="sidebar-logout-btn" onClick={logout}>
-              <Logout sx={{ fontSize: "16px" }} />
+              <Logout sx={{ fontSize: 16 }} />
               {isOpen && <span>Log out</span>}
             </button>
           </Tooltip>

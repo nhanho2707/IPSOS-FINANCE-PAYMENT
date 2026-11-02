@@ -9,6 +9,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
 import { ApiConfig } from "../../config/ApiConfig";
 import ProvincePricesTable from "./ProvincePricesTable";
+import { Theme } from "@mui/material/styles";
 
 interface SettingsData {
     internal_code: string;
@@ -17,10 +18,16 @@ interface SettingsData {
 }
 
 const labelSx = {
-    fontSize: "0.8125rem",
+    typography: "body2",
     fontWeight: 600,
-    color: "var(--text-color)",
+    color: "text.primary",
     mb: 0.75,
+};
+
+const readOnlyInputSx = {
+    "& .MuiInputBase-input.Mui-disabled": {
+        WebkitTextFillColor: (theme: Theme) => theme.palette.text.primary,
+    },
 };
 
 const Settings = () => {
@@ -75,29 +82,22 @@ const Settings = () => {
                 elevation={0}
                 sx={{
                     border: "1px solid",
-                    borderColor: "var(--body-color)",
+                    borderColor: "divider",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    backgroundColor: "var(--background-color)",
+                    backgroundColor: "background.paper",
                 }}
             >
                 {/* Section header */}
                 <Box
                     sx={{
-                        px: 2,
-                        py: 1.25,
-                        backgroundColor: "var(--body-color)",
-                        borderBottom: "2px solid",
-                        borderBottomColor: "rgba(0, 157, 156, 0.2)",
+                        px: 2.5,
+                        py: 1.5,
+                        borderBottom: 1,
+                        borderColor: "divider",
                     }}
                 >
-                    <Typography
-                        sx={{
-                            fontSize: "0.8125rem",
-                            fontWeight: 600,
-                            color: "var(--text-color)",
-                        }}
-                    >
+                    <Typography variant="h2">
                         Project Information
                     </Typography>
                 </Box>
@@ -115,11 +115,7 @@ const Settings = () => {
                                 onChange={(e) =>
                                     setFormData(prev => ({ ...prev, internal_code: e.target.value }))
                                 }
-                                sx={{
-                                    "& .MuiInputBase-input.Mui-disabled": {
-                                        WebkitTextFillColor: "var(--text-color)",
-                                    },
-                                }}
+                                sx={readOnlyInputSx}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -132,11 +128,7 @@ const Settings = () => {
                                 onChange={(e) =>
                                     setFormData(prev => ({ ...prev, project_name: e.target.value }))
                                 }
-                                sx={{
-                                    "& .MuiInputBase-input.Mui-disabled": {
-                                        WebkitTextFillColor: "var(--text-color)",
-                                    },
-                                }}
+                                sx={readOnlyInputSx}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -149,11 +141,7 @@ const Settings = () => {
                                 onChange={(e) =>
                                     setFormData(prev => ({ ...prev, symphony: e.target.value }))
                                 }
-                                sx={{
-                                    "& .MuiInputBase-input.Mui-disabled": {
-                                        WebkitTextFillColor: "var(--text-color)",
-                                    },
-                                }}
+                                sx={readOnlyInputSx}
                             />
                         </Grid>
                         <Grid item xs={12}>

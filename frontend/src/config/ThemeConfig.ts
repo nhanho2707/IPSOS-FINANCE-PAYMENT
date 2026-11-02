@@ -57,6 +57,19 @@ export const TRANSACTION_STATUS_TONE: Record<string, StatusTone> = {
   "suppended": "neutral",
 };
 
+export const QUOTATION_STATUS_TONE: Record<string, StatusTone> = {
+  "draft": "neutral",
+  "submitted": "info",
+  "fm_confirmed": "brand",
+  "approved": "success",
+};
+
+export const FEEDBACK_STATUS_TONE: Record<string, StatusTone> = {
+  "pending": "warning",
+  "resolved": "success",
+  "rejected": "danger",
+};
+
 export const getStatusTone = (
   status: string | null | undefined,
   toneMap: Record<string, StatusTone>

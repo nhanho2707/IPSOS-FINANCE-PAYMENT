@@ -1,20 +1,20 @@
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { AccountAuditActionLabels, AccountAuditLog, AccountCellConfig, AccountData, AccountStatusFilter, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
 import { getAccountErrorMessage, useAccounts } from "../../hook/useAccounts";
 import { useAccountAuditLogs } from "../../hook/useAccountAuditLogs";
 import ReusableTable from "../../components/Table/ReusableTable";
+import StatusChip from "../../components/StatusChip";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
 import { useMetadata } from "../../hook/useMetadata";
 import { useMemo, useState } from "react";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { BlockOutlined, CheckCircleOutline, EditOutlined, HistoryOutlined, LockResetOutlined } from "@mui/icons-material";
-import dayjs from "dayjs";
+import { formatDateTime } from "../../utils/format";
 
 type RoleOption = { id: number; name: string; department_id: number };
 type DepartmentOption = { id: number; name: string };
 
-const formatDateTime = (value?: string | null) => value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—";
 
 const formatAuditChanges = (log: AccountAuditLog) => {
     if (!log.changes) return "—";
@@ -72,10 +72,11 @@ const AccountManagement = () => {
     const [ formCreateData, setFormCreateData ] = useState<AccountData>(initialAccountData);
 
     const actionButtonSx = {
-        backgroundColor: '#f6f6f6',
+        backgroundColor: 'background.paper',
         borderRadius: '8px',
-        border: '1px solid #e8e8e8',
-        '&:hover': { backgroundColor: '#e0e0e0' },
+        border: '1px solid',
+        borderColor: 'divider',
+        '&:hover': { backgroundColor: 'action.hover' },
         padding: '5px',
     };
 
@@ -88,16 +89,9 @@ const AccountManagement = () => {
             width: 184,
             renderCell: (row: AccountData) => (
                 <Stack direction="row" spacing={0.5}>
-                    <Chip
-                        size="small"
-                        label={row.is_active ? "Active" : "Inactive"}
-                        color={row.is_active ? "success" : "default"}
-                        variant={row.is_active ? "outlined" : "filled"}
-                    />
+                    <StatusChip label={row.is_active ? "Active" : "Inactive"} tone={row.is_active ? "success" : "neutral"} />
                     {row.is_active && row.must_change_password && (
-                        <Tooltip title="Must change password on next login">
-                            <Chip size="small" label="Temp password" color="warning" variant="outlined" />
-                        </Tooltip>
+                        <StatusChip label="Temp password" tone="warning" tooltip="Must change password on next login" />
                     )}
                 </Stack>
             )
@@ -106,14 +100,14 @@ const AccountManagement = () => {
             label: "Last Login",
             name: "last_login_at",
             type: "date",
-            width: 140,
+            width: 148,
             renderCell: (row: AccountData) => formatDateTime(row.last_login_at)
         },
         {
             label: "Created",
             name: "created_at",
             type: "date",
-            width: 140,
+            width: 148,
             renderCell: (row: AccountData) => formatDateTime(row.created_at)
         },
         {
@@ -172,7 +166,7 @@ const AccountManagement = () => {
             label: "Time",
             name: "created_at",
             type: "date",
-            width: 140,
+            width: 148,
             renderCell: (row: AccountAuditLog) => formatDateTime(row.created_at)
         },
         {

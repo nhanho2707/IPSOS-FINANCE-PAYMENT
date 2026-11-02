@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Card, CardContent, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
-import numeral from "numeral";
 import { TransactionChannel, useTransactionStatistics } from "../hook/useTransactionStatistics";
 import HourlyHistogramChart from "./Charts/HourlyHistogramChart";
 import SearchDatePickerFromTo from "./SearchDatePickerFromTo";
 import ReusableTable from "./Table/ReusableTable";
 import { ColumnFormat } from "../config/ColumnConfig";
+import { formatDateTime, formatNumber, formatPercent } from "../utils/format";
 
 const CHANNEL_LABELS: Record<TransactionChannel, string> = {
   vinnet: "Vinnet",
@@ -21,11 +21,6 @@ const toHistogramData = (buckets: Record<string, number> | undefined) => {
   const data = Object.entries(buckets ?? {}).map(([name, value]) => ({ name, value }));
   return data.some((d) => d.value > 0) ? data : [];
 };
-
-const formatAmount = (value: number | undefined) => numeral(value ?? 0).format("0,0");
-
-const formatDateTime = (value: string | null | undefined) =>
-  value ? dayjs(value).format("DD/MM/YYYY HH:mm:ss") : "";
 
 const formatMinutes = (minutes: number | null | undefined) => {
   if (minutes === null || minutes === undefined) return "—";
@@ -120,7 +115,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
     CHANNELS.filter((c) => (statistics?.by_channel?.[c]?.count ?? 0) > 0)
       .map((c) => {
         const value = statistics?.by_channel[c][field] ?? 0;
-        return `${CHANNEL_LABELS[c]}: ${field === "amount" ? formatAmount(value) : value}`;
+        return `${CHANNEL_LABELS[c]}: ${field === "amount" ? formatNumber(value) : value}`;
       })
       .join(" · ");
 
@@ -154,7 +149,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       type: "number",
       align: "right",
       width: 96,
-      renderCell: (row) => formatAmount(row.amount)
+      renderCell: (row) => formatNumber(row.amount)
     },
     {
       label: "Gap",
@@ -219,14 +214,14 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             label="Respondents who received a gift"
-            value={numeral(total).format("0,0")}
+            value={formatNumber(total)}
             caption={channelBreakdown("count")}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             label="Total gift value (VND)"
-            value={formatAmount(statistics?.total_amount)}
+            value={formatNumber(statistics?.total_amount)}
             caption={channelBreakdown("amount")}
           />
         </Grid>
@@ -242,7 +237,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
             label={`Anomalies (gift received before interview ended${toleranceText})`}
             value={anomaliesTotal}
             color={anomaliesTotal > 0 ? "error" : "inherit"}
-            caption={measuredTotal > 0 ? `${numeral(anomaliesTotal / measuredTotal).format("0.[0]%")} of measurable interviews` : undefined}
+            caption={measuredTotal > 0 ? `${formatPercent(anomaliesTotal / measuredTotal)} of measurable interviews` : undefined}
           />
         </Grid>
       </Grid>

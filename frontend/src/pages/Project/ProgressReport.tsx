@@ -13,6 +13,7 @@ import {
   LinearProgress,
 } from "@mui/material";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend, ResponsiveContainer } from "recharts";
+import { BRAND, NEUTRAL } from "../../config/ThemeConfig";
 
 // Mock data
 const kpi = {
@@ -106,7 +107,7 @@ const DashboardProject: React.FC = () => {
                   <XAxis dataKey="week" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="progress" stroke="#1976d2" strokeWidth={3} />
+                  <Line type="monotone" dataKey="progress" stroke={BRAND.accent} strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -125,8 +126,8 @@ const DashboardProject: React.FC = () => {
                   <YAxis type="category" dataKey="team" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" stackId="a" fill="#4caf50" name="Completed" />
-                  <Bar dataKey="remaining" stackId="a" fill="#e0e0e0" name="Remaining" />
+                  <Bar dataKey="completed" stackId="a" fill={BRAND.main} name="Completed" />
+                  <Bar dataKey="remaining" stackId="a" fill={NEUTRAL[200]} name="Remaining" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

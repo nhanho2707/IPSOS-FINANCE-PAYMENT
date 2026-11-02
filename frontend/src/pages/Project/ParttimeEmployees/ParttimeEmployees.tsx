@@ -140,7 +140,9 @@ const ParttimeEmployees = () => {
                     p: 2,
                     mb: 2,
                     borderRadius: 2,
-                    backgroundColor: "#f5f5f5",
+                    backgroundColor: "background.paper",
+                    border: 1,
+                    borderColor: "divider",
                     display: "flex",
                     gap: 2,
                     flexWrap: "wrap"

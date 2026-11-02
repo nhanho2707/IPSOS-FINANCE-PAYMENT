@@ -4,7 +4,7 @@ import { ApiConfig } from "../../../config/ApiConfig";
 import QuotationDynamicForm from "./QuotationDynamicForm";
 import { useQuotation } from "../../../hook/useQuotation";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Alert, Box, Button, Chip, Divider, Grid, IconButton, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Divider, Grid, IconButton, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from "@mui/material";
 import TabPanel from "../../../components/TabPanel";
 import { QuotationVersionData } from "../../../config/QuotationConfig";
 import EditIcon from "@mui/icons-material/Edit";
@@ -25,6 +25,9 @@ import { useOperations } from "../../../hook/useOperations";
 import EstimateCostTable, { EstimateCostNode, normalizeNodes } from "./EstimateCostTable";
 import { createDefaultEstimateCost } from "./EstimateCostTemplate";
 import CalculateIcon from '@mui/icons-material/Calculate';
+import { formatDate, formatStatus } from "../../../utils/format";
+import StatusChip from "../../../components/StatusChip";
+import { getStatusTone, QUOTATION_STATUS_TONE } from "../../../config/ThemeConfig";
 
 const Quotation: React.FC = () => {
     const { id } = useParams<{id: string}>();
@@ -365,7 +368,7 @@ const Quotation: React.FC = () => {
                     {openAlert && (
                         <Alert
                             severity={(alertSource === 'operations' ? operationsActionState : actionState).error ? "error" : "success"}
-                            sx={{ mb: 1.5, borderRadius: "8px", fontSize: "0.875rem" }}
+                            sx={{ mb: 1.5 }}
                             action={
                                 <IconButton
                                     aria-label="close"
@@ -387,9 +390,9 @@ const Quotation: React.FC = () => {
                             gap: 1,
                             p: 2,
                             border: "1px solid",
-                            borderColor: "var(--body-color)",
+                            borderColor: "divider",
                             borderRadius: "12px",
-                            backgroundColor: "var(--background-color)"
+                            backgroundColor: "background.paper"
                         }}
                     >
                         <Box
@@ -399,7 +402,7 @@ const Quotation: React.FC = () => {
                                 gap: 2
                             }}
                         >
-                            <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-color)", mt: "4px" }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, mt: "4px" }}>
                                 Version:
                             </Typography>
                             <TextField
@@ -431,13 +434,7 @@ const Quotation: React.FC = () => {
                                             >
                                                 <span>Version {v.version}</span>
                                                 
-                                                <Chip
-                                                    label={v.status === 'fm_confirmed' ? 'FM Confirmed' : v.status}
-                                                    size="small"
-                                                    color={
-                                                        v.status === "draft" ? "default" : v.status === "submitted" ? "warning" : v.status === "fm_confirmed" ? "info" : "success"
-                                                    }
-                                                />
+                                                <StatusChip label={formatStatus(v.status)} tone={getStatusTone(v.status, QUOTATION_STATUS_TONE)} />
                                             </Box>
                                             
                                         </MenuItem>
@@ -567,7 +564,7 @@ const Quotation: React.FC = () => {
                             }}
                         >
                             {selectedVersion && (
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
+                                <Typography variant="body2" color="text.secondary">
                                     {selectedVersion.status === 'draft' ? 'Created by' : 'Submitted by'}: {" "} 
                                     <strong>
                                         {selectedVersion.created_user?.name} ({selectedVersion.created_user?.email})
@@ -576,25 +573,23 @@ const Quotation: React.FC = () => {
                             )}
 
                             {selectedVersion && selectedVersion.created_at && (
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
+                                <Typography variant="body2" color="text.secondary">
                                     {selectedVersion.status === 'draft' ? 'Created at' : 'Submitted at'}: {" "}
-                                    {new Date(
-                                        selectedVersion.created_at
-                                    ).toLocaleDateString()}
+                                    {formatDate(selectedVersion.created_at)}
                                 </Typography>
                             )}
                         </Box>
                         {selectedVersion && selectedVersion.fm_confirmed_user && selectedVersion.fm_confirmed_at && (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
+                                <Typography variant="body2" color="text.secondary">
                                     FM Confirmed by: {" "}
                                     <strong>
                                         {selectedVersion.fm_confirmed_user?.name} ({selectedVersion.fm_confirmed_user?.email})
                                     </strong>
                                 </Typography>
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
+                                <Typography variant="body2" color="text.secondary">
                                     FM Confirmed at: {" "}
-                                    {new Date(selectedVersion.fm_confirmed_at).toLocaleDateString()}
+                                    {formatDate(selectedVersion.fm_confirmed_at)}
                                 </Typography>
                             </Box>
                         )}
@@ -607,31 +602,29 @@ const Quotation: React.FC = () => {
                                     gap: 2
                                 }}
                             >
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
+                                <Typography variant="body2" color="text.secondary">
                                     Approved by: {" "}
                                     <strong>
                                         {selectedVersion.approved_user?.name} ({selectedVersion.approved_user?.email})
                                     </strong>
                                 </Typography>
 
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
+                                <Typography variant="body2" color="text.secondary">
                                     Approved at: {" "}
-                                    {new Date(
-                                        selectedVersion.approved_at
-                                    ).toLocaleDateString()}
+                                    {formatDate(selectedVersion.approved_at)}
                                 </Typography>
                             </Box>
                         )}
 
                         {selectedVersion && ['submitted', 'fm_confirmed', 'approved'].includes(selectedVersion.status) && (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)", whiteSpace: "nowrap" }}>
+                                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
                                     Quotation Link:
                                 </Typography>
                                 <Typography
+                                    variant="body2"
                                     sx={{
-                                        fontSize: "0.8125rem",
-                                        color: "var(--main-color)",
+                                        color: "primary.main",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
                                         whiteSpace: "nowrap",
@@ -644,7 +637,7 @@ const Quotation: React.FC = () => {
                                     <IconButton
                                         size="small"
                                         onClick={handleCopyLink}
-                                        sx={{ color: linkCopied ? "var(--main-color)" : "var(--text-secondary-color)" }}
+                                        sx={{ color: linkCopied ? "primary.main" : "secondary.main" }}
                                     >
                                         <LinkIcon fontSize="small" />
                                     </IconButton>
@@ -698,13 +691,7 @@ const Quotation: React.FC = () => {
                             setShowEstimatedCost(true);
                             setValue('three');
                         }}
-                        sx={{
-                            mt: 1,
-                            borderColor: "var(--main-color)",
-                            color: "var(--main-color)",
-                            textTransform: "none",
-                            '&:hover': { borderColor: "var(--main-color)", backgroundColor: "rgba(0,157,156,0.06)" }
-                        }}
+                        sx={{ mt: 1 }}
                     >
                         Generate Estimated Cost
                     </Button>
@@ -727,13 +714,6 @@ const Quotation: React.FC = () => {
                         </Button>
                         <Button
                             variant="outlined"
-                            sx={{
-                                borderColor: "var(--main-color)",
-                                color: "var(--main-color)",
-                                textTransform: "none",
-                                fontSize: "0.8125rem",
-                                '&:hover': { borderColor: "var(--main-color)", backgroundColor: "rgba(0,157,156,0.06)" }
-                            }}
                             onClick={() => openDialog({
                                 title: 'Load Template',
                                 message: 'Reset to the default template? Current data will be lost.',
@@ -781,13 +761,7 @@ const Quotation: React.FC = () => {
                                     >
                                         <span>Version {v.version}</span>
                                         
-                                        <Chip
-                                            label={v.status === 'fm_confirmed' ? 'FM Confirmed' : v.status}
-                                            size="small"
-                                            color={
-                                                v.status === "draft" ? "default" : v.status === "submitted" ? "warning" : v.status === "fm_confirmed" ? "info" : "success"
-                                            }
-                                        />
+                                        <StatusChip label={formatStatus(v.status)} tone={getStatusTone(v.status, QUOTATION_STATUS_TONE)} />
                                     </Box>
                                 </MenuItem>
                             )

@@ -50,7 +50,7 @@ const StatusChip: React.FC<StatusChipProps> = ({
           <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
             {label}
           </Box>
-          {showCaret && <ArrowDropDown sx={{ fontSize: "1.125rem", ml: 0.25, mr: -0.5 }} />}
+          {showCaret && <ArrowDropDown sx={{ fontSize: 16, ml: 0.25, mr: -0.5 }} />}
         </Box>
       }
       sx={{

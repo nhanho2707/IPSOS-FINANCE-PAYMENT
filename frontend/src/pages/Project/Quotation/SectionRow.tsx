@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField, Tooltip, Typography } from "@mui/material";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import RadioRow from "./RadioRow";
 import RangeRow from "./RangeRow";
@@ -9,6 +9,9 @@ import RichTextRow from "./RichTextRow";
 import EditableRow from "./EditableRow";
 import { FieldSchema } from "../../../utils/renderFields";
 import { FeedbackThread, FeedbackThreadEntry } from "../../../config/QuotationConfig";
+import { formatDateTime, formatStatus } from "../../../utils/format";
+import StatusChip from "../../../components/StatusChip";
+import { FEEDBACK_STATUS_TONE, getStatusTone } from "../../../config/ThemeConfig";
 
 export interface SectionRowData {
     [key: string]: any
@@ -44,6 +47,11 @@ function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolve
     return last.status ?? 'none';
 }
 
+function rejectionTooltip(thread: FeedbackThread): string {
+    const lastRejection = [...thread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
+    return lastRejection?.content ? `Reason: ${lastRejection.content}` : 'Rejected';
+}
+
 function statusColor(status: ReturnType<typeof getThreadStatus>): string {
     if (status === 'pending') return 'warning.main';
     if (status === 'resolved') return 'success.main';
@@ -74,12 +82,9 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                 }}
             >
                 {!isFeedback && entry.status && (
-                    <Chip
-                        label={entry.status === 'resolved' ? 'Resolved' : 'Rejected'}
-                        size="small"
-                        color={entry.status === 'resolved' ? 'success' : 'error'}
-                        sx={{ mb: 0.5 }}
-                    />
+                    <Box sx={{ mb: 0.5 }}>
+                        <StatusChip label={formatStatus(entry.status)} tone={getStatusTone(entry.status, FEEDBACK_STATUS_TONE)} />
+                    </Box>
                 )}
                 {entry.content && (
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -88,7 +93,7 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                 )}
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, px: 0.5 }}>
-                {entry.user_name} · {new Date(entry.created_at).toLocaleString()}
+                {entry.user_name} · {formatDateTime(entry.created_at)}
             </Typography>
         </Box>
     );
@@ -298,13 +303,13 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
         <>
             <TableRow
                 sx={{
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                    "&:hover": { backgroundColor: "action.hover" },
                     "&:last-child td": { border: 0 },
                 }}
             >
                 <TableCell
                     width={200}
-                    sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-color)" }}
+                    sx={{ fontWeight: 600 }}
                 >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: 'wrap' }}>
                         <span>{row.label}</span>
@@ -319,44 +324,17 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                                 </IconButton>
                             </Tooltip>
                         )}
-                        {threadStatus === 'resolved' && (
-                            <Chip
-                                label="Resolved"
-                                size="small"
-                                color="success"
-                                variant="outlined"
+                        {threadStatus !== 'none' && (
+                            <StatusChip
+                                label={formatStatus(threadStatus)}
+                                tone={getStatusTone(threadStatus, FEEDBACK_STATUS_TONE)}
+                                tooltip={threadStatus === 'rejected' ? rejectionTooltip(safeThread) : undefined}
                                 onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
-                            />
-                        )}
-                        {threadStatus === 'rejected' && (() => {
-                            const lastResponse = [...safeThread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
-                            return (
-                                <Tooltip title={lastResponse?.content ? `Reason: ${lastResponse.content}` : 'Rejected'} placement="top">
-                                    <Chip
-                                        label="Rejected"
-                                        size="small"
-                                        color="error"
-                                        variant="outlined"
-                                        onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                        sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
-                                    />
-                                </Tooltip>
-                            );
-                        })()}
-                        {threadStatus === 'pending' && (
-                            <Chip
-                                label="Pending"
-                                size="small"
-                                color="warning"
-                                variant="outlined"
-                                onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
                             />
                         )}
                     </Box>
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                <TableCell>
                     { renderMiniTable(row.fields) }
                 </TableCell>
             </TableRow>

@@ -70,7 +70,7 @@ const ConfirmPassword = () => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: "var(--body-color)"
+                backgroundColor: "background.default"
             }}
         >
             <Box
@@ -83,7 +83,7 @@ const ConfirmPassword = () => {
                     mx: 2,
                     p: 4,
                     borderRadius: 2,
-                    backgroundColor: "#fff",
+                    backgroundColor: "background.paper",
                     boxShadow: 3,
                     display: "flex",
                     flexDirection: "column",

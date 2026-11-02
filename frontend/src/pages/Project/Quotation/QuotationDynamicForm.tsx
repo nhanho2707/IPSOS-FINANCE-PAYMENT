@@ -67,10 +67,10 @@ const QuotationDynamicForm: React.FC<DynamicFormProps> = ({ schema, initialData,
                 elevation={0}
                 sx={{
                     border: "1px solid",
-                    borderColor: "var(--body-color)",
+                    borderColor: "divider",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    backgroundColor: "var(--background-color)",
+                    backgroundColor: "background.paper",
                 }}
             >
                 <TableContainer>

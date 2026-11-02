@@ -1,5 +1,6 @@
 import { Autocomplete, Box, Checkbox, TableCell, TableRow, TextField } from "@mui/material";
 import { memo } from "react";
+import { Theme } from "@mui/material/styles";
 
 type Option = { value: string | number, label: string, parent?: string | number };
 
@@ -45,7 +46,7 @@ const MultiSelectRow = memo(({ row, isEditing, isDisabled, onChange}: Props) => 
                         <TextField {...params} size="small" placeholder={row.placeholder} />
                     )}
                     sx={{
-                        "& .Mui-disabled": { WebkitTextFillColor: "#000", opacity: 0.9 },
+                        "& .Mui-disabled": { WebkitTextFillColor: (theme: Theme) => theme.palette.text.primary, opacity: 0.9 },
                     }}
                 />
             </TableCell>

@@ -60,7 +60,7 @@ const Assignment: React.FC = () => {
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
-                <Typography sx={{ mb: 2, fontSize: "0.875rem", fontWeight: 600, color: "var(--text-color)" }}>
+                <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
                     Select users to assign to this project:
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

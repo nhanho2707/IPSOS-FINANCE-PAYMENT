@@ -230,12 +230,13 @@ const CATISettings = () => {
                             justifyContent: "space-between",
                             alignItems: "center",
                             p: 2,
-                            border: "1px solid #eee",
+                            border: "1px solid",
+                            borderColor: "divider",
                             borderRadius: 2,
-                            backgroundColor: "#fafafa"
+                            backgroundColor: "background.default"
                         }}
                     >
-                        <Typography sx={{ fontSize: "1.0625rem", fontWeight: 600, color: "text.primary" }}>
+                        <Typography variant="h2">
                             Batches
                         </Typography>
                         <Box sx={{

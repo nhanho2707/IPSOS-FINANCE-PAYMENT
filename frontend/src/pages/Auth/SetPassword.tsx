@@ -68,7 +68,7 @@ const SetPassword = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "var(--body-color)",
+        backgroundColor: "background.default",
       }}
     >
       <Box
@@ -81,7 +81,7 @@ const SetPassword = () => {
           mx: 2,
           p: 4,
           borderRadius: 2,
-          backgroundColor: "#fff",
+          backgroundColor: "background.paper",
           boxShadow: 3,
           display: "flex",
           flexDirection: "column",

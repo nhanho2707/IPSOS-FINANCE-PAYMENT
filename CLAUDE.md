@@ -15,10 +15,11 @@ Internal tool for IPSOS Vietnam to manage field research projects and incentive 
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript, MUI v5, React Router v6, Axios, i18next |
+| Frontend | React 18 + TypeScript, Vite, MUI v9 + MUI X date pickers v9, React Router v6, Axios, i18next |
 | Backend | Laravel 11 (PHP 8.2+), Sanctum auth, Maatwebsite Excel |
 | Database | MySQL (production), SQLite (local dev) |
 | Infrastructure | Docker Compose (frontend + backend + db) |
+| Testing & CI | Playwright e2e against a mocked API (frontend), PHPUnit feature tests (backend); GitHub Actions runs the frontend checks |
 
 ## Repository Layout
 
@@ -34,7 +35,9 @@ IPSOS-FINANCE-PAYMENT/
 │   │   └── Constants/
 │   ├── routes/api.php          # All REST routes
 │   └── database/
+├── .github/workflows/frontend.yml   # CI: lint, build, e2e, screenshots against the base branch
 ├── frontend/
+│   ├── e2e/                # Playwright specs; support/mockApi.ts is the fake API, support/test.ts the fixtures
 │   └── src/
 │       ├── config/
 │       │   ├── ApiConfig.ts        # All API endpoint URLs (single source of truth)
@@ -63,10 +66,13 @@ php artisan key:generate
 php artisan migrate
 php artisan serve          # runs on :8000
 
-# Frontend
+# Frontend (Node 22)
 cd frontend
 npm install
-npm start                  # runs on :3000
+npm start                  # Vite dev server on :3000
+npm run lint
+npm run build              # typecheck + production build into build/
+npm run test:e2e           # Playwright against the mocked API (first time: npx playwright install chromium)
 
 # Docker (full stack)
 docker-compose up
@@ -107,7 +113,8 @@ const [actionState, setActionState] = useState<ActionState>({
 - Do not rename Excel import/export column headers; they are the file format users already rely on.
 
 ### Component Rules
-- Use **MUI v5** components (`@mui/material`). Do not introduce a second UI library.
+- Use **MUI v9** components (`@mui/material`). Do not introduce a second UI library.
+- MUI v9 API: `<Grid size={{ xs: 12, md: 6 }}>` (no `item`/`xs` props); spacing, colour and font weight go in `sx`, not as props (`<Typography mt={1}>` no longer works); sub-component props go through `slotProps` (`htmlInput`, `input`, `paper`, `primary`…), not `inputProps`/`PaperProps`/`primaryTypographyProps`; busy buttons use `<Button loading>`. Outline icons are named `XOutlineOutlined` (e.g. `DeleteOutlineOutlined`).
 - Shared dialogs: `FormDialog` for short forms, `ConfirmDialog` for yes/no, `DetailDrawer` for details and long forms, `GenericDialog` for other custom content, `RejectDialog` for rejection with reason.
   Open `ConfirmDialog` through `useDialog()` (`<ConfirmDialog {...dialogProps} />`); use `tone: "danger"` plus an explicit `confirmText` for destructive actions. Never use `alert()` / `window.confirm()`.
 - Feedback: never open a dialog only to show a message. Short confirmations and errors go to `useToast().showToast(message, severity)` from `contexts/ToastContext.tsx`; results the user needs to read (bulk send, skipped import rows) go in an inline `Alert`, e.g. `ResourceTable`'s `banner`.
@@ -121,6 +128,11 @@ const [actionState, setActionState] = useState<ActionState>({
 ### State Management
 - No Redux. Local state + custom hooks only.
 - Server state uses plain Axios inside hooks (not React Query), following the existing `ActionState` pattern.
+
+### Testing
+- `frontend/e2e/app.spec.ts` drives the real UI against `e2e/support/mockApi.ts` with a fixed clock. A test fails on any console error, so React/MUI warnings about props, keys or nesting count as failures.
+- When a page calls a new endpoint, add its response to `mockApi.ts`. When you add a page or change a flow, extend `app.spec.ts` and `capture()` the screen.
+- CI (`.github/workflows/frontend.yml`) runs lint, build and e2e on every PR that touches `frontend/`; these must pass. It also screenshots the base branch and the PR and compares them; changes show up as a warning, with before/after images in the `visual-diff` artifact.
 
 ## Backend Conventions
 

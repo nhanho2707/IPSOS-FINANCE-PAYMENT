@@ -1,6 +1,8 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { ErrorOutline, LockOutlined, SearchOff } from "@mui/icons-material";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import "./ErrorPage.css";
+import EmptyState from "../../components/EmptyState";
+import { BrandMark } from "../../components/Shell/AppShell";
 
 interface ErrorPageState {
   errorCode?: number;
@@ -11,6 +13,11 @@ interface ErrorPageState {
 const DEFAULT_ERROR_CODE = 404;
 const DEFAULT_ERROR_MESSAGE = "Sorry, the page you are looking for does not exist.";
 
+const ERROR_TITLES: Record<number, { title: string; icon: React.ElementType }> = {
+  404: { title: "Page not found", icon: SearchOff },
+  403: { title: "No access to this page", icon: LockOutlined },
+};
+
 const ErrorPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,47 +26,45 @@ const ErrorPage = () => {
     (location.state ?? {}) as ErrorPageState;
   const canGoBack = location.key !== "default";
 
+  // Some callers send only the last digit of the HTTP status (4 for 404, 3 for 403).
+  const code = errorCode < 10 ? 400 + errorCode : errorCode;
+  const { title, icon } = ERROR_TITLES[code] ?? { title: "Something went wrong", icon: ErrorOutline };
+
   return (
-    <div className="page404">
-      <div className="center">
-        <div className="error">
-          <div className="number">4</div>
-          <div className="illustration">
-            <div className="circle" />
-            <div className="clip">
-              <div className="paper">
-                <div className="face">
-                  <div className="eyes">
-                    <div className="eye eye-left" />
-                    <div className="eye eye-right" />
-                  </div>
-                  <div className="rosyCheeks rosyCheeks-left" />
-                  <div className="rosyCheeks rosyCheeks-right" />
-                  <div className="mouth" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="number">{String(errorCode).slice(-1)}</div>
-        </div>
-        <div className="text-404">{errorMessage}</div>
-        {blockedApi && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, fontFamily: "monospace" }}>
-            {blockedApi}
-          </Typography>
-        )}
-        <Stack direction="row" spacing={1.5} sx={{ mt: 4 }}>
-          <Button variant="contained" component={RouterLink} to="/project-management/projects">
-            Back to projects
-          </Button>
-          {canGoBack && (
-            <Button variant="outlined" color="inherit" onClick={() => navigate(-1)}>
-              Go back
-            </Button>
-          )}
-        </Stack>
-      </div>
-    </div>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, px: 2, py: 6, bgcolor: "background.default" }}>
+      <BrandMark />
+      <Paper elevation={0} sx={{ width: "100%", maxWidth: 520, border: 1, borderColor: "divider", borderRadius: "12px" }}>
+        <Typography variant="overline" component="p" color="text.secondary" sx={{ textAlign: "center", pt: 3 }}>
+          Error {code}
+        </Typography>
+        <EmptyState
+          icon={icon}
+          title={title}
+          description={
+            <>
+              {errorMessage}
+              {blockedApi && (
+                <Typography component="span" variant="caption" sx={{ display: "block", mt: 1, fontFamily: "monospace", overflowWrap: "anywhere" }}>
+                  {blockedApi}
+                </Typography>
+              )}
+            </>
+          }
+          action={
+            <Stack direction="row" spacing={1.5} justifyContent="center">
+              <Button variant="contained" component={RouterLink} to="/project-management/projects">
+                Back to projects
+              </Button>
+              {canGoBack && (
+                <Button variant="outlined" color="inherit" onClick={() => navigate(-1)}>
+                  Go back
+                </Button>
+              )}
+            </Stack>
+          }
+        />
+      </Paper>
+    </Box>
   );
 };
 

@@ -37,7 +37,12 @@ export interface TransactionStatisticsData {
     anomalies_total: number;
 }
 
-export function useTransactionStatistics(projectId: number) {
+interface StatisticsFilters {
+    dateFrom?: string | null;
+    dateTo?: string | null;
+}
+
+export function useTransactionStatistics(projectId: number, initialFilters: StatisticsFilters = {}) {
 
     const [ statistics, setStatistics ] = useState<TransactionStatisticsData | null>(null);
 
@@ -49,8 +54,8 @@ export function useTransactionStatistics(projectId: number) {
     });
 
     const [ channel, setChannel ] = useState<TransactionChannel | "">("");
-    const [ dateFrom, setDateFrom ] = useState<string | null>(null);
-    const [ dateTo, setDateTo ] = useState<string | null>(null);
+    const [ dateFrom, setDateFrom ] = useState<string | null>(initialFilters.dateFrom ?? null);
+    const [ dateTo, setDateTo ] = useState<string | null>(initialFilters.dateTo ?? null);
 
     // Filters can change faster than the query answers; a late response for old filters must not overwrite the current one.
     const requestRef = useRef<AbortController | null>(null);

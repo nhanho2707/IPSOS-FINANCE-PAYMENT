@@ -1,6 +1,7 @@
 import React from "react";
 import {
   AssignmentIndOutlined,
+  DashboardOutlined,
   CardGiftcardOutlined,
   GroupsOutlined,
   HeadsetMicOutlined,
@@ -13,9 +14,10 @@ import { ProjectData } from "./ProjectFieldsConfig";
 import { hasRole, Role, ROLE_ACCESS } from "./RoleConfig";
 
 // The sidebar follows the order work happens in a project; "bottom" items sit apart at the foot of the sidebar.
-export type ProjectNavGroup = "plan" | "field" | "payments" | "bottom";
+export type ProjectNavGroup = "overview" | "plan" | "field" | "payments" | "bottom";
 
-export const PROJECT_NAV_GROUPS: { key: Exclude<ProjectNavGroup, "bottom">; label: string }[] = [
+export const PROJECT_NAV_GROUPS: { key: Exclude<ProjectNavGroup, "bottom">; label?: string }[] = [
+  { key: "overview" },
   { key: "plan", label: "Plan" },
   { key: "field", label: "Field" },
   { key: "payments", label: "Payments" },
@@ -35,6 +37,7 @@ export interface ProjectNavItem {
 
 // The first item a role can open is that role's landing page inside a project (getProjectHomePath).
 export const PROJECT_NAV_ITEMS: ProjectNavItem[] = [
+  { label: "Overview", description: "Where the project stands: sample, gifts, spending and quotation.", path: "overview", icon: DashboardOutlined, group: "overview", allowedRoles: ROLE_ACCESS.projectOverview },
   { label: "Quotation", description: "Versioned cost quotation and its approval.", path: "quotation", icon: RequestQuoteOutlined, group: "plan", allowedRoles: ROLE_ACCESS.projectQuotation },
   { label: "Assignment", description: "People who can open and work on this project.", path: "assignment", icon: AssignmentIndOutlined, group: "plan", allowedRoles: ROLE_ACCESS.projectAssignment },
   { label: "Interviewers", description: "Interviewers on this project and the gifts sent through them.", path: "parttime-employees", icon: GroupsOutlined, group: "field", allowedRoles: ROLE_ACCESS.projectInterviewers },

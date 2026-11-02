@@ -1,40 +1,7 @@
 import { UserData } from "./AccountFieldsConfig";
 import { ColumnFormat } from "./ColumnConfig";
-import { formatDate } from "../utils/format";
 
-export const ProjectCellConfig: ColumnFormat[] = [
-  {
-    label: "Symphony",
-    name: "symphony",
-    type: "string",
-    width: 120
-  },
-  {
-    label: "Internal Code",
-    name: "internal_code",
-    type: "string",
-    width: 104
-  },
-  {
-    label: "Project Name",
-    name: "project_name",
-    type: "string"
-  },
-  {
-    label: "Field Start",
-    name: "planned_field_start",
-    type: "date",
-    width: 108,
-    renderCell: (row: ProjectData) => formatDate(row.planned_field_start)
-  },
-  {
-    label: "Field End",
-    name: "planned_field_end",
-    type: "date",
-    width: 108,
-    renderCell: (row: ProjectData) => formatDate(row.planned_field_end)
-  },
-];
+export type ProjectStatusCounts = Record<string, number>;
 
 export interface ProvinceData {
   id: string,
@@ -65,6 +32,8 @@ export interface ProjectData {
     project_objectives?: string,
     remember_token?: string,
     remember_uuid?: string,
+    // The API names the creator object created_user_id.
+    created_user_id?: { id?: number, name?: string, email?: string } | null,
     count_respondents?: number,
     count_employees?: number,
     has_submitted_quotation?: boolean,

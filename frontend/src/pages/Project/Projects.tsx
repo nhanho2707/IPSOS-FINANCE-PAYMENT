@@ -1,6 +1,9 @@
-import { Box, Button, LinearProgress, Link, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Link } from "@mui/material";
 import { Add, Block, CheckCircleOutline, ContentCopy } from "@mui/icons-material";
 import ResourceTable from "../../components/Table/ResourceTable";
+import CellStack from "../../components/Table/CellStack";
+import SampleProgress from "../../components/SampleProgress";
+import UserAvatar from "../../components/UserAvatar";
 import RowActions from "../../components/Table/RowActions";
 import { DateRangeFilter } from "../../components/Table/FilterChip";
 import FilterChip from "../../components/Table/FilterChip";
@@ -10,7 +13,7 @@ import StatusChip from "../../components/StatusChip";
 import { useProjects } from "../../hook/useProjects";
 import { useMetadata } from "../../hook/useMetadata";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
+import { ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
 import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
 import { getProjectHomePath } from "../../config/ProjectNavConfig";
 import { StatusDropdown } from "../../components/Table/StatusDropdown";
@@ -24,8 +27,15 @@ import ModalCloneProject from "../../components/Modals/Project/ModalCloneProject
 import { Dayjs } from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
-import { formatDateRange, formatStatus } from "../../utils/format";
-import { NEUTRAL } from "../../config/ThemeConfig";
+import { formatDateRange, formatFieldTiming, formatStatus } from "../../utils/format";
+
+const PROJECT_TABS = [
+  { value: "all", label: "All" },
+  ...["on going", "in coming", "planned", "on hold", "completed", "cancelled"].map((status) => ({
+    value: status,
+    label: formatStatus(status),
+  })),
+];
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -34,7 +44,7 @@ const Projects = () => {
   const canToggleDisabled = hasRole(user?.role, ROLE_ACCESS.projectToggleDisabled);
   const canClone = hasRole(user?.role, ROLE_ACCESS.projectClone);
 
-  const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled } = useProjects();
+  const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled, statusFilter, setStatusFilter, statusCounts } = useProjects();
   const { data } = useMetadata();
   const { openDialog, dialogProps } = useDialog();
 
@@ -62,67 +72,62 @@ const Projects = () => {
 
   const openProject = (project: ProjectData) => navigate(getProjectHomePath(project.id ?? 0, user?.role));
 
+  const sampleTarget = (project: ProjectData) =>
+    project.provinces?.reduce((sum: number, p: ProvinceData) => sum + (p.sample_size_main || 0) + (p.sample_size_booters || 0), 0) ?? 0;
+
   const columns: ColumnFormat[] = [
     {
-      label: "ID",
-      name: "id",
-      type: "number",
-      align: "left",
-      width: 56,
-      renderCell: (row: ProjectData) => (
-        <Typography component="span" variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-          #{row.id}
-        </Typography>
-      )
-    },
-    ...ProjectCellConfig.map((col): ColumnFormat => col.name !== "project_name" ? col : {
-      ...col,
-      flex: 2,
+      label: "Project",
+      name: "project_name",
+      type: "string",
+      flex: 2.4,
       renderCell: (row: ProjectData) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-          <Tooltip title={row.project_name} placement="top-start" enterDelay={600}>
-            <Link
-              component={RouterLink}
-              to={getProjectHomePath(row.id ?? 0, user?.role)}
-              underline="hover"
-              sx={{ fontWeight: 500, color: row.disabled ? 'text.secondary' : 'text.primary', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {row.project_name}
-            </Link>
-          </Tooltip>
+          <CellStack
+            primary={
+              <Link
+                component={RouterLink}
+                to={getProjectHomePath(row.id ?? 0, user?.role)}
+                underline="hover"
+                color={row.disabled ? 'text.secondary' : 'inherit'}
+              >
+                {row.project_name}
+              </Link>
+            }
+            secondary={[row.internal_code, row.symphony].filter(Boolean).join(' · ')}
+            title={row.project_name}
+          />
           {row.disabled && <StatusChip label="Disabled" tone="neutral" />}
         </Box>
       )
-    }),
+    },
     {
-      label: "Sample Size",
+      label: "Field period",
+      name: "planned_field_start",
+      type: "date",
+      width: 208,
+      renderCell: (row: ProjectData) => (
+        <CellStack
+          primary={formatDateRange(row.planned_field_start, row.planned_field_end) ?? "—"}
+          secondary={formatFieldTiming(row.planned_field_start, row.planned_field_end, row.status) ?? undefined}
+          numeric
+        />
+      )
+    },
+    {
+      label: "Sample",
       name: "sample_size",
       type: "string",
-      align: "left",
-      width: 124,
-      renderCell: (row: ProjectData) => {
-        const completed = row.count_respondents ?? 0;
-        const target = row.provinces?.reduce((sum: number, p: ProvinceData) => {
-          return sum + (p.sample_size_main || 0) + (p.sample_size_booters || 0);
-        }, 0) ?? 0;
-        const percent = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
-
-        return (
-          <Tooltip title={target > 0 ? `${percent}% of target` : "No sample size set"}>
-            <Box>
-              <Typography component="span" variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                {completed} / {target}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={percent}
-                aria-label="Sample progress"
-                sx={{ mt: 0.5, height: 4, borderRadius: 2, backgroundColor: NEUTRAL[100] }}
-              />
-            </Box>
-          </Tooltip>
-        )
-      }
+      width: 176,
+      renderCell: (row: ProjectData) => (
+        <SampleProgress
+          completed={row.count_respondents ?? 0}
+          target={sampleTarget(row)}
+          fieldStart={row.planned_field_start}
+          fieldEnd={row.planned_field_end}
+          status={row.status}
+        />
+      )
     },
     {
       label: "Status",
@@ -140,6 +145,18 @@ const Projects = () => {
           />
         )
       }
+    },
+    {
+      label: "Owner",
+      name: "created_user_id",
+      type: "string",
+      align: "center",
+      width: 72,
+      renderCell: (row: ProjectData) => row.created_user_id?.name ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <UserAvatar name={row.created_user_id.name} />
+        </Box>
+      ) : "—"
     },
     ...(canClone || canToggleDisabled ? [{
       label: "",
@@ -286,8 +303,11 @@ const Projects = () => {
 
   const fieldStartRange = formatDateRange(searchFromDate, searchToDate);
   const isFiltered = Boolean(searchTerm || fieldStartRange);
+  const statusLabel = statusFilter !== "all" ? formatStatus(statusFilter).toLowerCase() : "";
 
-  const emptyState = isFiltered ? (
+  const emptyState = !isFiltered && statusFilter !== "all" ? (
+    <EmptyState title={`No ${statusLabel} projects`} description="Projects move between the tabs when their status changes." />
+  ) : isFiltered ? (
     <EmptyState
       title="No projects found"
       description={[
@@ -335,6 +355,20 @@ const Projects = () => {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           onRowClick={openProject}
+          tabs={PROJECT_TABS.map((tab) => ({
+            value: tab.value,
+            label: tab.label,
+            count: !statusCounts
+              ? undefined
+              : tab.value === "all"
+                ? Object.values(statusCounts).reduce((sum, count) => sum + count, 0)
+                : statusCounts[tab.value] ?? 0,
+          }))}
+          tab={statusFilter}
+          onTabChange={(value) => {
+            setStatusFilter(value);
+            setPage(0);
+          }}
           stickyColumns={{ last: canClone || canToggleDisabled }}
           search={{
             placeholder: "Search name, code or Symphony",

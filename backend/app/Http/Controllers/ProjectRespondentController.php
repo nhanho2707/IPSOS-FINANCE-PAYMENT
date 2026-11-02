@@ -51,13 +51,22 @@ class ProjectRespondentController extends Controller
             }
 
             $perPage = $request->input('perPage', 10);
+            $giftStatus = $request->input('status');
 
-            $query = $project->projectRespondents()
-                                            ->with('province:id,name')
-                                            ->with('employee:id,employee_id');
+            $respondents = ProjectRespondent::query()
+                ->where('project_id', $project->id)
+                ->search($request->input('searchTerm'));
 
-            if($request->input('status') === 'pending'){
-                $query->where('status', ProjectRespondent::STATUS_RESPONDENT_PENDING);
+            // Counted before the status filter so every tab shows its own total for the current search.
+            $statusCounts = ProjectRespondent::giftStatusCounts($respondents);
+
+            $query = (clone $respondents)->with([
+                'province:id,name',
+                'employee:id,employee_id,first_name,last_name',
+            ]);
+
+            if($giftStatus){
+                $query->withGiftStatus($giftStatus);
             }
             
             $projectRespondents = $query->orderBy('id')->paginate($perPage);
@@ -71,6 +80,7 @@ class ProjectRespondentController extends Controller
                     'per_page' => $projectRespondents->perPage(),
                     'total' => $projectRespondents->total(),
                     'last_page' => $projectRespondents->lastPage(),
+                    'status_counts' => $statusCounts,
                 ]
             ]);
         } 

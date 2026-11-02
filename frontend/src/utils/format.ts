@@ -44,7 +44,8 @@ export function formatNumber(value: NumericInput): string {
 // Every amount in this app is VND (Vinnet top-ups, GotIt vouchers, province prices).
 export function formatMoney(value: NumericInput): string {
     const number = toNumber(value);
-    return number === null ? "—" : `${integerFormat.format(number)} ₫`;
+    // Non-breaking space: a wrapped line never starts with a lone "₫".
+    return number === null ? "—" : `${integerFormat.format(number)}\u00a0₫`;
 }
 
 export function formatPercent(ratio: number): string {
@@ -77,4 +78,40 @@ export function formatDateRange(from: DateInput, to: DateInput): string | null {
     return start.year() === end.year()
         ? `${start.format("D MMM")} – ${end.format("D MMM YYYY")}`
         : `${start.format("D MMM YYYY")} – ${end.format("D MMM YYYY")}`;
+}
+
+// Vietnamese mobile numbers read as 4-3-3 ("0903 412 887"); anything else is shown as stored.
+export function formatPhone(value: string | null | undefined): string {
+    if (!value) return "—";
+    const digits = value.replace(/\D/g, "");
+    if (digits.length === 10 || digits.length === 11) {
+        return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+    }
+    return value;
+}
+
+const plural = (count: number, unit: string) => `${count} ${unit}${count === 1 ? "" : "s"}`;
+
+// How a field period reads today: "Starts in 8 days", "Ends in 28 days", "Ended 3 days ago".
+export function formatFieldTiming(
+    start: DateInput,
+    end: DateInput,
+    status?: string | null,
+    today: Dayjs = dayjs()
+): string | null {
+    if (status === "completed") return "Completed";
+    if (status === "cancelled") return "Cancelled";
+
+    const from = toDate(start);
+    const to = toDate(end);
+    if (!from || !to) return null;
+
+    const daysFromToday = (date: Dayjs) => date.startOf("day").diff(today.startOf("day"), "day");
+    const untilStart = daysFromToday(from);
+    const untilEnd = daysFromToday(to);
+
+    if (untilStart > 0) return untilStart === 1 ? "Starts tomorrow" : `Starts in ${plural(untilStart, "day")}`;
+    if (untilEnd > 0) return untilEnd === 1 ? "Ends tomorrow" : `Ends in ${plural(untilEnd, "day")}`;
+    if (untilEnd === 0) return "Ends today";
+    return untilEnd === -1 ? "Ended yesterday" : `Ended ${plural(-untilEnd, "day")} ago`;
 }

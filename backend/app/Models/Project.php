@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 
@@ -27,6 +28,15 @@ class Project extends Model
     const STATUS_COMPLETED = 'completed';
     const STATUS_ON_HOLD = 'on hold';
     const STATUS_CANCELLED = 'cancelled';
+
+    public const STATUSES = [
+        self::STATUS_PLANNED,
+        self::STATUS_IN_COMING,
+        self::STATUS_ON_GOING,
+        self::STATUS_COMPLETED,
+        self::STATUS_ON_HOLD,
+        self::STATUS_CANCELLED,
+    ];
     
     const STATUS_PROJECT_NOT_FOUND = 'Không tìm thấy dự án. Vui lòng liên hệ Admin để biết thêm thông tin.'; // Project not found
     const STATUS_PROJECT_SUSPENDED_OR_NOT_FOUND = 'Dự án đang tạm dừng giao dịch hoặc không tồn tại'; // Project temporarily suspended or does not exist
@@ -35,6 +45,38 @@ class Project extends Model
 
     const ERROR_PROJECT_DETAILS_NOT_CONFIGURED =   'Dự án chưa được cấu hình chi tiết';
     const ERROR_INTERVIEWER_ID_NOT_REGISTERED =    'Mã số PVV không có trong danh sách đăng ký của dự án này.';
+
+    public function scopeWithStatus(Builder $query, string $status): Builder
+    {
+        return $query->whereHas('projectDetails', function (Builder $details) use ($status) {
+            $details->where('status', $status);
+        });
+    }
+
+    /**
+     * Projects per status for the given (already filtered) project query, for the status tabs.
+     *
+     * @return array<string, int>
+     */
+    public static function statusCounts(Builder $projects): array
+    {
+        $counts = array_fill_keys(self::STATUSES, 0);
+
+        $rows = DB::table('project_details')
+            ->whereIn('project_id', (clone $projects)->select('projects.id'))
+            ->select('status')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('status')
+            ->get();
+
+        foreach ($rows as $row) {
+            if (array_key_exists($row->status, $counts)) {
+                $counts[$row->status] += (int) $row->total;
+            }
+        }
+
+        return $counts;
+    }
 
     public static function createWithInternalCode(string $projectName): self
     {

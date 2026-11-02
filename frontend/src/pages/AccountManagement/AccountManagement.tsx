@@ -1,11 +1,13 @@
 import { Box, Button, MenuItem, Stack, TextField, Tooltip } from "@mui/material";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { AccountAuditActionLabels, AccountAuditLog, AccountCellConfig, AccountData, AccountStatusFilter, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
+import { AccountAuditActionLabels, AccountAuditLog, AccountData, AccountStatusFilter, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
 import { getAccountErrorMessage, useAccounts } from "../../hook/useAccounts";
 import { useAccountAuditLogs } from "../../hook/useAccountAuditLogs";
 import ReusableTable from "../../components/Table/ReusableTable";
 import ResourceTable from "../../components/Table/ResourceTable";
 import RowActions from "../../components/Table/RowActions";
+import CellStack from "../../components/Table/CellStack";
+import UserAvatar from "../../components/UserAvatar";
 import { SelectFilter } from "../../components/Table/FilterChip";
 import StatusChip from "../../components/StatusChip";
 import PageHeader from "../../components/PageHeader";
@@ -82,7 +84,28 @@ const AccountManagement = () => {
     const [ formCreateData, setFormCreateData ] = useState<AccountData>(initialAccountData);
 
     const columns: ColumnFormat[] = [
-        ...AccountCellConfig,
+        {
+            label: "User",
+            name: "name",
+            type: "string",
+            flex: 2.2,
+            renderCell: (row: AccountData) => {
+                const fullName = [row.first_name, row.last_name].filter(Boolean).join(" ") || row.name;
+                return (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+                        <UserAvatar name={fullName} size={28} showTooltip={false} />
+                        <CellStack primary={fullName} secondary={row.email} title={`${fullName} · ${row.email} · username ${row.name}`} />
+                    </Box>
+                );
+            }
+        },
+        {
+            label: "Role",
+            name: "role",
+            type: "string",
+            flex: 1.4,
+            renderCell: (row: AccountData) => <CellStack primary={row.role} secondary={row.department} />
+        },
         {
             label: "Status",
             name: "is_active",

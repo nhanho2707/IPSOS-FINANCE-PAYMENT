@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +74,85 @@ class ProjectRespondent extends Model
         self::STATUS_RESPONDENT_CANCELLED,
         self::STATUS_RESPONDENT_REJECTED,
     ];
+
+    // The Gifts page groups the stored statuses into four. Anything that is not received, still waiting
+    // or refused (provider errors, partial gifts, cancelled surveys...) is shown as failed.
+    public const GIFT_STATUS_SUCCESS = 'success';
+    public const GIFT_STATUS_PENDING = 'pending';
+    public const GIFT_STATUS_REFUSED = 'refused';
+    public const GIFT_STATUS_FAILED = 'failed';
+
+    public const GIFT_STATUSES = [
+        self::GIFT_STATUS_PENDING,
+        self::GIFT_STATUS_SUCCESS,
+        self::GIFT_STATUS_FAILED,
+        self::GIFT_STATUS_REFUSED,
+    ];
+
+    private const GIFT_STATUS_SOURCES = [
+        self::GIFT_STATUS_SUCCESS => self::STATUS_RESPONDENT_GIFT_RECEIVED,
+        self::GIFT_STATUS_PENDING => self::STATUS_RESPONDENT_PENDING,
+        self::GIFT_STATUS_REFUSED => self::STATUS_RESPONDENT_REJECTED,
+    ];
+
+    public static function giftStatus(?string $status): string
+    {
+        $giftStatus = array_search($status, self::GIFT_STATUS_SOURCES, true);
+
+        return $giftStatus === false ? self::GIFT_STATUS_FAILED : $giftStatus;
+    }
+
+    public function scopeWithGiftStatus(Builder $query, string $giftStatus): Builder
+    {
+        if ($giftStatus === self::GIFT_STATUS_FAILED) {
+            return $query->where(function (Builder $failed) {
+                $failed->whereNotIn('status', self::GIFT_STATUS_SOURCES)->orWhereNull('status');
+            });
+        }
+
+        return $query->where('status', self::GIFT_STATUS_SOURCES[$giftStatus]);
+    }
+
+    // Phone numbers are stored without spaces while people type them grouped ("0903 412 887").
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return $query;
+        }
+
+        $phone = preg_replace('/\s+/', '', $term);
+
+        return $query->where(function (Builder $search) use ($term, $phone) {
+            $search->where('respondent_id', 'like', "%$term%")
+                ->orWhere('phone_number', 'like', "%$phone%")
+                ->orWhere('respondent_phone_number', 'like', "%$phone%");
+        });
+    }
+
+    /**
+     * Respondents per Gifts status for the given (already filtered) query, for the status tabs.
+     *
+     * @return array<string, int>
+     */
+    public static function giftStatusCounts(Builder $query): array
+    {
+        $counts = array_fill_keys(self::GIFT_STATUSES, 0);
+
+        $rows = (clone $query)->toBase()
+            ->reorder()
+            ->select('status')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('status')
+            ->get();
+
+        foreach ($rows as $row) {
+            $counts[self::giftStatus($row->status)] += (int) $row->total;
+        }
+
+        return $counts;
+    }
 
     public function token()
     {

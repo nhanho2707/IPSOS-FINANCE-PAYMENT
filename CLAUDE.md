@@ -114,7 +114,8 @@ const [actionState, setActionState] = useState<ActionState>({
 - Buttons: plain MUI `variant="contained"` / `color="inherit"`; colors come from the theme in `config/ThemeConfig.ts`. Do not add CSS button classes.
 - Page headers: top-level pages start with `<PageHeader title description actions />` (at most one contained button in `actions`).
 - Project sub-pages: the header and breadcrumbs come from `ProjectLayout`, with title and description from `config/ProjectNavConfig.ts` (register new pages there, with their `group`); put page actions in `<ProjectPageActions>` and read project data with `useProjectContext()`.
-- Lists: use `ResourceTable` (search, `FilterChip` filters, `BulkActionBar`, `banner`, `EmptyState`, `onRowClick`) with `RowActions` for per-row actions; it wraps `ReusableTable`, which is used directly only for tables inside other components. Do not write one-off `<Table>` implementations.
+- Lists: use `ResourceTable` (status `tabs`, search, `FilterChip` filters, `BulkActionBar`, `banner`, `EmptyState`, `onRowClick`) with `RowActions` for per-row actions; it wraps `ReusableTable`, which is used directly only for tables inside other components. Do not write one-off `<Table>` implementations.
+- Data display: `StatCard` for headline numbers, `CellStack` for two-line cells, `ProviderBadge` for Vinnet/GotIt, `SampleProgress` for sample progress, `UserAvatar` for people. Provider colours come from `PROVIDER_STYLES` in `config/ThemeConfig.ts`.
 - Icons: prefer `@mui/icons-material` or `@phosphor-icons/react`.
 
 ### State Management

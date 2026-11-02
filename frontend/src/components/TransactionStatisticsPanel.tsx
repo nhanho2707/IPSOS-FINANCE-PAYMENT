@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Card, CardContent, Grid, MenuItem, TextField, Typography } from "@mui/material";
+import StatCard from "./StatCard";
+import { Alert, Box, Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { TransactionChannel, useTransactionStatistics } from "../hook/useTransactionStatistics";
 import HourlyHistogramChart from "./Charts/HourlyHistogramChart";
@@ -33,31 +34,6 @@ const formatMinutes = (minutes: number | null | undefined) => {
 
   return `${sign}${Math.floor(abs / 1440)}d ${Math.floor((abs % 1440) / 60)}h`;
 };
-
-interface StatCardProps {
-  label: string;
-  value: React.ReactNode;
-  caption?: React.ReactNode;
-  color?: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ label, value, caption, color = "inherit" }) => (
-  <Card variant="outlined" sx={{ height: "100%" }}>
-    <CardContent>
-      <Typography color="text.secondary" gutterBottom>
-        {label}
-      </Typography>
-      <Typography variant="h4" color={color}>
-        {value}
-      </Typography>
-      {caption && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {caption}
-        </Typography>
-      )}
-    </CardContent>
-  </Card>
-);
 
 interface TransactionStatisticsPanelProps {
   projectId: number;
@@ -236,7 +212,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           <StatCard
             label={`Anomalies (gift received before interview ended${toleranceText})`}
             value={anomaliesTotal}
-            color={anomaliesTotal > 0 ? "error" : "inherit"}
+            tone={anomaliesTotal > 0 ? "danger" : "default"}
             caption={measuredTotal > 0 ? `${formatPercent(anomaliesTotal / measuredTotal)} of measurable interviews` : undefined}
           />
         </Grid>

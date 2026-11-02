@@ -1,19 +1,21 @@
-import "./LoginForm.css";
-import ipsosLogo from "../../assets/img/Ipsos logo.svg";
 import React, { useState } from "react";
 import axios from "axios";
 import {
   Alert,
+  Box,
   IconButton,
   InputAdornment,
   Link,
   TextField,
+  Typography,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { VisibilityOff, Visibility } from "@mui/icons-material";
 import { Link as RouterLink, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { ApiConfig } from "../../config/ApiConfig";
+import { BRAND } from "../../config/ThemeConfig";
+import { BrandMark } from "../../components/Shell/AppShell";
 
 const Login = () => {
   const location = useLocation();
@@ -70,77 +72,112 @@ const Login = () => {
   const canSubmit = credentials.email.trim() !== "" && credentials.password !== "";
 
   return (
-    <div className="LoginForm">
-      <div className="header-form-login">
-        <img src={ipsosLogo} alt="Ipsos" />
-        <h2>Welcome back</h2>
-        <p>Sign in with your Ipsos account.</p>
-      </div>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "minmax(0, 5fr) minmax(0, 6fr)" },
+        bgcolor: "background.default",
+      }}
+    >
+      <Box
+        component="aside"
+        sx={{
+          display: { xs: "none", md: "flex" },
+          flexDirection: "column",
+          justifyContent: "space-between",
+          p: 6,
+          bgcolor: BRAND.dark,
+          color: "common.white",
+        }}
+      >
+        <BrandMark inverse />
+        <Box sx={{ maxWidth: 420 }}>
+          <Typography component="p" variant="h1" sx={{ color: "common.white" }}>
+            Field projects, quotations and respondent gifts in one place.
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1.5, color: "common.white", opacity: 0.8 }}>
+            Plan the quotation, follow fieldwork and send incentives through Vinnet and GotIt.
+          </Typography>
+        </Box>
+        <Typography variant="caption" sx={{ color: "common.white", opacity: 0.7 }}>
+          Ipsos Vietnam · internal tool
+        </Typography>
+      </Box>
 
-      <form className="form-validate" onSubmit={handleSubmit} noValidate>
-        {errorMessage && (
-          <Alert severity="error" sx={{ mt: 3 }} role="alert">
-            {errorMessage}
-          </Alert>
-        )}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: 2, py: 6 }}>
+        <Box sx={{ width: "100%", maxWidth: 400 }}>
+          <Box sx={{ display: { xs: "block", md: "none" }, mb: 4 }}>
+            <BrandMark />
+          </Box>
+          <Typography component="h1" variant="h1">Sign in</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Use your Ipsos account.
+          </Typography>
 
-        <TextField
-          label="Email"
-          type="email"
-          name="email"
-          autoComplete="username"
-          autoFocus
-          fullWidth
-          value={credentials.email}
-          onChange={handleChange("email")}
-          className="TextFieldLogin"
-          sx={{ mt: 3 }}
-        />
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 3 }}>
+            {errorMessage && (
+              <Alert severity="error" sx={{ mb: 2.5 }} role="alert">
+                {errorMessage}
+              </Alert>
+            )}
 
-        <TextField
-          label="Password"
-          type={showPassword ? "text" : "password"}
-          name="password"
-          autoComplete="current-password"
-          fullWidth
-          value={credentials.password}
-          onChange={handleChange("password")}
-          className="TextFieldLogin"
-          sx={{ mt: 3 }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
+            <TextField
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="username"
+              autoFocus
+              fullWidth
+              value={credentials.email}
+              onChange={handleChange("email")}
+            />
 
-        <div className="forgot-password">
-          <Link component={RouterLink} to="/forgot-password" underline="hover">
-            Forgot password?
-          </Link>
-        </div>
+            <TextField
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              autoComplete="current-password"
+              fullWidth
+              value={credentials.password}
+              onChange={handleChange("password")}
+              sx={{ mt: 2.5 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-        <LoadingButton
-          type="submit"
-          variant="contained"
-          fullWidth
-          size="large"
-          loading={submitting}
-          disabled={!canSubmit}
-          sx={{ mt: 4 }}
-        >
-          Sign in
-        </LoadingButton>
-      </form>
-    </div>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5 }}>
+              <Link component={RouterLink} to="/forgot-password" underline="hover" sx={{ typography: "body2", fontWeight: 500 }}>
+                Forgot password?
+              </Link>
+            </Box>
+
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              fullWidth
+              size="large"
+              loading={submitting}
+              disabled={!canSubmit}
+              sx={{ mt: 3 }}
+            >
+              Sign in
+            </LoadingButton>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

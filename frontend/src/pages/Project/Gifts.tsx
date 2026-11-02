@@ -1,8 +1,10 @@
-import { Alert, AlertTitle, Box, Button, Checkbox, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, Button, Checkbox, Stack, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import { OFFLINE_RESPONDENT_IMPORT_COLUMNS, OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData, toImportRow } from "../../config/OfflineProjectRespondentFieldsConfig";
+import { GiftStatus, OFFLINE_RESPONDENT_IMPORT_COLUMNS, OfflineGiftBulkSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportData, toImportRow } from "../../config/OfflineProjectRespondentFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import ResourceTable from "../../components/Table/ResourceTable";
+import CellStack from "../../components/Table/CellStack";
+import ProviderBadge from "../../components/ProviderBadge";
 import RowActions from "../../components/Table/RowActions";
 import BulkActionBar from "../../components/Table/BulkActionBar";
 import EmptyState from "../../components/EmptyState";
@@ -18,9 +20,31 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import StatusChip from "../../components/StatusChip";
 import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
 import { useToast } from "../../contexts/ToastContext";
-import { formatNumber, formatStatus } from "../../utils/format";
+import { formatMoney, formatNumber, formatPhone } from "../../utils/format";
 
 const MAX_FAILURES_SHOWN = 30;
+
+const GIFT_STATUS_LABELS: Record<GiftStatus, string> = {
+    pending: "Pending",
+    success: "Sent",
+    failed: "Failed",
+    refused: "Refused",
+};
+
+const GIFT_TABS: { value: GiftStatus | "all"; label: string }[] = [
+    { value: "all", label: "All" },
+    { value: "pending", label: GIFT_STATUS_LABELS.pending },
+    { value: "success", label: GIFT_STATUS_LABELS.success },
+    { value: "failed", label: GIFT_STATUS_LABELS.failed },
+    { value: "refused", label: GIFT_STATUS_LABELS.refused },
+];
+
+const EMPTY_TAB_TITLES: Record<GiftStatus, string> = {
+    pending: "No gifts waiting to be sent",
+    success: "No gifts sent yet",
+    failed: "No failed gifts",
+    refused: "No refused gifts",
+};
 
 interface BulkSendProgress {
     done: number,
@@ -77,7 +101,7 @@ const Gifts: React.FC = () => {
 
     const { openDialog, closeDialog, dialogProps } = useDialog();
 
-    const { offineProjectRespondents, removeProjectRespondent, offlineTransactionSending, bulkOfflineTransactionSending, fetchAllPendingProjectRespondents, importOfflineProjectRespondents, loading: loadingOfflineProjectRespondents, error: errorOfflineProjectRespondents, message: messageOfflineProjectRespondents, page, rowsPerPage, searchTerm, total, setSearchTerm, setPage, setRowsPerPage } = useOfflineProjectRespondents(projectId);
+    const { offineProjectRespondents, removeProjectRespondent, offlineTransactionSending, bulkOfflineTransactionSending, fetchAllPendingProjectRespondents, importOfflineProjectRespondents, loading: loadingOfflineProjectRespondents, error: errorOfflineProjectRespondents, message: messageOfflineProjectRespondents, page, rowsPerPage, searchTerm, total, setSearchTerm, setPage, setRowsPerPage, statusFilter, setStatusFilter, statusCounts } = useOfflineProjectRespondents(projectId);
     const [ loadingRowId, setLoadingRowId ] = useState<string | null>(null);
 
     const [ selectedRows, setSelectedRows ] = useState<Record<number, OfflineProjectRespondentData>>({});
@@ -269,19 +293,83 @@ const Gifts: React.FC = () => {
                 />
             )
         },
-        ...OfflineProjectRespondentCellConfig,
+        {
+            label: "Respondent",
+            name: "respondent_id",
+            type: "string",
+            flex: 1.8,
+            renderCell: (row: OfflineProjectRespondentData) => (
+                <CellStack
+                    primary={row.respondent_id}
+                    secondary={formatPhone(row.phone_number)}
+                    title={[
+                        row.respondent_id,
+                        `Gift phone: ${formatPhone(row.phone_number)}`,
+                        row.respondent_phone_number && `Survey phone: ${formatPhone(row.respondent_phone_number)}`,
+                        row.email && `Email: ${row.email}`,
+                    ].filter(Boolean).join(" · ")}
+                    numeric
+                />
+            )
+        },
+        {
+            label: "Interviewer",
+            name: "employee_id",
+            type: "string",
+            flex: 1.4,
+            renderCell: (row: OfflineProjectRespondentData) => (
+                <CellStack
+                    primary={row.employee_name || row.employee_id}
+                    secondary={row.employee_name ? row.employee_id : undefined}
+                />
+            )
+        },
+        {
+            label: "Province",
+            name: "province_name",
+            type: "string",
+            flex: 1
+        },
+        {
+            label: "Channel",
+            name: "channel",
+            type: "string",
+            width: 96,
+            renderCell: (row: OfflineProjectRespondentData) => <ProviderBadge provider={row.channel} />
+        },
+        {
+            label: "Amount",
+            name: "price_level",
+            type: "number",
+            align: "right",
+            width: 112,
+            renderCell: (row: OfflineProjectRespondentData) => (
+                <Box component="span" sx={{ fontVariantNumeric: "tabular-nums" }}>{formatMoney(row.price_level)}</Box>
+            )
+        },
         {
             label: "Status",
             name: "status",
             type: "string",
-            align: "left",
-            width: 104,
+            width: 176,
             renderCell: (row: OfflineProjectRespondentData) => (
-                <StatusChip
-                    label={formatStatus(row.status)}
-                    tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
-                    tooltip={row.status_label}
-                />
+                <Box sx={{ minWidth: 0 }}>
+                    <StatusChip
+                        label={GIFT_STATUS_LABELS[row.status] ?? row.status}
+                        tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
+                    />
+                    {row.status === "failed" && row.status_label && (
+                        <Tooltip title={row.status_label} placement="top-start">
+                            <Typography
+                                variant="caption"
+                                component="div"
+                                sx={{ mt: 0.25, color: "error.main", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                            >
+                                {row.status_label}
+                            </Typography>
+                        </Tooltip>
+                    )}
+                </Box>
             )
         },
         {
@@ -404,9 +492,30 @@ const Gifts: React.FC = () => {
 
     const openImport = () => fileInputRef.current?.click();
 
+    const selectedTotal = Object.values(selectedRows).reduce((sum, row) => sum + (Number(row.price_level) || 0), 0);
+
+    const showStatus = (value: string) => {
+        setStatusFilter(GIFT_TABS.find(tab => tab.value === value)?.value ?? "all");
+        setPage(0);
+    };
+
+    const allCount = statusCounts ? Object.values(statusCounts).reduce((sum, count) => sum + count, 0) : undefined;
+    const failedCount = statusCounts?.failed ?? 0;
+
+    // Exceptions first: failed gifts need someone to look at them, so they are announced above the list.
+    const failedBanner = failedCount > 0 && statusFilter !== "failed" ? (
+        <Alert
+            severity="warning"
+            action={<Button color="inherit" size="small" onClick={() => showStatus("failed")}>Show failed</Button>}
+        >
+            {plural(failedCount, "gift", "gifts")} failed{searchTerm ? " for this search" : ""}. The reason is listed under each one.
+        </Alert>
+    ) : null;
+
     const bulkBar = (selectedCount > 0 || bulkSending) ? (
         <BulkActionBar
             label={plural(selectedCount, "respondent selected", "respondents selected")}
+            summary={selectedTotal > 0 ? `${formatMoney(selectedTotal)} in total` : undefined}
             onClear={() => setSelectedRows({})}
             extra={
                 <LoadingButton size="small" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
@@ -465,8 +574,15 @@ const Gifts: React.FC = () => {
                 total = {total}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
-                dense
                 stickyColumns={{ first: true, last: true }}
+                tabs={GIFT_TABS.map(tab => ({
+                    value: tab.value,
+                    label: tab.label,
+                    count: tab.value === "all" ? allCount : statusCounts?.[tab.value],
+                    alert: tab.value === "failed",
+                }))}
+                tab={statusFilter}
+                onTabChange={showStatus}
                 search={{
                     placeholder: "Search phone number",
                     defaultValue: searchTerm,
@@ -478,9 +594,16 @@ const Gifts: React.FC = () => {
                     </LoadingButton>
                 )}
                 bulkBar={bulkBar}
-                banner={bulkOutcome && <BulkSendResultBanner outcome={bulkOutcome} onClose={() => setBulkOutcome(null)} />}
+                banner={(bulkOutcome || failedBanner) && (
+                    <Stack spacing={1}>
+                        {bulkOutcome && <BulkSendResultBanner outcome={bulkOutcome} onClose={() => setBulkOutcome(null)} />}
+                        {failedBanner}
+                    </Stack>
+                )}
                 emptyState={searchTerm ? (
-                    <EmptyState title="No respondents found" description={`Nothing matches “${searchTerm}”.`} />
+                    <EmptyState title="No respondents found" description={`Nothing matches “${searchTerm}”${statusFilter !== "all" ? ` in ${GIFT_STATUS_LABELS[statusFilter].toLowerCase()} gifts` : ""}.`} />
+                ) : statusFilter !== "all" ? (
+                    <EmptyState title={EMPTY_TAB_TITLES[statusFilter]} />
                 ) : (
                     <EmptyState
                         title="No respondents yet"

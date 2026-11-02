@@ -20,6 +20,7 @@ export const ROLE_ACCESS: Record<string, readonly Role[]> = {
   projectClone: [ROLES.ADMIN, ROLES.RESEARCHER, ROLES.SCRIPTER],
   projectEditInfo: [ROLES.ADMIN, ROLES.SCRIPTER],
 
+  projectOverview: ALL_ROLES,
   projectQuotation: [ROLES.ADMIN, ROLES.RESEARCHER, ROLES.FIELD_MANAGER],
   quotationApprove: [ROLES.ADMIN, ROLES.RESEARCHER],
   quotationMutate: [ROLES.ADMIN, ROLES.RESEARCHER],

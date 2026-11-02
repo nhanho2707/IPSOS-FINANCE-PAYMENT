@@ -1,16 +1,21 @@
-import { Alert, Autocomplete, Box, Button, Checkbox, Dialog, DialogTitle, Divider, Grid, Table, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Box, Button, Checkbox, Grid, LinearProgress, Paper, TextField, Typography } from "@mui/material";
 import { useVinnetAccount } from "../../hook/useVinnetAccount";
 import FormDialog from "../../components/Dialogs/FormDialog";
 import PageHeader from "../../components/PageHeader";
+import StatCard from "../../components/StatCard";
+import StatusChip from "../../components/StatusChip";
+import ProviderBadge from "../../components/ProviderBadge";
+import DateRangeField from "../../components/DateRangeField";
 import { useToast } from "../../contexts/ToastContext";
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { ApiConfig } from "../../config/ApiConfig";
-import { Skeleton } from "@mui/material";
 import { useGotItAccount } from "../../hook/useGotItAccount";
+import { useTransactionStatistics } from "../../hook/useTransactionStatistics";
 import dayjs, { Dayjs } from "dayjs"
-import SearchDatePickerFromTo from "../../components/SearchDatePickerFromTo";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
+import { LOW_BALANCE_THRESHOLDS, RECENT_SPEND_DAYS } from "../../config/FinanceConfig";
+import { getProviderStyle, NEUTRAL, STATUS_TONES } from "../../config/ThemeConfig";
 import { useMetadata } from "../../hook/useMetadata";
 import LoadingButton from "@mui/lab/LoadingButton";
 import AddIcon from '@mui/icons-material/Add';
@@ -18,9 +23,85 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { formatMoney } from "../../utils/format";
 import TransactionStatisticsPanel from "../../components/TransactionStatisticsPanel";
 
+interface ProviderAccount {
+    deposited: number;
+    spent: number;
+    balance: number;
+}
+
+// How long the balance lasts if gifts keep going out as they did over the recent period.
+const describeRunway = (balance: number, recentSpend: number | null): { text: string; urgent: boolean } | null => {
+    if (recentSpend === null) return null;
+    if (recentSpend <= 0) return { text: `No gifts paid in the last ${RECENT_SPEND_DAYS} days.`, urgent: false };
+
+    const weeks = balance / ((recentSpend / RECENT_SPEND_DAYS) * 7);
+    const basis = `at the last ${RECENT_SPEND_DAYS} days' spending`;
+
+    if (weeks < 1) return { text: `Less than a week left ${basis}.`, urgent: true };
+    if (weeks > 52) return { text: `More than a year left ${basis}.`, urgent: false };
+
+    const whole = Math.floor(weeks);
+    return { text: `About ${whole} week${whole === 1 ? "" : "s"} left ${basis}.`, urgent: weeks < 2 };
+};
+
+const ProviderBalanceCard: React.FC<{
+    provider: "vinnet" | "gotit";
+    account: ProviderAccount;
+    loading: boolean;
+    recentSpend: number | null;
+    footer?: React.ReactNode;
+}> = ({ provider, account, loading, recentSpend, footer }) => {
+    const { label, color } = getProviderStyle(provider);
+    const threshold = LOW_BALANCE_THRESHOLDS[provider];
+    const low = !loading && account.balance < threshold;
+    const spentShare = account.deposited > 0 ? Math.min(100, (account.spent / account.deposited) * 100) : 0;
+    const runway = loading ? null : describeRunway(account.balance, recentSpend);
+
+    return (
+        <StatCard
+            label={<ProviderBadge provider={provider} />}
+            value={formatMoney(account.balance)}
+            tone={low ? "warning" : "default"}
+            loading={loading}
+            action={low ? <StatusChip label="Low balance" tone="warning" tooltip={`Below ${formatMoney(threshold)}`} /> : undefined}
+            caption={loading ? undefined : `Balance · spent ${formatMoney(account.spent)} of ${formatMoney(account.deposited)} deposited`}
+        >
+            <LinearProgress
+                variant="determinate"
+                value={spentShare}
+                aria-label={`${label} share of deposits spent`}
+                sx={{ mt: 1, height: 6, borderRadius: 3, bgcolor: NEUTRAL[100], "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 3 } }}
+            />
+            {runway && (
+                <Typography variant="body2" sx={{ mt: 1, color: runway.urgent ? STATUS_TONES.warning.fg : "text.secondary", fontWeight: runway.urgent ? 600 : 400 }}>
+                    {runway.text}
+                </Typography>
+            )}
+            {footer && <Box sx={{ mt: 2 }}>{footer}</Box>}
+        </StatCard>
+    );
+};
+
+const SectionCard: React.FC<{ title: string; description?: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, description, action, children }) => (
+    <Paper elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: "12px", bgcolor: "background.paper" }}>
+        <Box sx={{ display: "flex", alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, gap: 1.5, justifyContent: "space-between", px: 2.5, py: 1.75, borderBottom: 1, borderColor: "divider" }}>
+            <Box>
+                <Typography variant="h2" component="h2">{title}</Typography>
+                {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
+            </Box>
+            {action}
+        </Box>
+        <Box sx={{ p: 2.5 }}>{children}</Box>
+    </Paper>
+);
+
 const Transactions = () => {
     const { loading: vinnetLoading, vinnetAccount } = useVinnetAccount();
     const { gotitAccount, addDeposit, loading: gotitLoading } = useGotItAccount('gotit');
+    const { statistics: recentStatistics } = useTransactionStatistics(0, {
+        dateFrom: dayjs().subtract(RECENT_SPEND_DAYS - 1, "day").format("YYYY-MM-DD"),
+        dateTo: dayjs().format("YYYY-MM-DD"),
+    });
     const { showToast } = useToast();
     const [ open, setOpen ] = useState(false);
     const [ amount, setAmount ] = useState("");
@@ -28,10 +109,10 @@ const Transactions = () => {
 
     const [ fromDate, setFromDate ] = useState<Dayjs | null>(null);
     const [ toDate, setToDate ] = useState<Dayjs | null>(null);
-    
+
     const [ loadingExport, setLoadingExport ] = useState<boolean>(false);
-    const [ loadingExportByProjects, setLoadingExportByProjects ] = useState<boolean>(false); 
-    
+    const [ loadingExportByProjects, setLoadingExportByProjects ] = useState<boolean>(false);
+
     const { data } = useMetadata();
 
     const [ selectedProjects, setSelectedProjects ] = useState<ProjectData[]>([]);
@@ -91,15 +172,15 @@ const Transactions = () => {
         return error instanceof Error ? error.message : String(error);
     }
 
-    const handleExport = async (from: Dayjs | null, to: Dayjs | null) => {
+    const handleExport = async () => {
+        if(!fromDate || !toDate) return;
+
         try{
             setLoadingExport(true);
             setExportError("");
 
-            if(!from || !to) return;
-
-            const from_date = from.startOf('day').format('YYYY-MM-DD HH:mm:ss');
-            const to_date = to.endOf('day').format('YYYY-MM-DD HH:mm:ss');
+            const from_date = fromDate.startOf('day').format('YYYY-MM-DD HH:mm:ss');
+            const to_date = toDate.endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
             const response = await axios.get(ApiConfig.functions.exportTransactions, {
                 params: {
@@ -112,7 +193,7 @@ const Transactions = () => {
                 }
             });
 
-            saveBlob(response.data, "gotit_transactions.xlsx");
+            saveBlob(response.data, `transactions_${fromDate.format("YYYYMMDD")}_to_${toDate.format("YYYYMMDD")}.xlsx`);
         }catch(error){
             console.error("Export failed", error);
             setExportError(`Export failed: ${await getExportErrorMessage(error)}`);
@@ -147,249 +228,135 @@ const Transactions = () => {
             setLoadingExportByProjects(false);
         }
     }
-    
+
+    const recentSpend = (channel: "vinnet" | "gotit") =>
+        recentStatistics ? recentStatistics.by_channel?.[channel]?.amount ?? 0 : null;
+
+    const projectLabel = (option: ProjectData) => `${option.internal_code} - ${option.project_name}`;
+
     return (
         <>
-        <PageHeader
-            title="Finance"
-            description="Provider balances, GotIt deposits and transaction exports."
-        />
-        <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-                <Box
-                    sx={{
-                        p: 3,
-                        borderRadius: 2,
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "divider",
-                    }}
-                >
-                    <Typography 
-                        variant="h6" 
-                        gutterBottom 
-                        sx={{
-                            mb: 2
-                        }}
-                    >
-                        Vinnet Account
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1
-                    }}>
-                        <Typography color="text.secondary">Deposited:</Typography>
-                        {vinnetLoading ? (
-                            <Skeleton width={80} height={24} />
-                        ) : (
-                            <Typography>{formatMoney(vinnetAccount?.deposited)}</Typography>
-                        )}
-                    </Box>
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1
-                    }}>
-                        <Typography color="text.secondary">Balance:</Typography>
-                        {vinnetLoading ? (
-                            <Skeleton width={80} height={24} />
-                        ) : (
-                            <Typography>{formatMoney(vinnetAccount?.balance)}</Typography>
-                        )}
-                    </Box>
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1
-                    }}>
-                        <Typography color="text.secondary">Spent:</Typography>
-                        {vinnetLoading ? (
-                            <Skeleton width={80} height={24} />
-                        ) : (
-                            <Typography>{formatMoney(vinnetAccount?.spent)}</Typography>
-                        )}
-                    </Box>
-                </Box>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <Box
-                    sx={{
-                        p: 3,
-                        borderRadius: 2,
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "divider",
-                    }}
-                >
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center"
-                        }}
-                    >
-                        <Typography 
-                            variant="h6"
-                            gutterBottom
-                        >
-                            Got It Account
-                        </Typography>
-                        <Button 
-                            variant="contained" 
-                            size="small" 
-                            startIcon={<AddIcon />}
-                            sx={{
-                                mb: 2
-                            }}
-                            onClick={openDepositDialog}
-                        >
-                            Add deposit
-                        </Button>
-                    </Box>
+            <PageHeader
+                title="Finance"
+                description="Provider balances, GotIt deposits and transaction exports."
+            />
 
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1
-                    }}>
-                        <Typography color="text.secondary">Deposited:</Typography>
-                        {gotitLoading ? (
-                            <Skeleton width={80} height={24} />
-                        ) : (
-                            <Typography>{formatMoney(gotitAccount.deposited)}</Typography>
-                        )}
-                    </Box>
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1
-                    }}>
-                        <Typography color="text.secondary">Balance:</Typography>
-                        {gotitLoading ? (
-                            <Skeleton width={80} height={24} />
-                        ) : (
-                            <Typography>{formatMoney(gotitAccount.balance)}</Typography>
-                        )}
-                    </Box>
-                    <Box sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1
-                    }}>
-                        <Typography color="text.secondary">Spent:</Typography>
-                        {gotitLoading ? (
-                            <Skeleton width={80} height={24} />
-                        ) : (
-                            <Typography>{formatMoney(gotitAccount.spent)}</Typography>
-                        )}
-                    </Box>
-                </Box>
-            </Grid>
-            {exportError && (
-                <Grid item xs={12}>
-                    <Alert severity="error" onClose={() => setExportError("")}>
-                        {exportError}
-                    </Alert>
+            <Grid container spacing={2.5}>
+                <Grid item xs={12} md={6}>
+                    <ProviderBalanceCard
+                        provider="vinnet"
+                        account={vinnetAccount}
+                        loading={vinnetLoading}
+                        recentSpend={recentSpend("vinnet")}
+                    />
                 </Grid>
-            )}
-            <Grid item xs={12}>
-                <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                    Choose a date range to export transactions
-                </Typography>
-                <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="Export Excel" buttonIcon={<FileDownloadOutlinedIcon />} loadingButton={loadingExport} onSearchChange={handleExport} />
-                <Divider sx={{ mt: 2 }} />
-            </Grid>
-            <Grid item xs={12}>
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 2,
-                    }}
-                >
-                    <Box
-                        sx={{
-                            flex: 1
-                        }}
-                    >
-                        <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                            Choose projects to export transactions:
-                        </Typography>
-                        <Autocomplete
-                            multiple
-                            disableCloseOnSelect
-                            options={data.projects || {}}
-                            value={selectedProjects || []}
-                            onChange={(event, newValue) => setSelectedProjects(newValue)}
-                            getOptionLabel={(option) => `${option.internal_code} - ${option.project_name}`}
-                            renderOption={(props, option, { selected }) => (
-                                <li {...props}>
-                                    <Checkbox
-                                        style={{ marginRight: 8 }}
-                                        checked={selected}
+                <Grid item xs={12} md={6}>
+                    <ProviderBalanceCard
+                        provider="gotit"
+                        account={gotitAccount}
+                        loading={gotitLoading}
+                        recentSpend={recentSpend("gotit")}
+                        footer={
+                            <Button variant="outlined" color="inherit" size="small" startIcon={<AddIcon />} onClick={openDepositDialog}>
+                                Add deposit
+                            </Button>
+                        }
+                    />
+                </Grid>
+
+                <Grid item xs={12}>
+                    <SectionCard title="Export transactions" description="Excel files for reconciliation, by date or by project.">
+                        {exportError && (
+                            <Alert severity="error" onClose={() => setExportError("")} sx={{ mb: 2 }}>
+                                {exportError}
+                            </Alert>
+                        )}
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={5}>
+                                <Typography variant="body2" fontWeight={600} sx={{ mb: 1.5 }}>By date</Typography>
+                                <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
+                                    <DateRangeField
+                                        label="Dates"
+                                        from={fromDate}
+                                        to={toDate}
+                                        onChange={(from, to) => {
+                                            setFromDate(from);
+                                            setToDate(to);
+                                        }}
                                     />
-                                    {option.internal_code} - {option.project_name}
-                                </li>
-                            )}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    size="small"
-                                    placeholder="Select..."
-                                />
-                            )}
-                        />
-                    </Box>
-                    <Box
-                        sx={{
-                            pt: 5.2
-                        }}
+                                    <LoadingButton
+                                        variant="outlined"
+                                        color="inherit"
+                                        startIcon={<FileDownloadOutlinedIcon />}
+                                        loading={loadingExport}
+                                        loadingPosition="start"
+                                        disabled={!fromDate || !toDate}
+                                        onClick={handleExport}
+                                    >
+                                        Export
+                                    </LoadingButton>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={12} md={7}>
+                                <Typography variant="body2" fontWeight={600} sx={{ mb: 1.5 }}>By project</Typography>
+                                <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                                    <Autocomplete
+                                        multiple
+                                        disableCloseOnSelect
+                                        limitTags={2}
+                                        options={data.projects || []}
+                                        value={selectedProjects}
+                                        onChange={(_event, newValue) => setSelectedProjects(newValue)}
+                                        getOptionLabel={projectLabel}
+                                        renderOption={(props, option, { selected }) => (
+                                            <li {...props}>
+                                                <Checkbox size="small" sx={{ mr: 1 }} checked={selected} />
+                                                {projectLabel(option)}
+                                            </li>
+                                        )}
+                                        renderInput={(params) => (
+                                            <TextField {...params} size="small" label="Projects" placeholder={selectedProjects.length ? "" : "Choose projects"} />
+                                        )}
+                                        sx={{ flex: 1, minWidth: 0 }}
+                                    />
+                                    <LoadingButton
+                                        variant="outlined"
+                                        color="inherit"
+                                        startIcon={<FileDownloadOutlinedIcon />}
+                                        loading={loadingExportByProjects}
+                                        loadingPosition="start"
+                                        disabled={selectedProjects.length === 0}
+                                        onClick={handleExportExcelByProjects}
+                                        sx={{ flexShrink: 0 }}
+                                    >
+                                        Export
+                                    </LoadingButton>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </SectionCard>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <SectionCard
+                        title="Interview & gift timing"
+                        description="When interviews happen and how long respondents wait for their gift."
+                        action={
+                            <Autocomplete
+                                options={data.projects || []}
+                                value={statsProject}
+                                onChange={(_event, newValue) => setStatsProject(newValue)}
+                                getOptionLabel={projectLabel}
+                                renderInput={(params) => (
+                                    <TextField {...params} size="small" label="Project" placeholder="All projects" InputLabelProps={{ shrink: true }} />
+                                )}
+                                sx={{ width: { xs: "100%", sm: 360 } }}
+                            />
+                        }
                     >
-                        <LoadingButton
-                            onClick={handleExportExcelByProjects}
-                            size="small"
-                            startIcon={<FileDownloadOutlinedIcon />}
-                            loading={loadingExportByProjects}
-                            loadingPosition="start"
-                            variant="contained"
-                            disabled={selectedProjects.length == 0}
-                            >
-                                <span>Export Excel</span>
-                        </LoadingButton>
-                    </Box>
-                </Box>
-                
-            </Grid>
-
-            <Grid item xs={12}>
-                <Divider sx={{ mt: 2, mb: 2 }} />
-
-                <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
-                    Interview & gift timing statistics
-                </Typography>
-
-                <Autocomplete
-                    options={data.projects || []}
-                    value={statsProject}
-                    onChange={(event, newValue) => setStatsProject(newValue)}
-                    getOptionLabel={(option) => `${option.internal_code} - ${option.project_name}`}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            size="small"
-                            label="Projects"
-                            placeholder="All projects"
-                            sx={{ maxWidth: 400 }}
-                        />
-                    )}
-                />
-
-                <TransactionStatisticsPanel projectId={statsProject?.id ?? 0} />
+                        <TransactionStatisticsPanel projectId={statsProject?.id ?? 0} />
+                    </SectionCard>
+                </Grid>
             </Grid>
 
             <FormDialog
@@ -416,7 +383,6 @@ const Transactions = () => {
                     helperText={!isDepositInvalid ? formatMoney(depositAmount) : " "}
                 />
             </FormDialog>
-        </Grid>
         </>
     )
 }

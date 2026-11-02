@@ -42,7 +42,7 @@ interface AppShellProps {
 }
 
 // The logo file has wide white margins; the mark is cropped to its square.
-export const BrandMark: React.FC<{ showName?: boolean }> = ({ showName = true }) => (
+export const BrandMark: React.FC<{ showName?: boolean; inverse?: boolean }> = ({ showName = true, inverse = false }) => (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
         <Box sx={{ width: 28, height: 28, borderRadius: 1, overflow: "hidden", flexShrink: 0, position: "relative" }}>
             <Box
@@ -54,8 +54,12 @@ export const BrandMark: React.FC<{ showName?: boolean }> = ({ showName = true })
         </Box>
         {showName && (
             <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" fontWeight={600} noWrap>Finance Payment</Typography>
-                <Typography variant="caption" color="text.secondary" component="div" noWrap>Ipsos Vietnam</Typography>
+                <Typography variant="body2" fontWeight={600} noWrap sx={{ color: inverse ? "common.white" : "text.primary" }}>
+                    Finance Payment
+                </Typography>
+                <Typography variant="caption" component="div" noWrap sx={{ color: inverse ? "common.white" : "text.secondary", opacity: inverse ? 0.8 : 1 }}>
+                    Ipsos Vietnam
+                </Typography>
             </Box>
         )}
     </Box>

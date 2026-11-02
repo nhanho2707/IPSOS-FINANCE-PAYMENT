@@ -75,6 +75,16 @@ export const FEEDBACK_STATUS_TONE: Record<string, StatusTone> = {
   "rejected": "danger",
 };
 
+// Fixed per provider so the same colour means the same provider in badges, cards and charts.
+export const PROVIDER_STYLES: Record<string, { label: string; color: string }> = {
+  vinnet: { label: "Vinnet", color: BRAND.accent },
+  gotit: { label: "GotIt", color: BRAND.navy },
+  other: { label: "Other", color: NEUTRAL[400] },
+};
+
+export const getProviderStyle = (provider: string | null | undefined) =>
+  PROVIDER_STYLES[provider?.trim().toLowerCase() ?? ""] ?? { label: provider || "—", color: NEUTRAL[400] };
+
 export const getStatusTone = (
   status: string | null | undefined,
   toneMap: Record<string, StatusTone>

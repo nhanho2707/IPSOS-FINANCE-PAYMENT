@@ -18,6 +18,7 @@ import Page200 from "./pages/Page200/Page200";
 import ProjectLayout from "./Layouts/ProjectLayout";
 import Projects from "./pages/Project/Projects";
 import Quotation from "./pages/Project/Quotation/Quotation";
+import ProjectOverview from "./pages/Project/Overview";
 import ParttimeEmployees from "./pages/Project/ParttimeEmployees/ParttimeEmployees";
 import MiniCATI from "./pages/MiniCATI/MiniCATI";
 import CustomVoucher from "./pages/CustomVoucher/CustomVoucher";
@@ -106,6 +107,10 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
+              <Route
+                path="overview"
+                element={<RoleGate allowedRoles={getProjectPageRoles("overview")}><ProjectOverview /></RoleGate>}
+              />
               <Route
                 path="quotation"
                 element={<RoleGate allowedRoles={getProjectPageRoles("quotation")}><Quotation /></RoleGate>}

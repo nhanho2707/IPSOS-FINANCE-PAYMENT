@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload } from "../config/OfflineProjectRespondentFieldsConfig";
+import { GiftStatus, GiftStatusCounts, OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload } from "../config/OfflineProjectRespondentFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
@@ -81,6 +81,8 @@ export function useOfflineProjectRespondents(projectId: number) {
     const [ page, setPage ] = useState(0);
     const [ rowsPerPage, setRowsPerPage ] = useState(10);
     const [ searchTerm, setSearchTerm ] = useState("");
+    const [ statusFilter, setStatusFilter ] = useState<GiftStatus | "all">("all");
+    const [ statusCounts, setStatusCounts ] = useState<GiftStatusCounts | null>(null);
 
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0);
@@ -105,13 +107,15 @@ export function useOfflineProjectRespondents(projectId: number) {
                 params: {
                     page: page + 1,
                     perPage: rowsPerPage,
-                    searchTerm: searchTerm
+                    searchTerm: searchTerm,
+                    ...(statusFilter !== "all" && { status: statusFilter })
                 }
             });
 
             setOfflineProjectRespondents(response.data.data);
             setMeta(response.data.meta);
             setTotal(response.data.meta.total);
+            setStatusCounts(response.data.meta.status_counts ?? null);
 
         }catch(error: any){
             setError(true);
@@ -119,7 +123,7 @@ export function useOfflineProjectRespondents(projectId: number) {
         }finally{
             setLoading(false);
         }
-    }, [projectId, page, rowsPerPage, searchTerm]);
+    }, [projectId, page, rowsPerPage, searchTerm, statusFilter]);
 
     const importOfflineProjectRespondents = useCallback(async(payload: OfflineProjectRespondentImportPayload[]) => {
         try
@@ -307,7 +311,7 @@ export function useOfflineProjectRespondents(projectId: number) {
 
     useEffect(() => {
         fetchProjectRespondents(page, rowsPerPage, searchTerm);
-    }, [projectId, page, rowsPerPage, searchTerm])
+    }, [projectId, page, rowsPerPage, searchTerm, statusFilter])
 
     return {
         offineProjectRespondents,
@@ -325,6 +329,9 @@ export function useOfflineProjectRespondents(projectId: number) {
         total,
         setSearchTerm,
         setPage,
-        setRowsPerPage
+        setRowsPerPage,
+        statusFilter,
+        setStatusFilter,
+        statusCounts
     };
 }

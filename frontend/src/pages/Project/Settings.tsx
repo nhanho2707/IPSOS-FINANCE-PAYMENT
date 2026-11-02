@@ -1,15 +1,15 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useProjectContext } from "../../hook/useProjectContext";
-import { Box, Button, Divider, Grid, Paper, TextField, Typography } from "@mui/material";
+import { Box, Button, Paper, Stack, TextField, Typography } from "@mui/material";
 import SecretTextBox from "../../components/SecretTextBox";
+import FormDialog from "../../components/Dialogs/FormDialog";
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
 import { ApiConfig } from "../../config/ApiConfig";
 import ProvincePricesTable from "./ProvincePricesTable";
-import { Theme } from "@mui/material/styles";
 
 interface SettingsData {
     internal_code: string;
@@ -17,64 +17,57 @@ interface SettingsData {
     symphony: string;
 }
 
-const labelSx = {
-    typography: "body2",
-    fontWeight: 600,
-    color: "text.primary",
-    mb: 0.75,
-};
-
-const readOnlyInputSx = {
-    "& .MuiInputBase-input.Mui-disabled": {
-        WebkitTextFillColor: (theme: Theme) => theme.palette.text.primary,
-    },
-};
+const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+    <>
+        <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
+        <Typography component="dd" variant="body2" sx={{ m: 0, minWidth: 0, overflowWrap: "anywhere" }}>{children || "—"}</Typography>
+    </>
+);
 
 const Settings = () => {
     const { projectId, project: selectedProject, refreshProject } = useProjectContext();
+    const { showToast } = useToast();
 
     const { user } = useAuth();
     const canEdit = hasRole(user?.role, ROLE_ACCESS.projectEditInfo);
 
+    const [ editOpen, setEditOpen ] = useState(false);
+    const [ formData, setFormData ] = useState<SettingsData>({ internal_code: '', project_name: '', symphony: '' });
+    const [ saving, setSaving ] = useState(false);
+    const [ saveError, setSaveError ] = useState<string | null>(null);
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState<SettingsData>({ internal_code: '', project_name: '', symphony: '' });
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        if (!selectedProject) return;
-        setFormData({
-            internal_code: selectedProject.internal_code ?? '',
-            project_name: selectedProject.project_name ?? '',
-            symphony: selectedProject.symphony ?? '',
-        });
-    }, [selectedProject]);
-
-    const handleCancel = () => {
+    const openEdit = () => {
         setFormData({
             internal_code: selectedProject?.internal_code ?? '',
             project_name: selectedProject?.project_name ?? '',
             symphony: selectedProject?.symphony ?? '',
         });
-        setIsEditing(false);
+        setSaveError(null);
+        setEditOpen(true);
     };
 
     const handleSave = async () => {
         setSaving(true);
+        setSaveError(null);
         try {
             const token = localStorage.getItem('authToken');
             const url = ApiConfig.project.updateProjectInfo.replace('{projectId}', projectId.toString());
             await axios.put(url, formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setIsEditing(false);
+            setEditOpen(false);
+            showToast("Project information saved.");
             await refreshProject();
         } catch (error) {
-            console.error(error);
+            const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+            setSaveError(message || "The changes were not saved. Please try again.");
         } finally {
             setSaving(false);
         }
     };
+
+    const update = (field: keyof SettingsData) => (event: React.ChangeEvent<HTMLInputElement>) =>
+        setFormData(prev => ({ ...prev, [field]: event.target.value }));
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -88,88 +81,41 @@ const Settings = () => {
                     backgroundColor: "background.paper",
                 }}
             >
-                {/* Section header */}
                 <Box
                     sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 2,
                         px: 2.5,
                         py: 1.5,
                         borderBottom: 1,
                         borderColor: "divider",
                     }}
                 >
-                    <Typography variant="h2">
-                        Project Information
+                    <Typography variant="h2" component="h2">
+                        Project information
                     </Typography>
+                    {canEdit && (
+                        <Button variant="outlined" color="inherit" size="small" startIcon={<EditOutlinedIcon />} onClick={openEdit} disabled={!selectedProject}>
+                            Edit
+                        </Button>
+                    )}
                 </Box>
 
-                {/* Form fields */}
                 <Box sx={{ p: 2.5 }}>
-                    <Grid container spacing={2.5}>
-                        <Grid item xs={12} sm={6} md={4}>
-                            <Typography sx={labelSx}>Internal Code</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                value={formData.internal_code}
-                                disabled={!isEditing}
-                                onChange={(e) =>
-                                    setFormData(prev => ({ ...prev, internal_code: e.target.value }))
-                                }
-                                sx={readOnlyInputSx}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                            <Typography sx={labelSx}>Project Name</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                value={formData.project_name}
-                                disabled={!isEditing}
-                                onChange={(e) =>
-                                    setFormData(prev => ({ ...prev, project_name: e.target.value }))
-                                }
-                                sx={readOnlyInputSx}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                            <Typography sx={labelSx}>Symphony</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                value={formData.symphony}
-                                disabled={!isEditing}
-                                onChange={(e) =>
-                                    setFormData(prev => ({ ...prev, symphony: e.target.value }))
-                                }
-                                sx={readOnlyInputSx}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <SecretTextBox label="Token" value={selectedProject?.remember_token || ""} />
-                        </Grid>
-                    </Grid>
+                    <Box
+                        component="dl"
+                        sx={{ m: 0, mb: 2.5, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "160px 1fr" }, columnGap: 2, rowGap: 1.25 }}
+                    >
+                        <InfoRow label="Project name">{selectedProject?.project_name}</InfoRow>
+                        <InfoRow label="Internal code">{selectedProject?.internal_code}</InfoRow>
+                        <InfoRow label="Symphony">{selectedProject?.symphony}</InfoRow>
+                    </Box>
+                    <Box sx={{ maxWidth: 560 }}>
+                        <SecretTextBox label="Token" value={selectedProject?.remember_token || ""} />
+                    </Box>
                 </Box>
-
-                {canEdit && (
-                    <>
-                        <Divider />
-                        <Box sx={{ px: 2.5, py: 1.5, display: "flex", gap: 1 }}>
-                            <Button
-                                variant="contained"
-                                startIcon={!isEditing ? <EditOutlinedIcon /> : <SaveOutlinedIcon />}
-                                disabled={saving}
-                                onClick={() => (!isEditing ? setIsEditing(true) : handleSave())}
-                            >
-                                {!isEditing ? "Edit" : saving ? "Saving..." : "Save"}
-                            </Button>
-                            {isEditing && (
-                                <Button onClick={handleCancel} disabled={saving}>
-                                    Cancel
-                                </Button>
-                            )}
-                        </Box>
-                    </>
-                )}
             </Paper>
 
             <Box component="section" aria-labelledby="province-prices-title">
@@ -181,6 +127,22 @@ const Settings = () => {
                 </Typography>
                 <ProvincePricesTable projectId={projectId} canEdit={canEdit} />
             </Box>
+
+            <FormDialog
+                open={editOpen}
+                title="Edit project information"
+                error={saveError}
+                onClose={() => setEditOpen(false)}
+                onSubmit={handleSave}
+                submitDisabled={!formData.project_name.trim()}
+                loading={saving}
+            >
+                <Stack spacing={2}>
+                    <TextField autoFocus required size="small" label="Project name" value={formData.project_name} onChange={update("project_name")} />
+                    <TextField size="small" label="Internal code" value={formData.internal_code} onChange={update("internal_code")} />
+                    <TextField size="small" label="Symphony" value={formData.symphony} onChange={update("symphony")} />
+                </Stack>
+            </FormDialog>
         </Box>
     );
 };

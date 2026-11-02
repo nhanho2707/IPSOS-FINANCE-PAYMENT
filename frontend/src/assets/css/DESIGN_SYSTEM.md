@@ -275,6 +275,24 @@ Menu khai báo trong config, không viết trong component:
 - Nút của trang (Import, Add…) đặt trong `<ProjectPageActions>`: component này portal nút vào header của layout, nút vẫn dùng state và handler của trang.
 - Cần dữ liệu dự án thì dùng `useProjectContext()` (`projectId`, `project`, `refreshProject`); trang con không tự hiển thị lại tên dự án.
 - Dự án bị disable: header hiện `Alert` thông tin.
+- **Overview** (`pages/Project/Overview.tsx`) là trang đầu tiên của mọi vai trò khi mở dự án. Mỗi thẻ chỉ tải dữ liệu mà vai trò đó được đọc (`useProjectOverview`): thống kê giao dịch cho Admin, Finance, Scripter; số quà theo trạng thái cho Admin; báo giá cho Admin, Researcher, Field Manager. Thẻ không tải được thì ghi "Not available right now" thay vì làm hỏng cả trang.
+
+### Thẻ số liệu, nhà cung cấp, ô hai dòng
+
+| Component | Dùng cho |
+|---|---|
+| `StatCard` | Một con số chính: `label`, `value` (h1, tabular), `caption`, `tone` (`warning`/`danger` chỉ khi cần chú ý), `action` góc phải (chip cảnh báo), `children` (thanh tiến độ, link) |
+| `ProviderBadge` | Kênh Vinnet / GotIt / Other với màu cố định (`PROVIDER_STYLES` trong `ThemeConfig.ts`: Vinnet teal, GotIt navy). Dùng cùng màu cho badge, thẻ số dư và biểu đồ |
+| `CellStack` | Ô hai dòng trong bảng: dòng chính 13px/500, dòng phụ 12px `text.secondary` ("Tên" trên "mã · Symphony", "mã đáp viên" trên "số điện thoại") |
+| `SampleProgress` | Tiến độ mẫu: số đã có / mục tiêu, %, thanh màu teal; cam kèm "behind" khi dự án đang field mà % hoàn thành thấp hơn phần thời gian field đã qua quá 10 điểm; xanh khi đạt 100% |
+| `UserAvatar` | Chữ cái đầu trên nền tone cố định theo tên (cùng người luôn cùng màu) |
+| `DateRangeField` | Một ô chọn khoảng ngày (preset tháng này, tháng trước, 30 ngày) thay cho hai ô From/To |
+
+Ngưỡng "Low balance" và số ngày dùng để ước tính số dư còn dùng được bao lâu nằm trong `src/config/FinanceConfig.ts`.
+
+#### Trạng thái quà (Gifts)
+
+Backend gom trạng thái lưu trong DB thành bốn nhóm (`ProjectRespondent::giftStatus`): `pending` (Pending), `success` (Sent), `refused` (Refused) và `failed` (mọi trạng thái khác, kể cả lỗi nhà cung cấp). Tab trạng thái trên Gifts và Projects lấy số đếm từ `meta.status_counts` của API, đếm theo từ khoá tìm kiếm hiện tại. Quà lỗi hiện lý do ngay dưới chip và không gửi lại được từ trang này.
 
 ### Dialog, drawer và thông báo
 

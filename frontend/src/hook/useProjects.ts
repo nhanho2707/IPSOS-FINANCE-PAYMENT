@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
-import { CloneProjectPayload, ProjectData } from "../config/ProjectFieldsConfig";
-import dayjs, { Dayjs } from "dayjs";
+import { CloneProjectPayload, ProjectData, ProjectStatusCounts } from "../config/ProjectFieldsConfig";
+import { Dayjs } from "dayjs";
 import { ActionState } from "../components/Table/ReusableTable";
 
 export function useProjects() {
@@ -20,9 +20,12 @@ export function useProjects() {
     const [ rowsPerPage, setRowsPerPage ] = useState(10);
     const [ searchTerm, setSearchTerm ] = useState("");
 
-    // null on both ends means any field start date.
-    const [ searchFromDate, setSearchFromDate ] = useState<Dayjs | null>(dayjs().startOf("year"));
-    const [ searchToDate, setSearchToDate ] = useState<Dayjs | null>(dayjs().endOf("year"));
+    // null on both ends means any field start date; the status tabs and the ordering
+    // (in field first) already keep the list focused without hiding last year's projects.
+    const [ searchFromDate, setSearchFromDate ] = useState<Dayjs | null>(null);
+    const [ searchToDate, setSearchToDate ] = useState<Dayjs | null>(null);
+    const [ statusFilter, setStatusFilter ] = useState<string>("all");
+    const [ statusCounts, setStatusCounts ] = useState<ProjectStatusCounts | null>(null);
 
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0); //Tổng số projects từ backend
@@ -50,6 +53,7 @@ export function useProjects() {
                     page: page + 1,        // Laravel dùng page = 1,2,3...
                     perPage: rowsPerPage,
                     searchTerm: searchTerm,
+                    ...(statusFilter !== "all" && { status: statusFilter }),
                     ...(searchFromDate && searchToDate && {
                         searchFromDate: searchFromDate.format("YYYY-MM-DD"),
                         searchToDate: searchToDate.format("YYYY-MM-DD")
@@ -60,6 +64,7 @@ export function useProjects() {
             setProjects(response.data.data);
             setMeta(response.data.meta);
             setTotal(response.data.meta.total);
+            setStatusCounts(response.data.meta.status_counts ?? null);
 
             setActionState((prev) => ({
                 ...prev,
@@ -94,7 +99,7 @@ export function useProjects() {
             }
         }; 
 
-    }, [page, rowsPerPage, searchTerm, searchFromDate, searchToDate, showDisabled]);
+    }, [page, rowsPerPage, searchTerm, searchFromDate, searchToDate, showDisabled, statusFilter]);
 
     const addProject = useCallback(async (payload: Partial<ProjectData>) => {
         setActionState({ type: 'add', loading: true, error: false, message: '' });
@@ -298,5 +303,8 @@ export function useProjects() {
         assignUsers,
         showDisabled,
         setShowDisabled,
+        statusFilter,
+        setStatusFilter,
+        statusCounts,
     };
 }

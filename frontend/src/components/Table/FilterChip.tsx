@@ -80,6 +80,15 @@ export interface DateRangePreset {
     to: Dayjs;
 }
 
+export const recentPresets = (): DateRangePreset[] => {
+    const now = dayjs();
+    return [
+        { label: "This month", from: now.startOf("month"), to: now.endOf("month") },
+        { label: "Last month", from: now.subtract(1, "month").startOf("month"), to: now.subtract(1, "month").endOf("month") },
+        { label: "Last 30 days", from: now.subtract(29, "day").startOf("day"), to: now.endOf("day") },
+    ];
+};
+
 export const yearPresets = (): DateRangePreset[] => {
     const now = dayjs();
     return [
@@ -89,7 +98,7 @@ export const yearPresets = (): DateRangePreset[] => {
     ];
 };
 
-const DateRangeForm: React.FC<{
+export const DateRangeForm: React.FC<{
     from: Dayjs | null;
     to: Dayjs | null;
     presets: DateRangePreset[];

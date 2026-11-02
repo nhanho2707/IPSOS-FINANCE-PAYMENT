@@ -1,21 +1,17 @@
-# Dockerfile for React
-FROM node:18-alpine
+# Front-end (React + Vite). Vite 8 needs Node 20.19+ or 22.12+.
+FROM node:22-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
-# Copy rest of the code
 COPY . .
 
-# Build the React app for production
+# Type-checks and bundles, so a broken build fails the image instead of the running container.
 RUN npm run build
 
-# Expose the port your app will run on
 EXPOSE 3000
 
-# Define the command to run the app
+# Vite dev server on 0.0.0.0:3000 (see vite.config.mts), as with the previous Create React App setup.
 CMD ["npm", "start"]

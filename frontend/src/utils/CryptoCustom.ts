@@ -1,8 +1,7 @@
 // utils/crypto.ts
 import JSEncrypt from 'jsencrypt';
-import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
-import { KJUR, KEYUTIL } from 'jsrsasign';
+import { KJUR, KEYUTIL, hextob64 } from 'jsrsasign';
 
 /**
  * Function to generate a signature
@@ -14,9 +13,8 @@ export function generateSignature(data: string, privateKey: string): string {
     const sig = new KJUR.crypto.Signature({ alg: 'SHA256withRSA' });
     sig.init(privateKey);
     sig.updateString(data);
-    const signature = sig.sign();
-    const buffer = Buffer.from(signature, 'hex'); // Convert hex to Buffer
-    return buffer.toString('base64'); // Encode Buffer to base64
+    // jsrsasign converts hex to base64 itself, so the browser bundle needs no Node Buffer polyfill.
+    return hextob64(sig.sign());
 }
 
 /**

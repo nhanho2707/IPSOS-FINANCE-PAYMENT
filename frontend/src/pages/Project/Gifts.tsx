@@ -1,7 +1,7 @@
 import { Box, Button, Checkbox, IconButton, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData } from "../../config/OfflineProjectRespondentFieldsConfig";
+import { OFFLINE_RESPONDENT_IMPORT_COLUMNS, OfflineGiftBulkSendResult, OfflineProjectRespondentCellConfig, OfflineProjectRespondentData, OfflineProjectRespondentImportData, toImportRow } from "../../config/OfflineProjectRespondentFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import SearchTextBox from "../../components/SearchTextBox";
 import ReusableTable from "../../components/Table/ReusableTable";
@@ -365,11 +365,31 @@ const Gifts: React.FC = () => {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
 
-            const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, {
+            const sheetRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
                 defval: ""
             });
 
-            if (!jsonData.length) {
+            const headers = sheetRows.length ? Object.keys(sheetRows[0]) : [];
+
+            const missingColumns = OFFLINE_RESPONDENT_IMPORT_COLUMNS.filter(
+                col => !headers.includes(col)
+            );
+
+            if (sheetRows.length && missingColumns.length > 0) {
+                openDialog({
+                    title: "Import Respondents Failed",
+                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            // Formatted-but-empty rows at the bottom of a long sheet still come back from sheet_to_json.
+            const rows = sheetRows
+                .map(toImportRow)
+                .filter(row => OFFLINE_RESPONDENT_IMPORT_COLUMNS.some(col => row[col] !== ""));
+
+            if (!rows.length) {
                 openDialog({
                     title: "Import Respondents Failed",
                     message: 'The file has no data.',
@@ -378,26 +398,7 @@ const Gifts: React.FC = () => {
                 return;
             }
 
-            const REQUIRED_COLUMNS = [
-                "InstanceID",	"Shell_ChainID", "SamplePoint",	"Province",	"InterviewerID", "RespondentPhoneNumber", "PhoneNumber", "Email", "PriceLevel", "Channel"
-            ]
-
-            const hearders = Object.keys(jsonData[0]);
-
-            const missingColumns = REQUIRED_COLUMNS.filter(
-                col => !hearders.includes(col)
-            );
-
-            if(missingColumns.length > 0){
-                openDialog({
-                    title: "Import Respondents Failed",
-                    message: `The file is missing required columns: ${missingColumns.join(", ")}`,
-                    showConfirmButton: false
-                });
-                return;
-            }
-            
-            await importRespondents(jsonData);
+            await importRespondents(rows);
         } catch (error) {
             console.error("Import error:", error);
         } finally {
@@ -406,18 +407,18 @@ const Gifts: React.FC = () => {
 
     };
 
-    const importRespondents = async (rows:  OfflineProjectRespondentImportData[]) => {
+    const importRespondents = async (rows: OfflineProjectRespondentImportData[]) => {
         const payload = rows.map(r => ({
-            instance_id: r.InstanceID.toString(),
-            shell_chainid: r.Shell_ChainID.toString(),
-            location_id: r.SamplePoint.toString(),
-            province_name: r.Province.toString(),
-            employee_id: r.InterviewerID.toString(),
-            respondent_phone_number: r.RespondentPhoneNumber.toString() ?? null,
-            phone_number: r.PhoneNumber.toString() ?? null,
-            email: r.Email.toString() ?? null,
-            price_level: r.PriceLevel.toString() ?? null,
-            channel: r.Channel.toString() ?? null
+            instance_id: r.InstanceID,
+            shell_chainid: r.Shell_ChainID,
+            location_id: r.SamplePoint,
+            province_name: r.Province,
+            employee_id: r.InterviewerID,
+            respondent_phone_number: r.RespondentPhoneNumber,
+            phone_number: r.PhoneNumber,
+            email: r.Email,
+            price_level: r.PriceLevel,
+            channel: r.Channel
         }));
 
         await importOfflineProjectRespondents(payload);

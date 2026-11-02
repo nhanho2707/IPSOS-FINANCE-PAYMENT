@@ -99,7 +99,7 @@ const Projects = () => {
       name: "sample_size",
       type: "string",
       align: "left",
-      width: 132,
+      width: 124,
       renderCell: (row: ProjectData) => {
         const completed = row.count_respondents ?? 0;
         const target = row.provinces?.reduce((sum: number, p: ProvinceData) => {
@@ -129,7 +129,7 @@ const Projects = () => {
       name: "status",
       type: "string",
       align: "left",
-      width: 140,
+      width: 136,
       renderCell: (row: ProjectData) => {
         return (
           <StatusDropdown
@@ -146,7 +146,7 @@ const Projects = () => {
       name: "disabled",
       type: "boolean" as const,
       align: "left" as const,
-      width: 80,
+      width: 72,
       renderCell: (row: ProjectData) => (
         <Tooltip title={row.disabled ? "Disabled — click to enable" : "Active — click to disable"}>
           <Switch
@@ -164,7 +164,7 @@ const Projects = () => {
       name: "action",
       type: "menu",
       align: "center",
-      width: 120,
+      width: 96,
       renderCell: (row: ProjectData) => {
         return (
           <Box

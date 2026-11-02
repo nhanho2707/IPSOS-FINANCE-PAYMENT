@@ -3,7 +3,6 @@ import { Alert, Box, Button, Card, CardContent, Grid, MenuItem, TextField, Typog
 import dayjs, { Dayjs } from "dayjs";
 import numeral from "numeral";
 import { TransactionChannel, useTransactionStatistics } from "../hook/useTransactionStatistics";
-import BarChartWidget from "../pages/TechcombankPanel/widgets/BarChartWidget";
 import HourlyHistogramChart from "./Charts/HourlyHistogramChart";
 import SearchDatePickerFromTo from "./SearchDatePickerFromTo";
 import ReusableTable from "./Table/ReusableTable";
@@ -17,10 +16,7 @@ const CHANNEL_LABELS: Record<TransactionChannel, string> = {
 
 const CHANNELS = Object.keys(CHANNEL_LABELS) as TransactionChannel[];
 
-const toChartData = (buckets: Record<string, number> | undefined, order: string[]) =>
-  order.map((name) => ({ name, value: buckets?.[name] ?? 0 }));
-
-// An all-zero day is sent as empty so the chart shows its "no data" state instead of 24 flat bars.
+// All-zero buckets are sent as empty so the chart shows its "no data" state instead of flat bars.
 const toHistogramData = (buckets: Record<string, number> | undefined) => {
   const data = Object.entries(buckets ?? {}).map(([name, value]) => ({ name, value }));
   return data.some((d) => d.value > 0) ? data : [];
@@ -51,7 +47,7 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, caption, color = "inherit" }) => (
-  <Card sx={{ height: "100%" }}>
+  <Card variant="outlined" sx={{ height: "100%" }}>
     <CardContent>
       <Typography color="text.secondary" gutterBottom>
         {label}
@@ -110,8 +106,6 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
   const gapUnknown = statistics?.gap_unknown ?? 0;
   const gapOffline = statistics?.gap_offline ?? 0;
   const toleranceText = statistics ? ` > ${statistics.anomaly_tolerance_minutes} min` : "";
-  // The backend owns the bucket labels (they embed the tolerance), and sends them in display order.
-  const gapOrder = Object.keys(statistics?.gap_buckets ?? {});
   const measuredTotal = total - gapUnknown - gapOffline;
   const gapExcludedCaption = [
     gapUnknown > 0 ? `${gapUnknown} interviews missing an end time` : null,
@@ -131,15 +125,16 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       .join(" · ");
 
   const anomalyColumns: ColumnFormat[] = [
-    { label: "Respondent ID", name: "respondent_id", type: "string" },
-    { label: "Phone", name: "phone", type: "string" },
+    { label: "Respondent ID", name: "respondent_id", type: "string", width: 112 },
+    { label: "Phone", name: "phone", type: "string", width: 116 },
     {
       label: "Channel",
       name: "channel",
       type: "string",
+      width: 84,
       renderCell: (row) => CHANNEL_LABELS[row.channel as TransactionChannel] ?? row.channel
     },
-    { label: "Interviewer ID", name: "employee_id", type: "string" },
+    { label: "Interviewer ID", name: "employee_id", type: "string", width: 112 },
     { label: "PVV", name: "employee_name", type: "string" },
     {
       label: "Interview ended",
@@ -158,6 +153,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       name: "amount",
       type: "number",
       align: "right",
+      width: 96,
       renderCell: (row) => formatAmount(row.amount)
     },
     {
@@ -165,6 +161,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
       name: "gap_minutes",
       type: "number",
       align: "right",
+      width: 88,
       renderCell: (row) => (
         <Typography component="span" color="error" fontWeight={600} fontSize="inherit">
           {formatMinutes(row.gap_minutes)}
@@ -266,11 +263,11 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
           />
         </Grid>
         <Grid item xs={12}>
-          <BarChartWidget
+          {/* The backend owns the bucket labels (they embed the tolerance) and sends them in display order. */}
+          <HourlyHistogramChart
             title="Gap: interview end → gift received"
-            data={toChartData(statistics?.gap_buckets, gapOrder)}
-            sorted={false}
-            sortedList={gapOrder}
+            data={toHistogramData(statistics?.gap_buckets)}
+            valueLabel="Gifts received"
           />
         </Grid>
       </Grid>

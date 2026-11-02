@@ -89,6 +89,8 @@ type Props = {
 
 const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
     const [rows, setRows] = useState<PriceRow[]>([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -447,12 +449,25 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
         }
     };
 
+    // All prices arrive in one response, so the table pages through them locally.
+    const lastPage = Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1);
+    const currentPage = Math.min(page, lastPage);
+    const pagedRows = rows.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
+
     return (
         <Box>
             <ReusableTable
                 columns={columns}
-                data={rows}
+                data={pagedRows}
                 actionStatus={{ ...actionState, loading }}
+                total={rows.length}
+                page={currentPage}
+                rowsPerPage={rowsPerPage}
+                onPageChange={(_event, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                    setRowsPerPage(parseInt(event.target.value, 10));
+                    setPage(0);
+                }}
                 topToolbar={
                     <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
                         {canEdit && (
@@ -466,7 +481,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                         )}
                         {canEdit && (
                             <Button
-                                variant="contained"
+                                variant="outlined"
+                                color="inherit"
                                 startIcon={<FileUploadIcon />}
                                 disabled={importing}
                                 onClick={() => fileInputRef.current?.click()}
@@ -475,7 +491,8 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
                             </Button>
                         )}
                         <Button
-                            variant="contained"
+                            variant="outlined"
+                            color="inherit"
                             startIcon={<FileDownloadIcon />}
                             onClick={handleExport}
                         >

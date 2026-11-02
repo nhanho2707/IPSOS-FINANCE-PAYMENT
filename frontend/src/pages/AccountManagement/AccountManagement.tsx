@@ -85,7 +85,7 @@ const AccountManagement = () => {
             label: "Status",
             name: "is_active",
             type: "string",
-            width: 170,
+            width: 184,
             renderCell: (row: AccountData) => (
                 <Stack direction="row" spacing={0.5}>
                     <Chip
@@ -121,7 +121,7 @@ const AccountManagement = () => {
             name: "action",
             type: "menu",
             align: "center",
-            width: 180,
+            width: 172,
             renderCell: (row: AccountData) => (
                 <Stack direction="row" spacing={1} justifyContent="center">
                     <Tooltip title="Edit Role & Department">

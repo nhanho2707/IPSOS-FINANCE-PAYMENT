@@ -70,13 +70,13 @@ export const OfflineProjectRespondentCellConfig: ColumnFormat[] = [
         label: "Resp. Phone",
         name: "respondent_phone_number",
         type: "string",
-        flex: 1.5
+        flex: 2
     },
     {
         label: "Phone",
         name: "phone_number",
         type: "string",
-        flex: 1.5
+        flex: 2
     },
     {
         label: "Email",
@@ -88,13 +88,13 @@ export const OfflineProjectRespondentCellConfig: ColumnFormat[] = [
         label: "Price Level",
         name: "price_level",
         type: "string",
-        flex: 1.5
+        flex: 1.2
     },
     {
         label: "Channel",
         name: "channel",
         type: "string",
-        flex: 1.5
+        flex: 1.2
     }
 ];
 

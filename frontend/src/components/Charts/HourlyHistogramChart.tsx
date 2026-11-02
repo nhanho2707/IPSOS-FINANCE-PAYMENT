@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import { Card, CardContent, CardHeader } from '@mui/material';
+import { BRAND } from '../../config/ThemeConfig';
 
 interface HistogramDatum {
     name: string;
@@ -140,7 +141,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
                 innerHeight - yScale(d.value),
                 4
             ))
-            .attr('fill', 'var(--main-color)')
+            .attr('fill', BRAND.accent)
             .style('cursor', 'pointer');
 
         bars.on('pointerenter pointermove', function (event, d) {
@@ -155,7 +156,7 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
                 .html(`
                     <div style="font-weight:600;margin-bottom:4px;">${d.name}</div>
                     <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-                        <span style="width:8px;height:8px;border-radius:2px;background:var(--main-color);display:inline-block;flex-shrink:0;"></span>
+                        <span style="width:8px;height:8px;border-radius:2px;background:${BRAND.accent};display:inline-block;flex-shrink:0;"></span>
                         <span>${valueLabel}</span>
                         <strong style="margin-left:8px;">${d.value}</strong>
                     </div>
@@ -179,8 +180,8 @@ const HourlyHistogramChart: React.FC<HourlyHistogramChartProps> = ({ title, data
     }, [data, valueLabel, width]);
 
     return (
-        <Card>
-            <CardHeader title={title} sx={{ color: 'var(--font-secondary)' }} />
+        <Card variant="outlined">
+            <CardHeader title={title} titleTypographyProps={{ variant: 'h2' }} />
             <CardContent>
                 <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
                     <svg

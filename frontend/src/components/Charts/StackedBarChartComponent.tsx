@@ -1,5 +1,4 @@
 // src/components/StackedBarChart.tsx
-import "../../assets/css/techcombank.css";
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 

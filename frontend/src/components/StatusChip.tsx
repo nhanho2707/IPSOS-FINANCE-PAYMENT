@@ -56,7 +56,6 @@ const StatusChip: React.FC<StatusChipProps> = ({
       sx={{
         maxWidth: maxWidth ?? "100%",
         height: 24,
-        fontSize: "0.75rem",
         color: colors.fg,
         backgroundColor: colors.bg,
         "& .MuiChip-icon": { ml: 1, mr: -0.25 },

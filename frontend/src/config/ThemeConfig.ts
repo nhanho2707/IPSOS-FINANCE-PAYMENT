@@ -1,10 +1,24 @@
 import { alpha, createTheme } from "@mui/material/styles";
 
 export const BRAND = {
-  main: "#009d9c",
-  dark: "#007a79",
-  light: "#4dbab9",
+  accent: "#009d9c", // charts, focus rings, selection marks: 3.3:1 on white, so never for small text
+  main: "#007a79", // filled buttons and links: white text on it is 5.2:1 (WCAG AA)
+  dark: "#00605f",
+  soft: "#e6f5f5",
   navy: "#2f469c",
+} as const;
+
+export const NEUTRAL = {
+  0: "#ffffff",
+  50: "#f6f7f9",
+  100: "#f2f4f7",
+  200: "#e4e7ec",
+  300: "#d0d5dd",
+  400: "#98a2b3",
+  500: "#667085",
+  600: "#475467",
+  700: "#344054",
+  900: "#101828",
 } as const;
 
 export type StatusTone = "neutral" | "info" | "brand" | "success" | "warning" | "danger";
@@ -19,7 +33,7 @@ export interface StatusToneColors {
 export const STATUS_TONES: Record<StatusTone, StatusToneColors> = {
   neutral: { bg: "#eceff1", fg: "#455a64", dot: "#78909c" },
   info:    { bg: "#e3f2fd", fg: "#0d47a1", dot: "#1e88e5" },
-  brand:   { bg: "#e0f4f4", fg: "#00605f", dot: BRAND.main },
+  brand:   { bg: "#e0f4f4", fg: "#00605f", dot: BRAND.accent },
   success: { bg: "#e8f5e9", fg: "#1b5e20", dot: "#43a047" },
   warning: { bg: "#fff3e0", fg: "#8a4500", dot: "#ef6c00" },
   danger:  { bg: "#fdecea", fg: "#b71c1c", dot: "#e53935" },
@@ -51,16 +65,19 @@ export const getStatusTone = (
   return toneMap[status] ?? toneMap[status.trim().toLowerCase()] ?? "neutral";
 };
 
-const FONT_FAMILY = '"Roboto", "Helvetica", "Arial", sans-serif';
+const FONT_FAMILY = '"Inter", "Helvetica", "Arial", sans-serif';
 
-// html is 14px (global.css) and MUI's default htmlFontSize is 16, so MUI rem values
-// already render at the sizes in DESIGN_SYSTEM.md. Changing htmlFontSize would enlarge every MUI text by ~14%.
+// html is 14px (global.css) while MUI's pxToRem assumes 16px. The variants below are sized against the
+// real root, so variant="body2" renders exactly 13px. MUI's internal sizes and the h4–h6/subtitle variants
+// keep their current rendering, which keeps the respondent pages and client dashboards unchanged.
+const rem = (px: number) => `${Number((px / 14).toFixed(4))}rem`;
+
 export const appTheme = createTheme({
   palette: {
     primary: {
       main: BRAND.main,
       dark: BRAND.dark,
-      light: BRAND.light,
+      light: BRAND.accent,
       contrastText: "#ffffff",
     },
     secondary: {
@@ -72,20 +89,24 @@ export const appTheme = createTheme({
     error: { main: "#d32f2f" },
     info: { main: "#0288d1" },
     text: {
-      primary: "#212121",
-      secondary: "#707070",
+      primary: NEUTRAL[900],
+      secondary: NEUTRAL[600],
     },
+    divider: NEUTRAL[200],
     background: {
-      default: "#ffffff",
-      paper: "#ffffff",
+      default: NEUTRAL[50],
+      paper: NEUTRAL[0],
     },
   },
   typography: {
     fontFamily: FONT_FAMILY,
-    button: {
-      textTransform: "none",
-      fontWeight: 500,
-    },
+    h1: { fontSize: rem(22), lineHeight: rem(28), fontWeight: 600, letterSpacing: "-0.01em" },
+    h2: { fontSize: rem(16), lineHeight: rem(24), fontWeight: 600, letterSpacing: 0 },
+    h3: { fontSize: rem(14), lineHeight: rem(20), fontWeight: 600, letterSpacing: 0 },
+    body2: { fontSize: rem(13), lineHeight: rem(18) },
+    caption: { fontSize: rem(12), lineHeight: rem(16) },
+    overline: { fontSize: rem(11), lineHeight: rem(16), fontWeight: 600, letterSpacing: "0.06em" },
+    button: { fontSize: rem(13), fontWeight: 500, textTransform: "none" },
   },
   shape: {
     borderRadius: 8,
@@ -95,18 +116,95 @@ export const appTheme = createTheme({
       defaultProps: {
         disableElevation: true,
       },
+      styleOverrides: {
+        // Secondary actions: <Button variant="outlined" color="inherit">
+        outlinedInherit: {
+          borderColor: NEUTRAL[300],
+          color: NEUTRAL[700],
+          "&:hover": { borderColor: NEUTRAL[300], backgroundColor: NEUTRAL[50] },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          backgroundColor: theme.palette.background.paper,
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: NEUTRAL[300] },
+          "&:hover:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline": {
+            borderColor: NEUTRAL[400],
+          },
+          "&.Mui-focused": { boxShadow: `0 0 0 3px ${alpha(BRAND.accent, 0.18)}` },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: BRAND.accent, borderWidth: 1 },
+          "&.Mui-error.Mui-focused": { boxShadow: `0 0 0 3px ${alpha(theme.palette.error.main, 0.16)}` },
+          "&.Mui-error .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.error.main },
+        }),
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          fontSize: rem(13),
+          borderColor: NEUTRAL[200],
+        },
+        head: {
+          fontSize: rem(12),
+          fontWeight: 600,
+          color: NEUTRAL[600],
+          backgroundColor: NEUTRAL[50],
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&.MuiTableRow-hover:hover": { backgroundColor: NEUTRAL[50] },
+          "&.Mui-selected, &.Mui-selected:hover": { backgroundColor: BRAND.soft },
+        },
+      },
     },
     MuiChip: {
       styleOverrides: {
         root: {
           fontWeight: 500,
         },
+        sizeSmall: {
+          fontSize: rem(12),
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          backgroundColor: NEUTRAL[900],
+          height: 2,
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          minHeight: 44,
+          minWidth: 0,
+          paddingInline: 2,
+          marginRight: 24,
+          color: NEUTRAL[600],
+          "&.Mui-selected": { color: NEUTRAL[900] },
+        },
       },
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: 12,
+          borderRadius: 14,
+          boxShadow: `0 24px 48px -12px ${alpha(NEUTRAL[900], 0.18)}`,
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontSize: rem(16),
+          fontWeight: 600,
         },
       },
     },
@@ -121,7 +219,7 @@ export const appTheme = createTheme({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          fontSize: "0.75rem",
+          fontSize: rem(12),
         },
       },
     },
@@ -143,6 +241,9 @@ export const themeCssVariables: Record<string, string> = {
   "--main-color": BRAND.main,
   "--main-color-dark": BRAND.dark,
   "--text-forth-color": BRAND.main,
+  "--canvas-color": NEUTRAL[50],
+  "--text-color": NEUTRAL[900],
+  "--text-primary-color": NEUTRAL[600],
   ...toneVariables,
   "--status-cancelled-color": STATUS_TONES.danger.fg,
 };

@@ -7,6 +7,7 @@ import logo from "../../assets/img/Ipsos logo.png";
 import { ChevronLeft, ChevronRight, FolderOpen, Logout, ManageAccounts, Payments } from "@mui/icons-material";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasRole, Role, ROLE_ACCESS } from "../../config/RoleConfig";
+import { MOBILE_MEDIA_QUERY } from "./MobileNavToggle";
 
 interface SideBarProps {
   isOpen: boolean;
@@ -46,7 +47,7 @@ const Sidebar: React.FC<SideBarProps> = ({ isOpen, toggleSidebar }) => {
   const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
     setIsSmallScreen(mediaQuery.matches);
 
     const handleResize = (e: MediaQueryListEvent) => {

@@ -10,11 +10,11 @@
 ### Font family
 
 ```css
-font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-/* Variable: var(--main-font) */
+font-family: "Inter", "Helvetica", "Arial", sans-serif;
+/* CSS: var(--main-font) · MUI: theme.typography.fontFamily */
 ```
 
-Không import hoặc sử dụng font khác. Roboto đã được load qua Google Fonts trong `global.css`.
+Inter được load qua Google Fonts trong `global.css` (có bộ ký tự tiếng Việt). Roboto vẫn được khai báo cho trang đáp viên và dashboard khách hàng đang gọi đích danh nó; code mới không dùng Roboto.
 
 ### Base font size
 
@@ -23,61 +23,75 @@ html { font-size: 14px; }   /* root — tất cả rem tính từ đây */
 body { font-size: 1rem; }   /* = 14px */
 ```
 
-Mọi giá trị `font-size` trong code nên dùng `rem` để scale đồng bộ khi base thay đổi.
-Chỉ dùng `px` khi cần override MUI (những chỗ đã dùng `!important`).
+MUI tính `pxToRem` theo root 16px, nên các variant bên dưới được khai báo theo root 14px thật bằng hàm `rem(px)` trong `ThemeConfig.ts`.
+Variant `h4`–`h6` và `subtitle1/2` giữ cách render cũ để không đổi trang đáp viên và dashboard khách hàng.
 
 ### Font scale
 
-| Token | rem | px tương đương | Dùng cho |
+Dùng variant của MUI (`<Typography variant="body2">` hoặc `sx={{ typography: "caption" }}`). Code mới không gõ `fontSize` bằng tay.
+
+| Variant | Cỡ / chiều cao dòng | Weight | Dùng cho |
 |---|---|---|---|
-| `xs` | `0.75rem` | ~10.5px | Badge, label phụ, caption |
-| `sm` | `0.8125rem` | ~11.4px | Table cell, table header |
-| `base` | `0.875rem` | ~12.3px | Body text, button, form input |
-| `md` | `1rem` | 14px | Sidebar section title, widget title |
-| `lg` | `1.0625rem` | ~14.9px | Page title (`.filter-title`), modal title |
-| `xl` | `1.25rem` | ~17.5px | Heading section |
-| `2xl` | `1.5rem` | 21px | Widget số liệu lớn (dashboard) |
+| `h1` | 22 / 28px | 600 | Tiêu đề trang |
+| `h2` | 16 / 24px | 600 | Tiêu đề section, card, biểu đồ |
+| `h3` | 14 / 20px | 600 | Tiêu đề nhóm nhỏ |
+| `body1` | 14px | 400 | Văn bản chính, input |
+| `body2` | 13 / 18px | 400 | Ô bảng, văn bản phụ, alert, phân trang |
+| `caption` | 12 / 16px | 400 | Meta, chú thích, chip nhỏ |
+| `overline` | 11 / 16px | 600, chữ hoa, +0.06em | Nhãn nhóm |
+| `button` | 13px | 500 | Nút, tab |
+
+Header bảng 12px / 600 / `text.secondary`, khai báo trong `MuiTableCell` của theme.
 
 ### Font weight
 
 | Weight | Dùng cho |
 |---|---|
-| `400` | Body text thông thường |
-| `500` | Button, label quan trọng |
-| `600` | Page title, section heading, active nav item |
-| `700` | Widget số liệu lớn |
+| `400` | Văn bản thường |
+| `500` | Nút, chip, label quan trọng |
+| `600` | Tiêu đề, header bảng, mục nav đang chọn |
+| `700` | Số liệu lớn (dashboard) |
 
-### Line height
-
-```css
-line-height: 1.5;   /* default body */
-line-height: 2.5rem; /* welcome section items — do legacy, không nhân rộng */
-```
-
----
+Cột tiền và số lượng: `fontVariantNumeric: "tabular-nums"`, căn phải. Tiền luôn định dạng bằng `formatMoney()` (`src/utils/format.ts`), ví dụ `500,000,000 ₫`.
 
 ## 2. Color Palette
 
 ### Brand
 
-| Variable | Hex | Dùng cho |
+| Token | Hex | Dùng cho |
 |---|---|---|
-| `--main-color` | `#009d9c` | Button primary, active nav, accent, icon màu chính |
-| `--main-color-dark` | `#007a79` | Hover của button primary |
+| `BRAND.main` · `primary.main` · `--main-color` | `#007a79` | Nút chính, link, chữ màu brand. Chữ trắng trên nền này đạt 5,2:1 (WCAG AA) |
+| `BRAND.dark` · `primary.dark` · `--main-color-dark` | `#00605f` | Hover, chữ trên nền teal nhạt |
+| `BRAND.accent` · `primary.light` | `#009d9c` | Biểu đồ, focus ring, dấu chọn. Chỉ 3,3:1 trên nền trắng nên không dùng cho chữ nhỏ |
+| `BRAND.soft` | `#e6f5f5` | Nền dòng được chọn |
+| `BRAND.navy` · `secondary.main` | `#2f469c` | Chuỗi dữ liệu thứ hai |
 
-Màu brand được định nghĩa trong `src/config/ThemeConfig.ts` (`BRAND`) và đưa vào MUI theme (`palette.primary`) lẫn biến CSS.
-Không dùng `#009d9c` hardcode — trong `sx` dùng `"primary.main"`, trong CSS dùng `var(--main-color)`.
-Button MUI: dùng `variant="contained"` (tự lấy màu primary), không cần override bằng `!important`.
+Màu brand định nghĩa trong `src/config/ThemeConfig.ts` (`BRAND`) và đưa vào MUI theme (`palette`) lẫn biến CSS.
+Không hardcode hex — trong `sx` dùng `"primary.main"`, trong CSS dùng `var(--main-color)`.
+Button MUI: dùng `variant="contained"` (tự lấy màu primary), không override bằng `!important`.
+
+### Neutral
+
+| `NEUTRAL` | Hex | Dùng cho |
+|---|---|---|
+| `0` | `#ffffff` | Card, input (`background.paper`) |
+| `50` | `#f6f7f9` | Nền khung app (`--canvas-color`, `background.default`), header bảng |
+| `100` | `#f2f4f7` | Hover |
+| `200` | `#e4e7ec` | Viền card, divider (`palette.divider`) |
+| `300` | `#d0d5dd` | Viền input, nút phụ |
+| `400` | `#98a2b3` | Placeholder, disabled (2,6:1, không dùng cho chữ cần đọc) |
+| `600` | `#475467` | Chữ phụ (`text.secondary`, `--text-primary-color`) |
+| `900` | `#101828` | Chữ chính (`text.primary`, `--text-color`) |
 
 ### Text
 
 | Variable | Giá trị | Dùng cho |
 |---|---|---|
-| `--text-color` | `#212121` | Text chính — heading, table value, label |
-| `--text-primary-color` | `#707070` | Text phụ — placeholder, mô tả, nav item |
+| `--text-color` | `#101828` (sinh từ `ThemeConfig.ts`) | Text chính — heading, table value, label |
+| `--text-primary-color` | `#475467` (sinh từ `ThemeConfig.ts`) | Text phụ — placeholder, mô tả, nav item |
 | `--text-secondary-color` | `#2f469c` | Text nhấn màu xanh dương (tag, link) |
 | `--text-third-color` | `#3948a4` | Variant xanh dương đậm hơn |
-| `--text-forth-color` | `#009d9c` | Text accent = brand color |
+| `--text-forth-color` | `#007a79` (sinh từ `ThemeConfig.ts`) | Text accent = brand color |
 | `--text-fifth-color` | `rgb(214,67,67)` | Text lỗi, cảnh báo |
 | `--text-sixth-color` | `#000000de` | Text đen chuẩn MUI (87% opacity) |
 
@@ -85,8 +99,9 @@ Button MUI: dùng `variant="contained"` (tự lấy màu primary), không cần 
 
 | Variable | Giá trị | Dùng cho |
 |---|---|---|
+| `--canvas-color` | `#f6f7f9` (sinh từ `ThemeConfig.ts`) | Nền khung app (`.wrapper`): card trắng nổi trên nền xám nhạt |
 | `--background-color` | `#ffffff` | Card, modal, sidebar, input |
-| `--body-color` | `rgb(238,242,246)` | Page background, row striped, button icon |
+| `--body-color` | `rgb(238,242,246)` | Nền phụ (icon button, khối nhỏ); code mới dùng `NEUTRAL` |
 
 ### Tonal / Interactive (dùng với opacity — không có variable riêng)
 
@@ -154,7 +169,8 @@ Không hardcode màu avatar trực tiếp — lấy từ variable theo index.
 | `0.375rem` (5px) | Badge nhỏ |
 | `8px` (`theme.shape.borderRadius`) | Button, input, chip và các component MUI khác |
 | `0.625rem` (9px) | Nav item, card row, sidebar-user |
-| `0.75rem` (10.5px) | Modal box |
+| `0.75rem` (10.5px) | Modal box (legacy `.modal-box`) |
+| `14px` | Dialog MUI (theme `MuiDialog`) |
 | `1.25rem` (17.5px) | Widget card, content area |
 | `50%` | Avatar, dot status |
 | `8px` | Icon wrapper (nav, icon wrap) |
@@ -167,8 +183,14 @@ box-shadow:
   rgba(145,158,171,0.30) 0 0 0.125rem 0,
   rgba(145,158,171,0.12) 0 0.75rem 1.5rem -0.25rem;
 
-/* Modal */
+/* Modal (legacy .modal-box) */
 box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+
+/* Dialog MUI (theme) */
+box-shadow: 0 24px 48px -12px rgba(16,24,40,0.18);
+
+/* Menu, popover (theme): viền divider + */
+box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 ```
 
 Button không đổ bóng (`MuiButton.defaultProps.disableElevation` trong theme).
@@ -209,9 +231,9 @@ Nhãn nút viết dạng thường ("Add New Project"), theme đã tắt viết 
 
 | Loại | Code |
 |---|---|
-| Primary | `<Button variant="contained">` |
-| Phụ / Cancel | `<Button color="inherit">` |
-| Outlined | `<Button variant="outlined">` |
+| Primary | `<Button variant="contained">` — mỗi trang/dialog chỉ một nút này |
+| Phụ (Import, Export…) | `<Button variant="outlined" color="inherit">` — viền xám trung tính từ theme |
+| Cancel / tertiary | `<Button color="inherit">` |
 | Nguy hiểm (xoá, disable) | `<Button variant="contained" color="error">` |
 
 ### Dialog
@@ -247,59 +269,16 @@ width: 100%;           /* .textfield-add */
 ### Table
 
 Tất cả bảng dùng component `ReusableTable` — không viết `<Table>` one-off.
-Style được áp qua `sx` prop trực tiếp, **không** override `.MuiTableCell-*` trong CSS.
+Màu và cỡ chữ của header, ô, hover lấy từ theme (`MuiTableCell`, `MuiTableRow` trong `ThemeConfig.ts`). Trong `ReusableTable` chỉ còn padding, chiều rộng cột và cách xử lý tràn chữ.
 
-#### Container (Paper wrapper)
-
-```tsx
-<Paper elevation={0} sx={{
-  border: "1px solid",
-  borderColor: "var(--body-color)",
-  borderRadius: "12px",
-  overflow: "hidden",
-  backgroundColor: "var(--background-color)",
-}} />
-```
-
-#### Header cell
-
-```tsx
-sx={{
-  backgroundColor: "var(--body-color)",
-  fontWeight: 600,
-  fontSize: "0.8125rem",
-  color: "var(--text-color)",
-  py: 1.25,
-  px: 1.5,
-  borderBottom: "2px solid",
-  borderBottomColor: "rgba(0, 157, 156, 0.2)",   // teal nhẹ
-  whiteSpace: "nowrap",
-}}
-```
-
-#### Body cell
-
-```tsx
-sx={{
-  fontSize: "0.8125rem",
-  color: "var(--text-color)",
-  py: 1,
-  px: 1.5,
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-}}
-```
-
-#### Row hover
-
-```tsx
-sx={{
-  transition: "background-color 0.15s ease",
-  "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
-  "&:last-child td": { border: 0 },
-}}
-```
+| Phần | Quy định |
+|---|---|
+| Container | `Paper elevation={0}`, viền `divider`, bo 12px, nền `background.paper` |
+| Header | 12px / 600 / `text.secondary` trên nền `NEUTRAL[50]`, `py: 1.25` |
+| Ô | 13px (`body2`), `text.primary`, `py: 1`, `px: 1.5`; chữ dài cắt bằng ellipsis |
+| Cột điều khiển | `type: "boolean"` hoặc `"menu"` (checkbox, switch, nút hành động): không cắt, `px: 1` |
+| Hover dòng | `<TableRow hover>` → nền `NEUTRAL[50]` |
+| `dense` | Bảng nhiều cột (Gifts, Transactions của dự án): chữ 12px, `px: 1`, dùng tới khi bảng được thiết kế lại với ô hai dòng |
 
 #### Toolbar (topToolbar prop)
 
@@ -309,24 +288,17 @@ sx={{
 
 #### Empty state
 
-```tsx
-// Tự động render khi data.length === 0
-// Icon: InboxOutlinedIcon, opacity 0.5
-// Text: "Không có dữ liệu", fontSize 0.875rem, màu --text-primary-color
-```
+Tự động render khi `data.length === 0`: icon `InboxOutlinedIcon` (opacity 0.5) và `emptyText` màu `text.secondary`.
 
 #### Loading state
 
-```tsx
-// CircularProgress size=28, thickness=4, màu var(--main-color)
-// Căn giữa toàn bộ colSpan, py: 6
-```
+Lần tải đầu hiện 5 dòng `Skeleton`; tải lại khi đã có dữ liệu hiện `LinearProgress` 3px trên đầu bảng.
 
 #### Pagination
 
 - Nằm trong card, ngăn cách bởi `<Divider />`
 - `rowsPerPageOptions`: `[10, 25, 50, 100]`
-- Font size đồng bộ `0.8125rem`
+- Luôn truyền `total`, `page`, `onPageChange`. Dữ liệu tải một lần (ví dụ bảng giá tỉnh) thì cắt trang ở client và truyền `total = rows.length`
 
 #### Quy tắc chung
 

@@ -30,7 +30,7 @@ const Transactions: React.FC = () => {
       name: "actions",
       type: "menu",
       align: "center",
-      width: 100,
+      width: 72,
       renderAction: (row: any) => {
         const disabled = true;
         
@@ -97,6 +97,7 @@ const Transactions: React.FC = () => {
             total = {total}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            dense
         ></ReusableTable>
 
         {/* <AlertDialog

@@ -377,9 +377,7 @@ const Quotation: React.FC = () => {
                                 </IconButton>
                             }
                         >
-                            <span
-                                dangerouslySetInnerHTML={{ __html: (alertSource === 'operations' ? operationsActionState : actionState).message ?? "" }}
-                              ></span>
+                            {(alertSource === 'operations' ? operationsActionState : actionState).message}
                         </Alert>
                     )}
                     <Box
@@ -661,15 +659,11 @@ const Quotation: React.FC = () => {
                 value={value}
                 onChange={handleChange}
                 aria-label="quotation tabs"
-                sx={{
-                    "& .MuiTabs-indicator": { backgroundColor: "var(--main-color)" },
-                    "& .MuiTab-root.Mui-selected": { color: "var(--main-color)" },
-                    "& .MuiTab-root": { fontSize: "0.8125rem", fontWeight: 600 },
-                }}
-                >
-                <Tab value="one" label="GENERAL" />
-                <Tab value="two" label="OPERATIONS" />
-                {showEstimatedCost && <Tab value="three" label="ESTIMATED COST" />}
+                sx={{ borderBottom: 1, borderColor: "divider" }}
+            >
+                <Tab value="one" label="General" />
+                <Tab value="two" label="Operations" />
+                {showEstimatedCost && <Tab value="three" label="Estimated cost" />}
             </Tabs>
 
             <TabPanel value={value} index="one">

@@ -3,13 +3,13 @@ import SearchDatePicker from "./SearchDatePicker"
 import React, { useState } from "react"
 import { DateView } from '@mui/x-date-pickers/models';
 import LoadingButton from "@mui/lab/LoadingButton";
-import SendIcon from '@mui/icons-material/Send';
 
 interface SearchDatePickerFromToProps {
     fromValue: Dayjs | null,
     toValue: Dayjs | null,
     views?: DateView[],
     buttonLabel?: string,
+    buttonIcon?: React.ReactNode,
     loadingButton?: boolean,
     onSearchChange: (from: Dayjs | null, to: Dayjs | null) => void
 }
@@ -19,6 +19,7 @@ const SearchDatePickerFromTo: React.FC<SearchDatePickerFromToProps> = ({
                                     toValue=dayjs().endOf("year"), 
                                     views=['year', 'month', 'day'],
                                     buttonLabel,
+                                    buttonIcon,
                                     loadingButton,
                                     onSearchChange }) => {
 
@@ -49,9 +50,9 @@ const SearchDatePickerFromTo: React.FC<SearchDatePickerFromToProps> = ({
             <LoadingButton
                 onClick={handleFilter}
                 size="small"
-                startIcon={<SendIcon />}
+                startIcon={buttonIcon}
                 loading={loadingButton}
-                loadingPosition="end"
+                loadingPosition={buttonIcon ? "start" : "center"}
                 variant="contained"
                 disabled={isApplyFilter}
                 >

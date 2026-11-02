@@ -1,6 +1,5 @@
 import { Alert, Autocomplete, Box, Button, Checkbox, Dialog, DialogTitle, Divider, Grid, Table, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { useVinnetAccount } from "../../hook/useVinnetAccount";
-import numeral from "numeral";
 import GenericDialog from "../../components/Dialogs/GenericDialog";
 import { useState } from "react";
 import axios from "axios";
@@ -12,7 +11,9 @@ import SearchDatePickerFromTo from "../../components/SearchDatePickerFromTo";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { useMetadata } from "../../hook/useMetadata";
 import LoadingButton from "@mui/lab/LoadingButton";
-import SendIcon from '@mui/icons-material/Send';
+import AddIcon from '@mui/icons-material/Add';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import { formatMoney } from "../../utils/format";
 import TransactionStatisticsPanel from "../../components/TransactionStatisticsPanel";
 
 const Transactions = () => {
@@ -161,7 +162,7 @@ const Transactions = () => {
                         {vinnetLoading ? (
                             <Skeleton width={80} height={24} />
                         ) : (
-                            <Typography>${numeral(vinnetAccount?.deposited).format("0,0")}</Typography>
+                            <Typography>{formatMoney(vinnetAccount?.deposited)}</Typography>
                         )}
                     </Box>
                     <Box sx={{
@@ -173,7 +174,7 @@ const Transactions = () => {
                         {vinnetLoading ? (
                             <Skeleton width={80} height={24} />
                         ) : (
-                            <Typography>${numeral(vinnetAccount?.balance).format("0,0")}</Typography>
+                            <Typography>{formatMoney(vinnetAccount?.balance)}</Typography>
                         )}
                     </Box>
                     <Box sx={{
@@ -185,7 +186,7 @@ const Transactions = () => {
                         {vinnetLoading ? (
                             <Skeleton width={80} height={24} />
                         ) : (
-                            <Typography>${numeral(vinnetAccount?.spent).format("0,0")}</Typography>
+                            <Typography>{formatMoney(vinnetAccount?.spent)}</Typography>
                         )}
                     </Box>
                 </Box>
@@ -216,12 +217,13 @@ const Transactions = () => {
                         <Button 
                             variant="contained" 
                             size="small" 
+                            startIcon={<AddIcon />}
                             sx={{
                                 mb: 2
                             }}
                             onClick={() => setOpen(true)}
                         >
-                            + Add Deposited
+                            Add deposit
                         </Button>
                     </Box>
 
@@ -236,7 +238,7 @@ const Transactions = () => {
                         {gotitLoading ? (
                             <Skeleton width={80} height={24} />
                         ) : (
-                            <Typography>${numeral(gotitAccount.deposited).format("0,0")}</Typography>
+                            <Typography>{formatMoney(gotitAccount.deposited)}</Typography>
                         )}
                     </Box>
                     <Box sx={{
@@ -248,7 +250,7 @@ const Transactions = () => {
                         {gotitLoading ? (
                             <Skeleton width={80} height={24} />
                         ) : (
-                            <Typography>${numeral(gotitAccount.balance).format("0,0")}</Typography>
+                            <Typography>{formatMoney(gotitAccount.balance)}</Typography>
                         )}
                     </Box>
                     <Box sx={{
@@ -260,7 +262,7 @@ const Transactions = () => {
                         {gotitLoading ? (
                             <Skeleton width={80} height={24} />
                         ) : (
-                            <Typography>${numeral(gotitAccount.spent).format("0,0")}</Typography>
+                            <Typography>{formatMoney(gotitAccount.spent)}</Typography>
                         )}
                     </Box>
                 </Box>
@@ -276,7 +278,7 @@ const Transactions = () => {
                 <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
                     Choose a date range to export transactions (e.g. 01/01/2026 - 01/31/2026)
                 </Typography>
-                <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="Export Excel" loadingButton={loadingExport} onSearchChange={handleExport} />
+                <SearchDatePickerFromTo fromValue={fromDate} toValue={toDate} buttonLabel="Export Excel" buttonIcon={<FileDownloadOutlinedIcon />} loadingButton={loadingExport} onSearchChange={handleExport} />
                 <Divider sx={{ mt: 2 }} />
             </Grid>
             <Grid item xs={12}>
@@ -328,9 +330,9 @@ const Transactions = () => {
                         <LoadingButton
                             onClick={handleExportExcelByProjects}
                             size="small"
-                            startIcon ={<SendIcon />}
+                            startIcon={<FileDownloadOutlinedIcon />}
                             loading={loadingExportByProjects}
-                            loadingPosition="end"
+                            loadingPosition="start"
                             variant="contained"
                             disabled={selectedProjects.length == 0}
                             >
@@ -369,7 +371,7 @@ const Transactions = () => {
 
             <GenericDialog
                 open={open}
-                title="Add Deposited"
+                title="Add deposit"
                 onClose = {() => setOpen(false)}
                 onSubmit={() => handleAddDeposit()}
             >
@@ -382,7 +384,7 @@ const Transactions = () => {
                     }}
                 >
                     <TextField
-                        label="Amount"
+                        label="Amount (VND)"
                         type="number"
                         fullWidth
                         value={amount}

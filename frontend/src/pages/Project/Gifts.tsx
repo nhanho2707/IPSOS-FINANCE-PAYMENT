@@ -261,7 +261,7 @@ const Gifts: React.FC = () => {
             name: "status",
             type: "string",
             align: "center",
-            width: 112,
+            width: 104,
             renderHeader: () => {
                 return (
                     <div style={{ whiteSpace: "normal", lineHeight: 1.2, textAlign: "center" }}>
@@ -282,7 +282,7 @@ const Gifts: React.FC = () => {
             name: "actions",
             type: "menu",
             align: "center",
-            width: 184,
+            width: 168,
             renderAction: (row: OfflineProjectRespondentData) => {
                 const disabled = row.status !== 'pending';
 
@@ -526,6 +526,7 @@ const Gifts: React.FC = () => {
                 total = {total}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
+                dense
             ></ReusableTable>
     
             <ConfirmDialog {...dialogProps} />

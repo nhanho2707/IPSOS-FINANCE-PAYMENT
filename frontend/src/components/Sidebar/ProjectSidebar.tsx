@@ -12,6 +12,7 @@ import {
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { getProjectNavItemsForRole, ProjectNavItem, projectNavPath } from "../../config/ProjectNavConfig";
 import { useAuth } from "../../contexts/AuthContext";
+import { MOBILE_MEDIA_QUERY } from "./MobileNavToggle";
 
 interface ProjectSidebarProps {
   projectId: number;
@@ -25,7 +26,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
   const { user } = useAuth();
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
     setIsSmallScreen(mediaQuery.matches);
     const handleResize = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches);
     mediaQuery.addEventListener("change", handleResize);
@@ -82,7 +83,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ projectId, project, isO
         <ul className="menu-links">
           <Tooltip title="All Projects" placement="right" disableHoverListener={isOpen}>
             <li className="nav-link">
-              <NavLink to="/project-management/projects" onClick={handleClick}>
+              <NavLink to="/project-management/projects" end onClick={handleClick}>
                 <span className="nav-icon-wrap">
                   <HomeOutlined style={{ fontSize: "20px" }} />
                 </span>

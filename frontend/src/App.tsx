@@ -153,7 +153,7 @@ const App: React.FC = () => {
                   to="/error"
                   state={{
                     errorCode: 4,
-                    errorMessage: "Sorry, the page you are looking for does not exist. Please contact the Admistrator for asistance."
+                    errorMessage: "Sorry, the page you are looking for does not exist. Please contact the Administrator for assistance."
                   }}
                   replace
                 />

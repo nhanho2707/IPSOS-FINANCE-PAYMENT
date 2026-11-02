@@ -41,7 +41,7 @@
 
 ## CSS Variables
 
-Tất cả variables khai báo trong `global.css` `:root`. Không hardcode màu trực tiếp trong component — dùng variable.
+Variables khai báo trong `global.css` `:root`; riêng các biến màu brand, chữ, nền khung app và trạng thái được sinh từ `src/config/ThemeConfig.ts` (`themeCssVariables`). Không hardcode màu trực tiếp trong component — dùng variable.
 
 ```css
 /* SAI */
@@ -55,10 +55,11 @@ color: var(--text-color);
 
 | Variable | Giá trị | Dùng cho |
 |---|---|---|
-| `--text-color` | `#212121` | Text chính toàn app |
+| `--text-color` | `#101828` (sinh từ `ThemeConfig.ts`) | Text chính toàn app |
 | `--background-color` | `#fff` | Background card/modal |
-| `--body-color` | `rgb(238,242,246)` | Background page |
-| `--main-color` | `#009d9c` (sinh từ `ThemeConfig.ts`) | Brand color, button primary |
+| `--canvas-color` | `#f6f7f9` (sinh từ `ThemeConfig.ts`) | Nền khung app (`.wrapper`) |
+| `--body-color` | `rgb(238,242,246)` | Nền phụ (icon button, khối nhỏ) |
+| `--main-color` | `#007a79` (sinh từ `ThemeConfig.ts`) | Brand color, chữ màu brand, button primary |
 | `--sidebar-expanded` | `15.625rem` | Width sidebar mở |
 | `--sidebar-collapsed` | `5.5rem` | — | Width sidebar đóng |
 | `--transition-02` | `all 0.2s ease` | — | Transition nhanh |

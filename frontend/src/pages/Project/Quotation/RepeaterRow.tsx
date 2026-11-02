@@ -253,10 +253,9 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                 )}
             </Box>
         ) : (
-            <div
-                dangerouslySetInnerHTML={{ __html: (Array.isArray(row.value) ? row.value : []).map((option) => option.label).join(', ') || "-" }}
-                style={{ cursor: "pointer" }}
-            />
+            <div style={{ cursor: "pointer" }}>
+                {(Array.isArray(row.value) ? row.value : []).map((option) => option.label).join(', ') || "-"}
+            </div>
         )
     };
 

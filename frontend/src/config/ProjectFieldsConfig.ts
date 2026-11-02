@@ -6,13 +6,13 @@ export const ProjectCellConfig: ColumnFormat[] = [
     label: "Symphony",
     name: "symphony",
     type: "string",
-    width: 110
+    width: 120
   },
   {
     label: "Internal Code",
     name: "internal_code",
     type: "string",
-    width: 110
+    width: 104
   },
   {
     label: "Project Name",
@@ -23,13 +23,13 @@ export const ProjectCellConfig: ColumnFormat[] = [
     label: "Field Start",
     name: "planned_field_start",
     type: "date",
-    width: 100
+    width: 108
   },
   {
     label: "Field End",
     name: "planned_field_end",
     type: "date",
-    width: 100
+    width: 108
   },
 ];
 

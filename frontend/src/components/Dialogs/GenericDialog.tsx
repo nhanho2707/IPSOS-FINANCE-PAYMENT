@@ -32,7 +32,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
 
     return (
         <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth={maxWidth}>
-            <DialogTitle sx={{ fontSize: "1.0625rem", fontWeight: 600 }}>{title}</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             <DialogContent sx={{ width: '100%', pt: 2 }}>
                 {children}
             </DialogContent>

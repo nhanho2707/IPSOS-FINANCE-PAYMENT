@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import CloseIcon from "@mui/icons-material/Close";
 import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
@@ -19,6 +19,7 @@ import {
     TableRow,
     Typography,
 } from "@mui/material";
+import { Theme } from "@mui/material/styles";
 
 export type ActionType = 'add' | 'fetch' | 'store' | 'clone' | 'approve' | 'submit' | 'import' | 'export' | 'update' | 'delete' | 'idle';
 
@@ -41,6 +42,7 @@ interface ReusableTableProps<T extends object> {
     topToolbar?: React.ReactNode;
     getRowKey?: (row: T, index: number) => React.Key;
     emptyText?: string;
+    dense?: boolean;
 }
 
 const SKELETON_ROWS = 5;
@@ -51,22 +53,35 @@ const defaultRowKey = (row: object, index: number): React.Key => {
     return typeof id === "string" || typeof id === "number" ? id : index;
 };
 
-// table-layout: fixed only honours explicit widths, so `flex` columns share the space
-// left over by fixed-width columns in proportion to their flex value.
-const resolveColumnWidths = (columns: ColumnFormat[]) => {
+// table-layout: fixed only honours explicit widths, and browsers treat calc(% - px) on a cell as auto,
+// which gave every flex column the same width. Flex columns are therefore sized in px from the measured
+// container width, sharing what the fixed-width columns leave in proportion to their flex value.
+const resolveColumnWidths = (columns: ColumnFormat[], availableWidth: number) => {
     const fixedPx = columns.reduce((sum, col) => sum + (col.width ?? 0), 0);
     const flexColumns = columns.filter((col) => col.width === undefined);
-    const totalFlex = flexColumns.reduce((sum, col) => sum + (col.flex ?? 1), 0);
+    const totalFlex = flexColumns.reduce((sum, col) => sum + (col.flex ?? 1), 0) || 1;
+    const flexSpace = Math.max(availableWidth - fixedPx, 0);
 
     const widths = columns.map((col) => {
         if (col.width !== undefined) return `${col.width}px`;
-        const share = (col.flex ?? 1) / (totalFlex || 1);
-        return `calc((100% - ${fixedPx}px) * ${share.toFixed(4)})`;
+        if (!availableWidth) return undefined;
+        const share = (col.flex ?? 1) / totalFlex;
+        return `${Math.max(MIN_FLEX_COLUMN_PX, Math.floor(flexSpace * share))}px`;
     });
 
     const minTableWidth = fixedPx + flexColumns.length * MIN_FLEX_COLUMN_PX;
     return { widths, minTableWidth };
 };
+
+// Checkbox, switch and action columns hold controls, not text: clipping them with an ellipsis draws a stray "…".
+const isControlColumn = (col: ColumnFormat) => col.type === "boolean" || col.type === "menu";
+
+const cellOverflowSx = (col: ColumnFormat, dense: boolean) =>
+    isControlColumn(col)
+        ? { overflow: "visible", px: 1 }
+        : { overflow: "hidden", textOverflow: "ellipsis", px: dense ? 1 : 1.5 };
+
+const denseTextSx = { fontSize: (theme: Theme) => theme.typography.caption.fontSize };
 
 const renderCellContent = <T extends object>(col: ColumnFormat, row: T): React.ReactNode => {
     if (col.renderCell) return col.renderCell(row);
@@ -88,9 +103,12 @@ const ReusableTable = <T extends object>({
     topToolbar,
     getRowKey = defaultRowKey,
     emptyText = "No data",
+    dense = false,
 }: ReusableTableProps<T>) => {
     const [openAlert, setOpenAlert] = useState(false);
-    const { widths, minTableWidth } = resolveColumnWidths(columns);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [availableWidth, setAvailableWidth] = useState(0);
+    const { widths, minTableWidth } = resolveColumnWidths(columns, availableWidth);
     const isLoading = Boolean(actionStatus.loading);
     const showSkeleton = isLoading && data.length === 0;
 
@@ -98,12 +116,22 @@ const ReusableTable = <T extends object>({
         setOpenAlert(Boolean(actionStatus.message));
     }, [actionStatus]);
 
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new ResizeObserver(([entry]) => setAvailableWidth(Math.floor(entry.contentRect.width)));
+        observer.observe(container);
+
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <Box sx={{ px: 2 }}>
             {openAlert && actionStatus.message && (
                 <Alert
                     severity={actionStatus.error ? "error" : "success"}
-                    sx={{ mb: 1.5, borderRadius: "8px", fontSize: "0.875rem", whiteSpace: "pre-line" }}
+                    sx={{ mb: 1.5, whiteSpace: "pre-line" }}
                     action={
                         <IconButton
                             aria-label="Close"
@@ -123,10 +151,10 @@ const ReusableTable = <T extends object>({
                 elevation={0}
                 sx={{
                     border: "1px solid",
-                    borderColor: "var(--body-color)",
+                    borderColor: "divider",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    backgroundColor: "var(--background-color)",
+                    backgroundColor: "background.paper",
                 }}
             >
                 {topToolbar && (
@@ -140,7 +168,7 @@ const ReusableTable = <T extends object>({
                     {isLoading && !showSkeleton && <LinearProgress sx={{ height: 3 }} />}
                 </Box>
 
-                <TableContainer sx={{ maxHeight: "calc(100vh - 240px)", overflowX: "auto" }}>
+                <TableContainer ref={containerRef} sx={{ maxHeight: "calc(100vh - 240px)", overflowX: "auto" }}>
                     <Table
                         stickyHeader
                         aria-busy={isLoading}
@@ -153,18 +181,10 @@ const ReusableTable = <T extends object>({
                                         key={col.name || idx}
                                         align={col.align ?? "left"}
                                         sx={{
-                                            backgroundColor: "var(--body-color)",
-                                            fontWeight: 600,
-                                            fontSize: "0.8125rem",
-                                            color: "var(--text-color)",
                                             whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
                                             width: widths[idx],
                                             py: 1.25,
-                                            px: 1.5,
-                                            borderBottom: "2px solid",
-                                            borderBottomColor: "rgba(0, 157, 156, 0.2)",
+                                            ...cellOverflowSx(col, dense),
                                         }}
                                     >
                                         {col.renderHeader ? col.renderHeader() : col.label}
@@ -179,7 +199,7 @@ const ReusableTable = <T extends object>({
                                     <TableRow key={`skeleton-${rowIdx}`}>
                                         {columns.map((col, idx) => (
                                             <TableCell key={col.name || idx} sx={{ py: 1.25, px: 1.5 }}>
-                                                <Skeleton variant="text" sx={{ fontSize: "0.8125rem" }} />
+                                                <Skeleton variant="text" />
                                             </TableCell>
                                         ))}
                                     </TableRow>
@@ -192,12 +212,9 @@ const ReusableTable = <T extends object>({
                                         sx={{ py: 6, border: 0 }}
                                     >
                                         <InboxOutlinedIcon
-                                            sx={{ fontSize: 40, color: "var(--text-primary-color)", mb: 1, opacity: 0.5 }}
+                                            sx={{ fontSize: 40, color: "text.secondary", mb: 1, opacity: 0.5 }}
                                         />
-                                        <Typography
-                                            variant="body2"
-                                            sx={{ color: "var(--text-primary-color)", fontSize: "0.875rem" }}
-                                        >
+                                        <Typography variant="body2" color="text.secondary">
                                             {emptyText}
                                         </Typography>
                                     </TableCell>
@@ -206,11 +223,9 @@ const ReusableTable = <T extends object>({
                                 data.map((row, i) => (
                                     <TableRow
                                         key={getRowKey(row, i)}
+                                        hover
                                         sx={{
                                             transition: "background-color 0.15s ease",
-                                            "&:hover": {
-                                                backgroundColor: "rgba(0, 157, 156, 0.05)",
-                                            },
                                             "&:last-child td": { border: 0 },
                                         }}
                                     >
@@ -220,12 +235,9 @@ const ReusableTable = <T extends object>({
                                                 align={col.align ?? "left"}
                                                 sx={{
                                                     whiteSpace: "nowrap",
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    fontSize: "0.8125rem",
-                                                    color: "var(--text-color)",
                                                     py: 1,
-                                                    px: 1.5,
+                                                    ...cellOverflowSx(col, dense),
+                                                    ...(dense ? denseTextSx : {}),
                                                 }}
                                             >
                                                 {renderCellContent(col, row)}
@@ -247,12 +259,6 @@ const ReusableTable = <T extends object>({
                     rowsPerPage={rowsPerPage}
                     onPageChange={onPageChange ?? (() => {})}
                     onRowsPerPageChange={onRowsPerPageChange ?? (() => {})}
-                    sx={{
-                        fontSize: "0.8125rem",
-                        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-                            fontSize: "0.8125rem",
-                        },
-                    }}
                 />
             </Paper>
         </Box>

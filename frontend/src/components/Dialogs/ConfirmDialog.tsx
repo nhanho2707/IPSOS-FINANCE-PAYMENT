@@ -47,14 +47,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             aria-labelledby="confirm-dialog-title"
             aria-describedby="confirm-dialog-description"
         >
-            <DialogTitle id="confirm-dialog-title" sx={{ fontSize: "1.0625rem", fontWeight: 600 }}>
+            <DialogTitle id="confirm-dialog-title">
                 {title}
             </DialogTitle>
             <DialogContent>
                 <DialogContentText
                     id="confirm-dialog-description"
                     component="div"
-                    sx={{ whiteSpace: "pre-line", fontSize: "0.875rem" }}
+                    sx={{ whiteSpace: "pre-line" }}
                 >
                     {message}
                 </DialogContentText>

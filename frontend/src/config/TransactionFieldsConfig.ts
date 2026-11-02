@@ -34,31 +34,31 @@ export const TransactionCellConfig: ColumnFormat[] = [
         label: "Interviewer ID",
         name: "employee_id",
         type: "string",
-        flex: 1.5
+        flex: 1
     },
     {
         label: "Full Name",
         name: "full_name",
         type: "string",
-        flex: 1.5
+        flex: 1.4
     },
     {
         label: "Province",
         name: "province_name",
         type: "string",
-        flex: 1.5
+        flex: 1.2
     },
     {
         label: "Interview Start",
         name: "interview_start",
         type: "string",
-        flex: 1
+        flex: 1.8
     },
     {
         label: "Interview End",
         name: "interview_end",
         type: "string",
-        flex: 1
+        flex: 1.8
     },
     {
         label: "Shell_ChainID",
@@ -70,27 +70,27 @@ export const TransactionCellConfig: ColumnFormat[] = [
         label: "Res. Phone Number",
         name: "respondent_phone_number",
         type: "string",
-        flex: 1,
+        flex: 1.25,
         align: "right"
     },
     {
         label: "Phone Number",
         name: "phone_number",
         type: "string",
-        flex: 1,
+        flex: 1.25,
         align: "right"
     },
     {
         label: "Service Code",
         name: "service_code",
         type: "string",
-        flex: 1
+        flex: 1.05
     },
     {
         label: "Channel",
         name: "channel",
         type: "string",
-        flex: 1
+        flex: 0.9
     },
     {
         label: "Amount",

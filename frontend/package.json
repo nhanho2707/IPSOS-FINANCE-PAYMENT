@@ -51,7 +51,10 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "test:e2e": "playwright test",
+    "test:e2e:baseline": "E2E_VISUAL=1 playwright test --update-snapshots",
+    "test:e2e:visual": "E2E_VISUAL=1 playwright test"
   },
   "eslintConfig": {
     "extends": [
@@ -119,6 +122,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/crypto-js": "^4.2.2",
     "@types/d3": "^7.4.3",
     "@types/jsrsasign": "^10.5.14",

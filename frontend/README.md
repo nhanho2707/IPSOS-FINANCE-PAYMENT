@@ -18,6 +18,15 @@
 
 Lần đầu chạy Playwright trên máy mới: `npx playwright install chromium`.
 
+## Deploy lên XAMPP (Apache)
+
+1. `npm ci` (khi thư viện thay đổi) rồi `npm run build`.
+2. Xoá file cũ trong thư mục gốc của site, chép **toàn bộ** nội dung `build/` vào, kể cả file ẩn `.htaccess`. App phải chạy ở gốc domain, vì các file được gọi bằng đường dẫn `/assets/...`.
+3. `.htaccess` trả `index.html` cho mọi trang của React Router. Thiếu nó, bấm F5 ở một trang con sẽ ra trang 404 "Not Found" của Apache. File này cần `AllowOverride All` trong `<Directory>` của vhost (XAMPP để sẵn như vậy cho `htdocs`) và `mod_rewrite` (XAMPP bật sẵn).
+   - Nếu cả site báo lỗi 500 và `apache\logs\error.log` ghi "RewriteEngine not allowed here", vhost đang giới hạn `AllowOverride`: đổi thành `AllowOverride All`.
+   - Nếu không được sửa `AllowOverride`, xoá `.htaccess` và thêm `FallbackResource /index.html` vào `<Directory>` của vhost.
+4. Nén gzip (nhỏ hơn khoảng 3 lần): bỏ dấu `#` trước `LoadModule deflate_module` và `LoadModule filter_module` trong `apache\conf\httpd.conf`, rồi khởi động lại Apache. `.htaccess` đã có sẵn phần cấu hình nén.
+
 ## CI
 
 `.github/workflows/frontend.yml` chạy cho mọi PR có sửa `frontend/`:

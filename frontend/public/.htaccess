@@ -1,0 +1,25 @@
+# Pages such as /transaction-manager/transactions exist only in React Router, not as files, so
+# without this Apache answers a reload (F5) or a pasted link with its own 404 page.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  # A missing build file must stay a 404: answering with index.html breaks the page with a MIME error.
+  RewriteCond %{REQUEST_URI} !^/assets/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Every build renames the files in /assets but not index.html, so browsers must re-check it;
+# a cached index.html would point at files that the new deployment removed.
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# Applies once mod_deflate is enabled in httpd.conf; the JavaScript bundle is about 3x smaller compressed.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>

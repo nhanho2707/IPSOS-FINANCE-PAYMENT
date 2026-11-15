@@ -155,7 +155,7 @@ class TransactionsExportTest extends TestCase
         $this->assertSame('090****567', (string) $sheet->sheetData->row[1]->c[1]->is->t);
     }
 
-    public function test_the_date_export_runs_on_the_live_schema_and_keeps_cancelled_gotit_vouchers(): void
+    public function test_the_date_export_reads_invoice_comments_and_keeps_cancelled_gotit_vouchers(): void
     {
         config([
             'database.default' => 'sqlite',
@@ -209,7 +209,7 @@ class TransactionsExportTest extends TestCase
             $table->double('payment_amt')->default(0);
             $table->timestamps();
         });
-        // As on the live database: no invoice_comment column.
+        // As on the live database before the invoice_comment migration.
         Schema::create('project_gotit_voucher_transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('project_respondent_id');
@@ -218,6 +218,12 @@ class TransactionsExportTest extends TestCase
             $table->string('voucher_status')->nullable();
             $table->timestamps();
         });
+
+        $migration = require database_path('migrations/2026_11_15_000000_add_invoice_comment_to_project_gotit_voucher_transactions_table.php');
+        $migration->up();
+        $this->assertTrue(Schema::hasColumn('project_gotit_voucher_transactions', 'invoice_comment'));
+        // Running it again (or on a database that already has the column) changes nothing.
+        $migration->up();
 
         DB::table('projects')->insert(['id' => 1, 'internal_code' => 'VN2604', 'project_name' => 'Brand tracker']);
         DB::table('project_details')->insert(['project_id' => 1, 'symphony' => '26-041293-01']);
@@ -241,6 +247,7 @@ class TransactionsExportTest extends TestCase
         ]);
         $respondent(2, 'gotit');
         $gotit(2, 'Voucher được cập nhật thành công.', '2026-10-06 10:00:00');
+        DB::table('project_gotit_voucher_transactions')->where('project_respondent_id', 2)->update(['invoice_comment' => 'GotIt invoice 2']);
         $respondent(3, 'gotit');
         $gotit(3, 'Voucher được cancelled by GotIt ngày 20/10/2026', '2026-10-07 10:00:00');
         $respondent(4, 'gotit');
@@ -251,7 +258,7 @@ class TransactionsExportTest extends TestCase
         $rows = (new TransactionsExport('2026-10-01 00:00:00', '2026-10-31 23:59:59', 'finance', new VinnetService()))->query()->get();
 
         $this->assertSame(['R1', 'R2', 'R3'], $rows->pluck('respondent_id')->all());
-        $this->assertSame(['Invoice 1', null, null], $rows->pluck('invoice_comment')->all());
+        $this->assertSame(['Invoice 1', 'GotIt invoice 2', null], $rows->pluck('invoice_comment')->all());
         $this->assertSame(['V1', 'G2', 'G3'], $rows->pluck('transaction_id')->all());
         $this->assertEquals([10, 10, 10], $rows->pluck('month')->all());
     }

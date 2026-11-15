@@ -48,8 +48,10 @@ class TransactionsByProjectsExport extends StreamedXlsxExport
                                             voucher_status
                                             SEPARATOR '###'
                                         ) as statuses"),
-                                        // The live table has no invoice_comment column (see TransactionsExport).
-                                        DB::raw("NULL as invoice_comments")
+                                        DB::raw("GROUP_CONCAT(
+                                            invoice_comment
+                                            SEPARATOR '###'
+                                        ) as invoice_comments")
                                     )
                                     ->whereIn('voucher_status', [
                                         'Thành công',

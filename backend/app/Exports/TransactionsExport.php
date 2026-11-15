@@ -52,8 +52,7 @@ class TransactionsExport extends StreamedXlsxExport
                     ->orderBy('pr.id')
                     ->select([
                         DB::raw("MONTH(COALESCE(pvt.created_at, pgv.created_at)) as month"),
-                        // GotIt transactions have no invoice comment: the column is missing from the live database and nothing writes it.
-                        'pvt.vinnet_invoice_comment as invoice_comment',
+                        DB::raw("COALESCE(pvt.vinnet_invoice_comment, pgv.invoice_comment) as invoice_comment"),
                         DB::raw("COALESCE(pvt.vinnet_payservice_requuid, pgv.transaction_ref_id) as transaction_id"),
                         'pr.service_code',
                         DB::raw("COALESCE(pvt.created_at, pgv.created_at) as created_at"),

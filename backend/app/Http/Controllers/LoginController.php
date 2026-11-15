@@ -60,8 +60,12 @@ class LoginController extends Controller
 
         $user->forceFill(['last_login_at' => now()])->save();
 
-        // Generate a token for the authenticated user
-        $tokenResult = $user->createToken($user->name)->plainTextToken;
+        // Sanctum already rejects tokens older than sanctum.expiration; storing the same moment on the token
+        // and returning it lets the front-end sign the user out on time instead of on the next failed request.
+        $expirationMinutes = (int) config('sanctum.expiration');
+        $expiresAt = $expirationMinutes > 0 ? now()->addMinutes($expirationMinutes) : null;
+
+        $tokenResult = $user->createToken($user->name, ['*'], $expiresAt)->plainTextToken;
         
         //$user = User::where('email', $request->email)->first();
         
@@ -79,6 +83,9 @@ class LoginController extends Controller
             'status_code' => Response::HTTP_OK, //200,
             'message' => 'Login successfully',
             'token' => $tokenResult,
+            'expires_at' => $expiresAt?->toIso8601String(),
+            // Seconds from now, so a browser with a wrong clock still signs out at the right moment.
+            'expires_in' => $expiresAt ? $expirationMinutes * 60 : null,
             'user' => new UserResource($user)
         ], Response::HTTP_OK);
     }

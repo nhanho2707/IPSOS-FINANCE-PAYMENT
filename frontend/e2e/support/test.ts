@@ -5,7 +5,7 @@ import { respond } from "./mockApi";
 export type Role = "Admin" | "Finance" | "Scripter" | "Researcher" | "Field Manager";
 
 // The fixtures describe late 2026; a fixed clock keeps "Ends in 28 days" and the screenshots stable.
-const FIXED_NOW = new Date("2026-11-02T09:00:00+07:00");
+export const FIXED_NOW = new Date("2026-11-02T09:00:00+07:00");
 
 // Web fonts come from Google; without network access the page still renders with the fallback font.
 const IGNORED_CONSOLE_ERRORS = [/fonts\.(googleapis|gstatic)\.com/];

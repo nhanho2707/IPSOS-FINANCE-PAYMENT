@@ -84,6 +84,7 @@ docker-compose up
 - All endpoints live in `frontend/src/config/ApiConfig.ts`. Add new endpoints there; never hardcode URLs in components or hooks.
 - Parameterised URLs use string `.replace('{paramName}', value.toString())` at call site.
 - Auth token is stored in `localStorage` as `authToken` and sent as `Authorization: Bearer <token>`.
+- Tokens expire after `sanctum.expiration` minutes (480). Login returns `expires_in`; `AuthContext` keeps the expiry in `localStorage` as `authTokenExpiresAt` and signs out on time (timer plus a check when the tab regains focus). A 401 from the API also signs out.
 
 ### Custom Hooks Pattern
 Every resource has a dedicated hook in `frontend/src/hook/use<Resource>.ts`. The hook:

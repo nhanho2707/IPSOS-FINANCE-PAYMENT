@@ -1,4 +1,4 @@
-import { capture, expect, signInAs, test } from "./support/test";
+import { capture, expect, FIXED_NOW, signInAs, test } from "./support/test";
 
 const PROJECTS = "/project-management/projects";
 const PROJECT = `${PROJECTS}/1`;
@@ -111,6 +111,57 @@ test.describe("admin", () => {
             await page.goto(`${PROJECT}/${path}`);
             await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
         }
+    });
+});
+
+test.describe("session expiry", () => {
+    const EXPIRED_MESSAGE = "Your session has expired. Please sign in again.";
+    const setExpiresAt = (page: import("@playwright/test").Page, at: number) =>
+        page.addInitScript((value) => localStorage.setItem("authTokenExpiresAt", String(value)), at);
+
+    test("an expired session goes straight to sign-in", async ({ page }) => {
+        await signInAs(page, "Admin");
+        await setExpiresAt(page, FIXED_NOW.getTime() - 1000);
+        await page.goto(PROJECTS);
+
+        await expect(page).toHaveURL(/\/login$/);
+        await expect(page.getByText(EXPIRED_MESSAGE)).toBeVisible();
+        expect(await page.evaluate(() => localStorage.getItem("authToken"))).toBeNull();
+    });
+
+    test("the session ends on time while the page stays open", async ({ page }) => {
+        await signInAs(page, "Admin");
+        await setExpiresAt(page, FIXED_NOW.getTime() + 1000);
+        await page.goto(PROJECTS);
+        await expect(page.getByRole("heading", { name: "Projects", level: 1 })).toBeVisible();
+
+        await page.clock.setFixedTime(FIXED_NOW.getTime() + 2000);
+        await expect(page).toHaveURL(/\/login$/);
+        await expect(page.getByText(EXPIRED_MESSAGE)).toBeVisible();
+    });
+
+    test("signing in stores the expiry and coming back to the tab after it ends signs out", async ({ page }) => {
+        await page.route("http://localhost:8000/api/login", (route) => route.fulfill({
+            json: {
+                status_code: 200,
+                message: "Login successfully",
+                token: "fresh-token",
+                expires_in: 3600,
+                user: { first_name: "Nhan", last_name: "Ho", role: "Admin", must_change_password: false },
+            },
+        }));
+        await page.goto("/login");
+        await page.getByLabel("Email").fill("nhan.ho@ipsos.com");
+        await page.getByLabel("Password", { exact: true }).fill("secret");
+        await page.getByRole("button", { name: "Sign in" }).click();
+        await expect(page).toHaveURL(new RegExp(`${PROJECTS}$`));
+        expect(await page.evaluate(() => Number(localStorage.getItem("authTokenExpiresAt"))))
+            .toBe(FIXED_NOW.getTime() + 3600 * 1000);
+
+        await page.clock.setFixedTime(FIXED_NOW.getTime() + 3601 * 1000);
+        await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+        await expect(page).toHaveURL(/\/login$/);
+        await expect(page.getByText(EXPIRED_MESSAGE)).toBeVisible();
     });
 });
 

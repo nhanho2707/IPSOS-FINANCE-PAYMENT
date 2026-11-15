@@ -237,6 +237,9 @@ class APIObject
 
             // Set cURL options
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            // Without these cURL waits forever and PHP's time limit kills the request with no error recorded.
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header); // Set headers if any
 
             // Execute cURL session and get the response
@@ -284,6 +287,8 @@ class APIObject
 
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET"); // ép GET
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 
             // Gửi body JSON
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
@@ -338,6 +343,8 @@ class APIObject
 
             // Set cURL options
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 
             $header = $this->header;
 

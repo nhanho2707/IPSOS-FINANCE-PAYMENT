@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { capture, expect, FIXED_NOW, signInAs, test } from "./support/test";
 
 const PROJECTS = "/project-management/projects";
@@ -64,6 +65,33 @@ test.describe("admin", () => {
 
         await page.getByRole("tab", { name: /Failed/ }).click();
         await expect(page.getByText("Insufficient merchant balance")).toBeVisible();
+    });
+
+    test("gifts: test respondents are labelled and an import with tests says why", async ({ page }, testInfo) => {
+        await page.route(`http://localhost:8000/api${PROJECT}/offline/respondents/store`, (route) => route.fulfill({
+            json: { status_code: 900, message: "Import successfully", imported_count: 2, live_count: 1, test_count: 1, project_status: "in coming" },
+        }));
+        await page.goto(`${PROJECT}/gifts`);
+
+        await expect(page.getByRole("row").filter({ hasText: "INS-48252" }).getByText("Test", { exact: true })).toBeVisible();
+        await expect(page.getByRole("row").filter({ hasText: "INS-48210" }).getByText("Test", { exact: true })).toHaveCount(0);
+
+        const sheet = XLSX.utils.json_to_sheet([
+            { InstanceID: "9001", Shell_ChainID: "SC1", SamplePoint: "HN_A1", Province: "Hà Nội", InterviewerID: "HN001", RespondentPhoneNumber: "0901234567", PhoneNumber: "0901234567", Email: "", PriceLevel: "main", Channel: "vinnet" },
+            { InstanceID: "9002", Shell_ChainID: "SC1", SamplePoint: "_defaultsp", Province: "Hà Nội", InterviewerID: "HN001", RespondentPhoneNumber: "0907654321", PhoneNumber: "0907654321", Email: "", PriceLevel: "main", Channel: "vinnet" },
+        ]);
+        const book = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(book, sheet, "Respondents");
+        await page.locator('input[type="file"]').setInputFiles({
+            name: "respondents.xlsx",
+            mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            buffer: XLSX.write(book, { type: "buffer", bookType: "xlsx" }),
+        });
+
+        const banner = page.getByRole("alert").filter({ hasText: "Imported 2 respondents: 1 live, 1 test" });
+        await expect(banner).toBeVisible();
+        await expect(banner).toContainText("This project is Upcoming");
+        await capture(page, testInfo, "gifts-import-with-tests", { fullPage: false });
     });
 
     test("finance", async ({ page }, testInfo) => {

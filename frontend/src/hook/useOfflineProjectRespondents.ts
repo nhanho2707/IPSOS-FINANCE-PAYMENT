@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { GiftStatus, GiftStatusCounts, OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload } from "../config/OfflineProjectRespondentFieldsConfig";
+import { GiftStatus, GiftStatusCounts, OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload, OfflineImportResult } from "../config/OfflineProjectRespondentFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
@@ -125,7 +125,7 @@ export function useOfflineProjectRespondents(projectId: number) {
         }
     }, [projectId, page, rowsPerPage, searchTerm, statusFilter]);
 
-    const importOfflineProjectRespondents = useCallback(async(payload: OfflineProjectRespondentImportPayload[]) => {
+    const importOfflineProjectRespondents = useCallback(async(payload: OfflineProjectRespondentImportPayload[]): Promise<OfflineImportResult> => {
         try
         {
             setLoading(true);
@@ -148,7 +148,19 @@ export function useOfflineProjectRespondents(projectId: number) {
 
             await fetchProjectRespondents(page, rowsPerPage, searchTerm);
 
-            setMessage(`Imported ${response.data.imported_count} respondents.`);
+            const result: OfflineImportResult = {
+                imported: response.data.imported_count ?? payload.length,
+                live: response.data.live_count ?? response.data.imported_count ?? payload.length,
+                test: response.data.test_count ?? 0,
+                projectStatus: response.data.project_status ?? null,
+            };
+
+            // With test respondents the page shows a warning that explains them instead of this message.
+            if (result.test === 0) {
+                setMessage(`Imported ${result.imported} respondents.`);
+            }
+
+            return result;
 
         } catch(error: any){
             setError(true);

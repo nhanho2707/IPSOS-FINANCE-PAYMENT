@@ -95,6 +95,58 @@ class ProjectRespondent extends Model
         self::GIFT_STATUS_REFUSED => self::STATUS_RESPONDENT_REJECTED,
     ];
 
+    // A test respondent's gift is marked as received without calling Vinnet or GotIt.
+    const ENVIRONMENT_LIVE = 'live';
+    const ENVIRONMENT_TEST = 'test';
+
+    // Interviewer and location codes of the real field teams; anything else is a test or a pilot.
+    const FIELD_CODE_PREFIXES = ['hn', 'sg', 'dn', 'ct', 'ma'];
+
+    /**
+     * The single rule for live versus test, used when respondents are imported or created from an
+     * interview link and again when a gift is sent.
+     */
+    public static function environmentFor(?string $projectStatus, ?string $employeeCode, ?string $locationId): string
+    {
+        $isFieldCode = fn (?string $code) => in_array(substr(strtolower((string) $code), 0, 2), self::FIELD_CODE_PREFIXES, true);
+
+        if (in_array($projectStatus, [Project::STATUS_IN_COMING, Project::STATUS_ON_HOLD], true)) {
+            return self::ENVIRONMENT_TEST;
+        }
+
+        if ($projectStatus === Project::STATUS_ON_GOING && !$isFieldCode($employeeCode)) {
+            return self::ENVIRONMENT_TEST;
+        }
+
+        // Covers an empty location and the "_defaultsp" placeholder too.
+        if (!$isFieldCode($locationId)) {
+            return self::ENVIRONMENT_TEST;
+        }
+
+        return self::ENVIRONMENT_LIVE;
+    }
+
+    /**
+     * Live or test against the project as it is now. The stored value is only what applied when the
+     * respondent was created, e.g. imported while the project was still Upcoming.
+     */
+    public function currentEnvironment(): string
+    {
+        return self::environmentFor($this->project?->projectDetails?->status, $this->employee?->employee_id, $this->location_id);
+    }
+
+    public function syncEnvironment(): string
+    {
+        $environment = $this->currentEnvironment();
+
+        if ($this->environment !== $environment) {
+            Log::info("Respondent {$this->id}: environment {$this->environment} -> {$environment} (project status now {$this->project?->projectDetails?->status})");
+            $this->update(['environment' => $environment]);
+        }
+
+        return $environment;
+    }
+
     public static function giftStatus(?string $status): string
     {
         $giftStatus = array_search($status, self::GIFT_STATUS_SOURCES, true);

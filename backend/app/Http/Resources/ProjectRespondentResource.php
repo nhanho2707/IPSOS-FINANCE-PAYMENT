@@ -38,7 +38,7 @@ class ProjectRespondentResource extends JsonResource
             'email' => $this->email,
             'status_label' => $this->status,
             'status' => ProjectRespondent::giftStatus($this->status),
-            'environment' => $this->environment,
+            'environment' => $this->currentEnvironment(),
             'token' => $this->getToken($this->id),
             'channel' => $this->channel,
             'price_level' =>$this->project->getPriceForProvince($this->province_id, $this->price_level)

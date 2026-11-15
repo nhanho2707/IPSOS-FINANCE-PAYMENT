@@ -27,6 +27,16 @@ export type GiftStatus = "pending" | "success" | "refused" | "failed";
 
 export type GiftStatusCounts = Record<GiftStatus, number>;
 
+// "test" respondents are marked as received without paying through Vinnet or GotIt.
+export type RespondentEnvironment = "live" | "test";
+
+export interface OfflineImportResult {
+    imported: number;
+    live: number;
+    test: number;
+    projectStatus: string | null;
+}
+
 export interface OfflineProjectRespondentData {
     id: number,
     respondent_id: string,
@@ -39,7 +49,7 @@ export interface OfflineProjectRespondentData {
     email: string,
     status_label: string,
     status: GiftStatus,
-    environment: "live" | "test",
+    environment: RespondentEnvironment,
     token: string,
     // The gift amount in VND for the respondent's province and price level, despite the name.
     price_level: number | string

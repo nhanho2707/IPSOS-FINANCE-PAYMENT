@@ -1,6 +1,6 @@
 import { Alert, AlertTitle, Box, Button, Checkbox, Stack, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import { GiftStatus, OFFLINE_RESPONDENT_IMPORT_COLUMNS, OfflineGiftBulkSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportData, toImportRow } from "../../config/OfflineProjectRespondentFieldsConfig";
+import { GiftStatus, OFFLINE_RESPONDENT_IMPORT_COLUMNS, OfflineGiftBulkSendResult, OfflineImportResult, OfflineProjectRespondentData, OfflineProjectRespondentImportData, toImportRow } from "../../config/OfflineProjectRespondentFieldsConfig";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import ResourceTable from "../../components/Table/ResourceTable";
 import CellStack from "../../components/Table/CellStack";
@@ -19,7 +19,7 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import StatusChip from "../../components/StatusChip";
 import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
 import { useToast } from "../../contexts/ToastContext";
-import { formatMoney, formatNumber, formatPhone } from "../../utils/format";
+import { formatMoney, formatNumber, formatPhone, formatStatus } from "../../utils/format";
 
 const MAX_FAILURES_SHOWN = 30;
 
@@ -94,6 +94,28 @@ const BulkSendResultBanner: React.FC<{ outcome: BulkSendOutcome; onClose: () => 
     );
 };
 
+const TEST_RESPONDENT_HINT = "Sending marks this gift as received without paying it through Vinnet or GotIt.";
+const TEST_PROJECT_STATUSES = ["in coming", "on hold"];
+
+const ImportResultBanner: React.FC<{ result: OfflineImportResult; onClose: () => void }> = ({ result, onClose }) => (
+    <Alert severity="warning" onClose={onClose}>
+        <AlertTitle>
+            Imported {plural(result.imported, "respondent", "respondents")}: {formatNumber(result.live)} live, {formatNumber(result.test)} test
+        </AlertTitle>
+        <Typography variant="body2">
+            Sending a gift to a test respondent marks it as received without paying it.
+            {result.projectStatus && TEST_PROJECT_STATUSES.includes(result.projectStatus) && (
+                <> This project is <b>{formatStatus(result.projectStatus)}</b>, so every respondent counts as a test until it is In field.</>
+            )}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+            A respondent is a test while the project is Upcoming or On hold, or when its interviewer code (once In field) or
+            location code does not start with HN, SG, DN, CT or MA. This is checked again when each gift is sent, so
+            respondents with valid codes are paid once the project is In field.
+        </Typography>
+    </Alert>
+);
+
 const Gifts: React.FC = () => {
     const { projectId } = useProjectContext();
     const { showToast } = useToast();
@@ -107,6 +129,7 @@ const Gifts: React.FC = () => {
     const [ loadingSelectAllPending, setLoadingSelectAllPending ] = useState<boolean>(false);
     const [ bulkProgress, setBulkProgress ] = useState<BulkSendProgress | null>(null);
     const [ bulkOutcome, setBulkOutcome ] = useState<BulkSendOutcome | null>(null);
+    const [ importOutcome, setImportOutcome ] = useState<OfflineImportResult | null>(null);
     const [ stopRequested, setStopRequested ] = useState<boolean>(false);
     const stopBulkRef = useRef<boolean>(false);
 
@@ -353,10 +376,17 @@ const Gifts: React.FC = () => {
             width: 176,
             renderCell: (row: OfflineProjectRespondentData) => (
                 <Box sx={{ minWidth: 0 }}>
-                    <StatusChip
-                        label={GIFT_STATUS_LABELS[row.status] ?? row.status}
-                        tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
-                    />
+                    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                        <StatusChip
+                            label={GIFT_STATUS_LABELS[row.status] ?? row.status}
+                            tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
+                        />
+                        {row.environment === "test" && (
+                            <Tooltip title={TEST_RESPONDENT_HINT}>
+                                <span><StatusChip label="Test" tone="info" /></span>
+                            </Tooltip>
+                        )}
+                    </Stack>
                     {row.status === "failed" && row.status_label && (
                         <Tooltip title={row.status_label} placement="top-start">
                             <Typography
@@ -486,7 +516,9 @@ const Gifts: React.FC = () => {
             channel: r.Channel
         }));
 
-        await importOfflineProjectRespondents(payload);
+        setImportOutcome(null);
+        const result = await importOfflineProjectRespondents(payload);
+        setImportOutcome(result.test > 0 ? result : null);
     };
 
     const openImport = () => fileInputRef.current?.click();
@@ -593,8 +625,9 @@ const Gifts: React.FC = () => {
                     </Button>
                 )}
                 bulkBar={bulkBar}
-                banner={(bulkOutcome || failedBanner) && (
+                banner={(bulkOutcome || importOutcome || failedBanner) && (
                     <Stack spacing={1}>
+                        {importOutcome && <ImportResultBanner result={importOutcome} onClose={() => setImportOutcome(null)} />}
                         {bulkOutcome && <BulkSendResultBanner outcome={bulkOutcome} onClose={() => setBulkOutcome(null)} />}
                         {failedBanner}
                     </Stack>

@@ -163,6 +163,10 @@ const [actionState, setActionState] = useState<ActionState>({
 
 ## Working with External Payment Providers
 
+### Live and test respondents
+- `ProjectRespondent::environmentFor()` is the only rule: test while the project is Upcoming (`in coming`) or On hold, or when the interviewer code (In field) or location code does not start with HN, SG, DN, CT or MA.
+- A test respondent's gift is marked as received without calling Vinnet or GotIt. The stored `environment` is re-checked against the current project with `syncEnvironment()` when a gift is sent, and the Gifts page shows a Test chip.
+
 ### Vinnet (telco top-up)
 - Transactions use RSA-signed payloads. Crypto logic lives in `frontend/src/utils/CryptoCustom.ts`.
 - Merchant key can be rotated via the Finance panel.

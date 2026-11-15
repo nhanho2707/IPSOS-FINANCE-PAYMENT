@@ -69,10 +69,7 @@ class TransactionController extends Controller
 
             $project = $projectRespondent->project;
 
-            $employee = $projectRespondent->employee;
-
-            if($project->projectDetails->status === Project::STATUS_IN_COMING || $project->projectDetails->status === Project::STATUS_ON_HOLD || 
-                ($project->projectDetails->status === Project::STATUS_ON_GOING && !in_array(substr(strtolower($employee->employee_id), 0, 2), ['hn', 'sg', 'dn', 'ct']))){
+            if($projectRespondent->syncEnvironment() === ProjectRespondent::ENVIRONMENT_TEST){
                     
                     Log::info('Staging Environment: ');
                     
@@ -111,20 +108,7 @@ class TransactionController extends Controller
 
     private function detectEnvironment($project, $interviewURL): string
     {
-        if($project->projectDetails->status === Project::STATUS_IN_COMING || $project->projectDetails->status === Project::STATUS_ON_HOLD || 
-            ($project->projectDetails->status === Project::STATUS_ON_GOING && !in_array(substr(strtolower($interviewURL->interviewer_id), 0, 2), ['hn', 'sg', 'dn', 'ct', 'ma'])))
-            {
-                return 'test';
-            }
-
-        if(strlen($interviewURL->location_id) == 0 || 
-            strtolower($interviewURL->location_id) === '_defaultsp' || 
-                !in_array(substr(strtolower($interviewURL->location_id), 0, 2), ['hn', 'sg', 'dn', 'ct', 'ma']))
-                {
-                    return 'test';
-                }
-        
-        return 'live';
+        return ProjectRespondent::environmentFor($project->projectDetails->status, $interviewURL->interviewer_id, $interviewURL->location_id);
     }
 
     public function authenticate_token(ProjectRespondentTokenRequest $request, ProjectRespondentTokenService $tokenService, VinnetService $vinnetService)

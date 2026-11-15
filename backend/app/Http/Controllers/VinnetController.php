@@ -145,7 +145,7 @@ class VinnetController extends Controller
 
             Log::info('Price item by province: ' . intval($price));
             
-            if($projectRespondent->environment === 'test'){
+            if($projectRespondent->syncEnvironment() === ProjectRespondent::ENVIRONMENT_TEST){
 
                 Log::info('Environment: Staging');
 

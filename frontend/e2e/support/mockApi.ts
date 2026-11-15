@@ -53,7 +53,8 @@ export const respondents = Array.from({ length: 10 }, (_, i) => ({
     email: i % 3 === 0 ? `resp${i}@gmail.com` : "",
     status: GIFT_STATUSES[i],
     status_label: GIFT_STATUSES[i] === "failed" ? "Insufficient merchant balance" : GIFT_STATUSES[i],
-    environment: "live",
+    // INS-48252 was imported before fieldwork started.
+    environment: i === 6 ? "test" : "live",
     token: "tk",
     price_level: [50000, 100000, 50000, 200000, 100000][i % 5],
     channel: i % 3 === 0 ? "gotit" : "vinnet",

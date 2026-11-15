@@ -11,7 +11,8 @@ class TemplateParserService
     public function parse(string $filePath, string $projectType): array
     {
         $mtime    = file_exists($filePath) ? filemtime($filePath) : 0;
-        $cacheKey = 'quotation_schema_' . md5($filePath . $projectType) . '_' . $mtime;
+        // v2: columns are read by header name; v1 entries cached a wrong result for projects with several types.
+        $cacheKey = 'quotation_schema_v2_' . md5($filePath . $projectType) . '_' . $mtime;
 
         return Cache::remember($cacheKey, now()->addDay(), function () use ($filePath, $projectType) {
             return $this->doParse($filePath, $projectType);
@@ -33,22 +34,53 @@ class TemplateParserService
             }
         }
 
-        $dropdownMap = $this->parseSelectSheet($allSheets['SELECT']);
-        $configMap   = $this->parseConfigSheet($allSheets['CONFIG'], $dropdownMap, $projectType);
+        $projectTypes = array_values(array_filter(array_map('trim', explode(',', $projectType)), 'strlen'));
 
-        return $this->parseFieldSheet($allSheets['FIELDS'], $dropdownMap, $configMap, $projectType);
+        $dropdownMap = $this->parseSelectSheet($this->rowsByHeader($allSheets['SELECT']));
+        $configMap   = $this->parseConfigSheet($this->rowsByHeader($allSheets['CONFIG']), $dropdownMap, $projectTypes);
+
+        return $this->parseFieldSheet($this->rowsByHeader($allSheets['FIELDS']), $dropdownMap, $configMap, $projectTypes);
+    }
+
+    /**
+     * Each row keyed by its column's header. The templates do not share a column order:
+     * operations_template has no "placeholder" column in CONFIG, so positions would shift.
+     */
+    private function rowsByHeader(array $rows): array
+    {
+        $header = array_map(fn ($name) => strtolower(trim((string) $name)), array_shift($rows) ?? []);
+
+        return array_map(function (array $row) use ($header) {
+            $named = [];
+            foreach ($header as $position => $name) {
+                if ($name !== '') {
+                    $named[$name] = $row[$position] ?? null;
+                }
+            }
+
+            return $named;
+        }, $rows);
+    }
+
+    /**
+     * A field is shown when any of the project's types is listed in its project_types cell
+     * ("CLT, F2F"); a project usually has one type but can have several.
+     */
+    private function isHidden(array $projectTypes, mixed $cell): bool
+    {
+        $fieldTypes = array_map('trim', explode(',', (string) $cell));
+
+        return count(array_intersect($projectTypes, $fieldTypes)) === 0;
     }
 
     private function parseSelectSheet(array $rows): array
     {
         $map = [];
 
-        foreach ($rows as $index => $row) {
-            if ($index === 0) continue;
-
-            $key   = $row[0] ?? null;
-            $value = $row[1] ?? null;
-            $label = $row[2] ?? null;
+        foreach ($rows as $row) {
+            $key   = $row['key'] ?? null;
+            $value = $row['value'] ?? null;
+            $label = $row['label'] ?? null;
 
             if (!$key || !$value || !$label) continue;
 
@@ -61,24 +93,19 @@ class TemplateParserService
         return $map;
     }
 
-    private function parseConfigSheet(array $rows, array $dropdownMap, string $projectType): array
+    private function parseConfigSheet(array $rows, array $dropdownMap, array $projectTypes): array
     {
         $configMap = [];
 
-        foreach ($rows as $index => $row) {
-            if ($index === 0) continue;
-
-            $groupKey           = $row[0] ?? null;
-            $fieldName          = $row[1] ?? null;
-            $label              = $row[2] ?? null;
-            $placeholder        = $row[3] ?? null;
-            $type               = $row[4] ?? null;
-            $required           = $row[5] ?? null;
-            $default            = $row[6] ?? null;
-            $optionsKey         = $row[7] ?? null;
-            $projectTypeOptions = $row[8] !== null
-                ? array_map('trim', explode(',', (string) $row[8]))
-                : [];
+        foreach ($rows as $row) {
+            $groupKey    = $row['group_key'] ?? null;
+            $fieldName   = $row['field_name'] ?? null;
+            $label       = $row['label'] ?? null;
+            $placeholder = $row['placeholder'] ?? null;
+            $type        = $row['type'] ?? null;
+            $required    = $row['required'] ?? null;
+            $default     = $row['default_value'] ?? null;
+            $optionsKey  = $row['options_key'] ?? null;
 
             if (!$groupKey || !$fieldName) continue;
 
@@ -89,7 +116,7 @@ class TemplateParserService
                 'type'        => trim((string) $type),
                 'required'    => (bool) $required,
                 'default'     => $default,
-                'hidden'      => !in_array($projectType, $projectTypeOptions),
+                'hidden'      => $this->isHidden($projectTypes, $row['project_types'] ?? null),
             ];
 
             if (in_array($type, ['select', 'single-select', 'multi-select', 'radio', 'checkbox']) && $optionsKey) {
@@ -130,26 +157,21 @@ class TemplateParserService
         return $configMap;
     }
 
-    private function parseFieldSheet(array $rows, array $dropdownMap, array $configMap, string $projectType): array
+    private function parseFieldSheet(array $rows, array $dropdownMap, array $configMap, array $projectTypes): array
     {
         $schema = [];
 
-        foreach ($rows as $index => $row) {
-            if ($index === 0) continue;
-
-            $fieldName  = $row[0] ?? null;
-            $label      = $row[1] ?? null;
-            $type       = $row[2] ?? null;
-            $required   = $row[3] ?? null;
-            $default    = $row[4] ?? null;
-            $configKey  = $row[5] ?? null;
-            $optionsKey = $row[6] ?? null;
-            $layoutXS   = $row[7] ?? null;
-            $layoutSM   = $row[8] ?? null;
-            $layoutMD   = $row[9] ?? null;
-            $projectTypeOptions = $row[10] !== null
-                ? array_map('trim', explode(',', (string) $row[10]))
-                : [];
+        foreach ($rows as $row) {
+            $fieldName  = $row['field_name'] ?? null;
+            $label      = $row['label'] ?? null;
+            $type       = $row['type'] ?? null;
+            $required   = $row['required'] ?? null;
+            $default    = $row['default_value'] ?? null;
+            $configKey  = $row['config_key'] ?? null;
+            $optionsKey = $row['options_key'] ?? null;
+            $layoutXS   = $row['layout_xs'] ?? null;
+            $layoutSM   = $row['layout_sm'] ?? null;
+            $layoutMD   = $row['layout_md'] ?? null;
 
             if (!$fieldName) continue;
 
@@ -159,7 +181,7 @@ class TemplateParserService
                 'type'     => trim((string) $type),
                 'required' => (bool) $required,
                 'default'  => $default,
-                'hidden'   => !in_array($projectType, $projectTypeOptions),
+                'hidden'   => $this->isHidden($projectTypes, $row['project_types'] ?? null),
                 'layout'   => ['xs' => $layoutXS, 'sm' => $layoutSM, 'md' => $layoutMD],
             ];
 

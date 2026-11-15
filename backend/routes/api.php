@@ -90,6 +90,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/projects/{projectId}/transactions/show', [TransactionController::class, 'show']);
         Route::get('/projects/{projectId}/transactions/statistics', [TransactionController::class, 'statistics'])
             ->middleware('ensureUserHasRole:Admin,Finance,Scripter');
+        Route::get('/projects/{projectId}/transactions/statistics/interviews', [TransactionController::class, 'statisticsInterviews'])
+            ->middleware('ensureUserHasRole:Admin,Finance,Scripter');
+        Route::get('/projects/{projectId}/transactions/statistics/interviews/export', [TransactionController::class, 'exportStatisticsInterviews'])
+            ->middleware(['ensureUserHasRole:Admin,Finance,Scripter', 'extendExecutionTime']);
         
         Route::put('/projects/{projectId}/update-info', [ProjectController::class, 'updateProjectInfo'])
             ->middleware('ensureUserHasRole:Admin,Scripter');

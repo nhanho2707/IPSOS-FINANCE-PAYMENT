@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use App\Http\Requests\ProjectRespondentTokenRequest;
 use App\Http\Requests\TransactionRejectedRequest;
+use App\Http\Requests\TransactionStatisticsInterviewsRequest;
 use App\Http\Requests\TransactionStatisticsRequest;
 use App\Http\Resources\TransactionResource;
 use App\Models\Project;
@@ -20,18 +21,14 @@ use App\Models\ProjectGotItVoucherTransaction;
 use Ramsey\Uuid\Uuid;
 use App\Constants\TransactionStatus;
 use App\Services\ProjectRespondentTokenService;
+use App\Services\TransactionStatisticsService;
+use App\Services\XlsxStreamWriter;
 use App\Services\VinnetService;
 use App\Services\InterviewURL;
 
 
 class TransactionController extends Controller
 {
-    // Interview times arrive from the survey link as Vietnam wall-clock time, while created_at is written in the app timezone.
-    private const SURVEY_TIMEZONE = 'Asia/Ho_Chi_Minh';
-
-    // Tablet and server clocks drift by a few minutes, so smaller negative gaps are not worth checking.
-    private const ANOMALY_TOLERANCE_MINUTES = 5;
-
     public function verify(Request $request, ProjectRespondentTokenService $tokenService)
     {
         try{
@@ -372,170 +369,14 @@ class TransactionController extends Controller
         }
     }
 
-    public function statistics(TransactionStatisticsRequest $request, $projectId)
+    public function statistics(TransactionStatisticsRequest $request, TransactionStatisticsService $statistics, $projectId)
     {
         try
         {
-            $validated = $request->validated();
-
-            // A respondent can hold several successful rows (Vinnet split cards, several GotIt vouchers),
-            // so collapse them to one gift per respondent before counting.
-            $vinnetGifts = DB::table('project_vinnet_transactions')
-                    ->select(
-                        'project_respondent_id',
-                        DB::raw('MIN(created_at) as gift_time'),
-                        DB::raw('SUM(total_amt) as amount')
-                    )
-                    ->where('vinnet_token_message', TransactionStatus::VINNET_SUCCESS)
-                    ->groupBy('project_respondent_id');
-
-            $gotitGifts = DB::table('project_gotit_voucher_transactions')
-                    ->select(
-                        'project_respondent_id',
-                        DB::raw('MIN(created_at) as gift_time'),
-                        DB::raw('SUM(voucher_value) as amount')
-                    )
-                    ->where(function($q) {
-                        $q->where('voucher_status', TransactionStatus::GOTIT_SUCCESS)
-                        ->orWhere('voucher_status', 'LIKE', 'Voucher được cancelled by GotIt ngày%');
-                    })
-                    ->groupBy('project_respondent_id');
-
-            if($projectId != 0){
-                $projectRespondentIds = DB::table('project_respondents')->select('id')->where('project_id', $projectId);
-
-                $vinnetGifts->whereIn('project_respondent_id', $projectRespondentIds);
-                $gotitGifts->whereIn('project_respondent_id', $projectRespondentIds);
-            }
-
-            $query = DB::table('project_respondents as pr')
-                    ->leftJoinSub($vinnetGifts, 'vg', 'vg.project_respondent_id', '=', 'pr.id')
-                    ->leftJoinSub($gotitGifts, 'gg', 'gg.project_respondent_id', '=', 'pr.id')
-                    ->leftJoin('employees', 'employees.id', '=', 'pr.employee_id')
-                    ->leftJoin('project_respondent_tokens as prt', 'prt.project_respondent_id', '=', 'pr.id')
-                    ->where('pr.environment', 'live')
-                    ->whereIn('pr.channel', ['vinnet', 'gotit', 'other'])
-                    ->where(function($q) {
-                        $q->whereNotNull('vg.project_respondent_id')
-                        ->orWhereNotNull('gg.project_respondent_id');
-                    });
-
-            if($projectId != 0){
-                $query->where('pr.project_id', $projectId);
-            }
-
-            if(!empty($validated['channel'])){
-                $query->where('pr.channel', $validated['channel']);
-            }
-
-            // A plain range instead of whereDate() keeps an index on interview_start usable.
-            if(!empty($validated['date_from'])){
-                $query->where('pr.interview_start', '>=', Carbon::parse($validated['date_from'])->startOfDay()->toDateTimeString());
-            }
-
-            if(!empty($validated['date_to'])){
-                $query->where('pr.interview_start', '<', Carbon::parse($validated['date_to'])->addDay()->startOfDay()->toDateTimeString());
-            }
-
-            $rows = $query->select(
-                    'pr.channel',
-                    'pr.interview_start',
-                    'pr.interview_end',
-                    'vg.gift_time as vinnet_gift_time',
-                    'gg.gift_time as gotit_gift_time',
-                    DB::raw('COALESCE(vg.amount, 0) + COALESCE(gg.amount, 0) as amount'),
-                    'pr.respondent_id',
-                    'pr.respondent_phone_number',
-                    'employees.employee_id',
-                    'employees.first_name',
-                    'employees.last_name',
-                    'prt.batch_id'
-                )
-                ->orderBy('pr.id')
-                ->cursor();
-
-            $total = 0;
-            $totalAmount = 0;
-            $byChannel = $this->emptyChannelBuckets();
-            $interviewBuckets = $this->emptyHourBuckets();
-            $giftBuckets = $this->emptyHourBuckets();
-            $gapBuckets = $this->emptyGapBuckets();
-            $gaps = [];
-            $gapUnknown = 0;
-            $gapOffline = 0;
-            $anomalies = [];
-            $appTimezone = config('app.timezone');
-
-            foreach($rows as $row){
-                $amount = (float) $row->amount;
-
-                $total++;
-                $totalAmount += $amount;
-                $byChannel[$row->channel]['count']++;
-                $byChannel[$row->channel]['amount'] += $amount;
-
-                // A respondent paid through both providers received the gift at the earlier of the two; LEAST() would return NULL when one side is missing.
-                $firstGiftTime = min(array_filter([$row->vinnet_gift_time, $row->gotit_gift_time]));
-                $giftTime = Carbon::parse($firstGiftTime, $appTimezone)->setTimezone(self::SURVEY_TIMEZONE);
-                $giftBuckets[$this->hourRangeBucket($giftTime->hour)]++;
-
-                // Offline imports stamp interview_start/end with the import time, so they say nothing about the interview.
-                if(!empty($row->batch_id)){
-                    $gapOffline++;
-                    continue;
-                }
-
-                if($row->interview_start){
-                    $interviewBuckets[$this->hourRangeBucket(Carbon::parse($row->interview_start, self::SURVEY_TIMEZONE)->hour)]++;
-                }
-
-                if(!$row->interview_end){
-                    $gapUnknown++;
-                    continue;
-                }
-
-                $interviewEnd = Carbon::parse($row->interview_end, self::SURVEY_TIMEZONE);
-                $gapMinutes = (int) round(($giftTime->getTimestamp() - $interviewEnd->getTimestamp()) / 60);
-
-                $gaps[] = $gapMinutes;
-                $gapBuckets[$this->gapBucket($gapMinutes)]++;
-
-                if($this->isAnomaly($gapMinutes)){
-                    $anomalies[] = [
-                        'respondent_id' => $row->respondent_id,
-                        'phone' => $row->respondent_phone_number,
-                        'channel' => $row->channel,
-                        'employee_id' => $row->employee_id,
-                        'employee_name' => trim($row->first_name . ' ' . $row->last_name),
-                        'interview_end' => $interviewEnd->format('Y-m-d H:i:s'),
-                        'gift_time' => $giftTime->format('Y-m-d H:i:s'),
-                        'amount' => $amount,
-                        'gap_minutes' => $gapMinutes
-                    ];
-                }
-            }
-
-            $anomaliesTotal = count($anomalies);
-
-            usort($anomalies, fn($a, $b) => $a['gap_minutes'] <=> $b['gap_minutes']);
-
             return response()->json([
                 'status_code' => 200,
                 'message' => 'Successful request.',
-                'data' => [
-                    'total' => $total,
-                    'total_amount' => $totalAmount,
-                    'by_channel' => $byChannel,
-                    'interview_time_buckets' => $interviewBuckets,
-                    'gift_time_buckets' => $giftBuckets,
-                    'gap_buckets' => $gapBuckets,
-                    'gap_median_minutes' => $this->median($gaps),
-                    'gap_unknown' => $gapUnknown,
-                    'gap_offline' => $gapOffline,
-                    'anomaly_tolerance_minutes' => self::ANOMALY_TOLERANCE_MINUTES,
-                    'anomalies' => array_slice($anomalies, 0, 300),
-                    'anomalies_total' => $anomaliesTotal
-                ]
+                'data' => $statistics->summary((int) $projectId, $request->validated())
             ]);
         } catch(\Exception $e){
             Log::error($e->getMessage());
@@ -546,73 +387,39 @@ class TransactionController extends Controller
         }
     }
 
-    private function emptyChannelBuckets(): array
+    public function statisticsInterviews(TransactionStatisticsInterviewsRequest $request, TransactionStatisticsService $statistics, $projectId)
     {
-        return [
-            'vinnet' => ['count' => 0, 'amount' => 0],
-            'gotit' => ['count' => 0, 'amount' => 0],
-            'other' => ['count' => 0, 'amount' => 0]
-        ];
-    }
+        try
+        {
+            $validated = $request->validated();
+            $page = $statistics->interviews((int) $projectId, $validated, $validated);
 
-    private function emptyHourBuckets(): array
-    {
-        $buckets = [];
-
-        for($hour = 0; $hour < 24; $hour++){
-            $buckets[$this->hourRangeBucket($hour)] = 0;
+            return response()->json([
+                'status_code' => 200,
+                'message' => 'Successful request.',
+                'data' => $page['data'],
+                'meta' => $page['meta']
+            ]);
+        } catch(\Exception $e){
+            Log::error($e->getMessage());
+            return response()->json([
+                'status_code' => 400,
+                'error' => $e->getMessage()
+            ], 400);
         }
-
-        return $buckets;
     }
 
-    private function median(array $values): ?int
+    public function exportStatisticsInterviews(TransactionStatisticsInterviewsRequest $request, TransactionStatisticsService $statistics, $projectId)
     {
-        $count = count($values);
+        $validated = $request->validated();
+        $path = tempnam(sys_get_temp_dir(), 'export_');
 
-        if($count === 0){
-            return null;
-        }
+        (new XlsxStreamWriter())->write($path, $statistics->exportHeadings(), $statistics->exportRows((int) $projectId, $validated, $validated));
 
-        sort($values);
-
-        $middle = intdiv($count, 2);
-
-        return $count % 2 ? $values[$middle] : (int) round(($values[$middle - 1] + $values[$middle]) / 2);
-    }
-
-    private function emptyGapBuckets(): array
-    {
-        return [
-            $this->anomalyBucket() => 0,
-            '≤ 30 phút' => 0,
-            '30 phút - 2 giờ' => 0,
-            '2 - 24 giờ' => 0,
-            '> 24 giờ' => 0
-        ];
-    }
-
-    private function anomalyBucket(): string
-    {
-        return sprintf('Trước khi PV xong > %d phút (bất thường)', self::ANOMALY_TOLERANCE_MINUTES);
-    }
-
-    private function isAnomaly(int $gapMinutes): bool
-    {
-        return $gapMinutes < -self::ANOMALY_TOLERANCE_MINUTES;
-    }
-
-    private function hourRangeBucket(int $hour): string
-    {
-        return sprintf('%02d-%02d', $hour, ($hour + 1) % 24);
-    }
-
-    private function gapBucket(int $minutes): string
-    {
-        if($this->isAnomaly($minutes)) return $this->anomalyBucket();
-        if($minutes <= 30) return '≤ 30 phút';
-        if($minutes <= 120) return '30 phút - 2 giờ';
-        if($minutes <= 1440) return '2 - 24 giờ';
-        return '> 24 giờ';
+        return response()
+            ->download($path, 'interviews.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend();
     }
 }

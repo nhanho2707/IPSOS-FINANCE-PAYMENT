@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\TransactionStatisticsService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -37,7 +38,11 @@ class TransactionStatisticsRequest extends FormRequest
         return [
             'channel' => 'nullable|string|in:vinnet,gotit,other',
             'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from'
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'employee' => 'nullable|string|max:50',
+            'wait' => 'nullable|string|in:' . implode(',', array_keys(TransactionStatisticsService::WAIT_BUCKETS)),
+            'weekday' => 'nullable|integer|between:1,7',
+            'hour' => 'nullable|integer|between:0,23'
         ];
     }
 

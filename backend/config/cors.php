@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_origins' => ['https://ifieldvn.ipsos.com', 'https://www.ippay.vn', 'https://dev.ippay.vn', 'https://www.dev.ippay.vn', 'http://localhost:3000', 'https://mmstgweb.ipsosinteractive.com'],
 
     'allowed_origins_patterns' => [],
 

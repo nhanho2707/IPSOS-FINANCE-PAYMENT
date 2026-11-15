@@ -231,11 +231,11 @@ class TransactionStatisticsService
             if ($row['day'] !== null) {
                 $daily[$row['day']] ??= [
                     'date' => $row['day'],
-                    'interviews' => 0,
+                    'interviews' => array_fill_keys(self::CHANNELS, 0),
                     'gifts' => array_fill_keys(self::CHANNELS, 0),
                     'amount' => array_fill_keys(self::CHANNELS, 0.0),
                 ];
-                $daily[$row['day']]['interviews']++;
+                $daily[$row['day']]['interviews'][$row['channel']]++;
             }
 
             if (!$row['gifted']) continue;

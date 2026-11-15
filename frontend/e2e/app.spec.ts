@@ -94,12 +94,87 @@ test.describe("admin", () => {
         await capture(page, testInfo, "gifts-import-with-tests", { fullPage: false });
     });
 
-    test("finance", async ({ page }, testInfo) => {
+    test("finance overview", async ({ page }, testInfo) => {
         await page.goto("/transaction-manager/transactions");
         await expect(page.getByRole("heading", { name: "Finance", level: 1 })).toBeVisible();
         await expect(page.getByText("Low balance")).toBeVisible();
-        await expect(page.getByText(/weeks? left at the last 30 days/).first()).toBeVisible();
+        await expect(page.getByText(/weeks? left at the last 30 days' spending\. Runs out around/).first()).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Gifts paid" })).toBeVisible();
+        await expect(page.getByRole("button", { name: /^VN2555 Grab Food Delivery NPS Tracker/ })).toBeVisible();
         await capture(page, testInfo, "finance");
+
+        // A project in the ranking opens the analysis for that project and the same period.
+        await page.getByRole("button", { name: /^VN2555 Grab Food Delivery NPS Tracker/ }).click();
+        await expect(page).toHaveURL(/tab=analysis&project=6&from=2026-08-05&to=2026-11-02/);
+        await expect(page.getByRole("combobox", { name: "Project" })).toHaveValue("VN2555 - Grab Food Delivery NPS Tracker");
+
+        await page.getByRole("tab", { name: "Exports" }).click();
+        await expect(page.getByRole("heading", { name: "Export transactions" })).toBeVisible();
+        await expect(page).toHaveURL(/tab=exports$/);
+    });
+
+    test("finance analysis: charts filter each other and the interviews export", async ({ page }, testInfo) => {
+        await page.goto("/transaction-manager/transactions?tab=analysis");
+        await expect(page.getByRole("heading", { name: "By interviewer" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "By project" })).toBeVisible();
+        await expect(page.getByText("vs previous 30 days").first()).toBeVisible();
+        await capture(page, testInfo, "finance-analysis");
+
+        // Sorting by reviews brings the interviewer who sends gifts early to the top.
+        const interviewers = page.getByRole("table").filter({ hasText: "Interviewer ID" }).first();
+        await interviewers.getByRole("button", { name: "To review" }).click();
+        await expect(interviewers.getByRole("row").nth(1)).toContainText("HN007");
+
+        await interviewers.getByRole("button", { name: /^HN007/ }).click();
+        await expect(page).toHaveURL(/pvv=HN007/);
+        await expect(page.getByRole("button", { name: /Interviewer: HN007/ })).toBeVisible();
+
+        await page.getByRole("button", { name: /^Before the interview ended/ }).click();
+        await expect(page).toHaveURL(/wait=early/);
+        await expect(page.getByRole("button", { name: /Wait: Before the interview ended/ })).toBeVisible();
+
+        const review = page.getByRole("table").filter({ hasText: "Gift received" });
+        await expect(review.getByRole("row").nth(1)).toContainText("HN007");
+        await capture(page, testInfo, "finance-analysis-filtered");
+
+        await review.getByRole("row").nth(1).click();
+        const drawer = page.getByRole("dialog");
+        await expect(drawer.getByRole("heading", { name: "Timeline" })).toBeVisible();
+        await expect(drawer.getByText(/before the interview ended/)).toBeVisible();
+        await capture(page, testInfo, "interview-drawer", { fullPage: false });
+        await drawer.getByRole("button", { name: "Close" }).click();
+
+        const download = page.waitForEvent("download");
+        await page.getByRole("button", { name: "Export Excel" }).last().click();
+        expect((await download).suggestedFilename()).toBe("interviews_review_20261102.xlsx");
+
+        await page.getByRole("button", { name: "Reset" }).click();
+        await expect(page).not.toHaveURL(/pvv=|wait=/);
+        await expect(page.getByRole("button", { name: /Interviewer: HN007/ })).toHaveCount(0);
+    });
+
+    test("project statistics: keyboard on the week grid and the interviewer export", async ({ page }, testInfo) => {
+        await page.goto(`${PROJECT}/transaction-statistics`);
+        await expect(page.getByRole("heading", { name: "By interviewer" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "By project" })).toHaveCount(0);
+        await capture(page, testInfo, "project-statistics");
+
+        const grid = page.getByRole("group", { name: /Interviews started by weekday and hour/ });
+        await grid.focus();
+        for (let step = 0; step < 15; step++) await grid.press("ArrowRight");
+        await expect(page.getByRole("status")).toContainText("Mon, 14:00–15:00");
+        await grid.press("Enter");
+        await expect(page).toHaveURL(/wd=1&hr=14/);
+        await expect(page.getByRole("button", { name: /Time: Mon, 14:00–15:00/ })).toBeVisible();
+
+        await page.getByRole("tab", { name: /All interviews/ }).click();
+        await page.getByPlaceholder("Search ID, phone or interviewer").fill("SG001");
+        const interviews = page.getByRole("table").filter({ hasText: "Gift received" });
+        await expect(interviews.getByRole("row").nth(1)).toContainText("SG001");
+
+        const download = page.waitForEvent("download");
+        await page.getByRole("button", { name: "Export Excel" }).first().click();
+        expect((await download).suggestedFilename()).toBe("interviews_by_interviewer.xlsx");
     });
 
     test("accounts row menu and history drawer", async ({ page }, testInfo) => {

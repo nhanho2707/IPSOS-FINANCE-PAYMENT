@@ -16,6 +16,8 @@ export const ApiConfig = {
     getTeams: `${host}/api/project-management/{department_id}/teams`,
     viewTransactions: `${host}/api/project-management/projects/{projectId}/transactions/show`,
     viewTransactionStatistics: `${host}/api/project-management/projects/{projectId}/transactions/statistics`,
+    viewStatisticsInterviews: `${host}/api/project-management/projects/{projectId}/transactions/statistics/interviews`,
+    exportStatisticsInterviews: `${host}/api/project-management/projects/{projectId}/transactions/statistics/interviews/export`,
     viewEmployees: `${host}/api/project-management/{projectId}/employees`,
     addEmployees: `${host}/api/project-management/projects/{projectId}/employees/store`,
     removeEmployee: `${host}/api/project-management/projects/{projectId}/employees/{employeeId}/destroy`,

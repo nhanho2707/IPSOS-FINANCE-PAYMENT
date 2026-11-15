@@ -4,7 +4,7 @@ import { ApiConfig } from "../config/ApiConfig";
 import { GiftStatusCounts } from "../config/OfflineProjectRespondentFieldsConfig";
 import { QuotationVersionData } from "../config/QuotationConfig";
 import { ActionState } from "../components/Table/ReusableTable";
-import { TransactionStatisticsData } from "./useTransactionStatistics";
+import { TransactionStatisticsData } from "../config/StatisticsConfig";
 
 export interface ProjectOverviewAccess {
     statistics: boolean;

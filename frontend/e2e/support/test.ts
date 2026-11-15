@@ -49,6 +49,9 @@ export async function capture(page: Page, testInfo: TestInfo, name: string, opti
     await page.evaluate(() => document.fonts.ready);
     const fullPage = options.fullPage ?? true;
 
+    // A full-page capture of a scrolled page would draw the sticky sidebar in the middle of it.
+    if (fullPage) await page.evaluate(() => window.scrollTo(0, 0));
+
     if (process.env.E2E_VISUAL) {
         await expect(page).toHaveScreenshot(`${name}.png`, { fullPage });
         return;

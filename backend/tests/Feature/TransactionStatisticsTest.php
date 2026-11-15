@@ -327,8 +327,8 @@ class TransactionStatisticsTest extends TestCase
         $data = $this->statistics();
 
         $this->assertEquals([
-            ['date' => '2026-10-01', 'interviews' => 2, 'gifts' => ['vinnet' => 1, 'gotit' => 1, 'other' => 0], 'amount' => ['vinnet' => 100000, 'gotit' => 50000, 'other' => 0]],
-            ['date' => '2026-10-03', 'interviews' => 1, 'gifts' => ['vinnet' => 0, 'gotit' => 0, 'other' => 0], 'amount' => ['vinnet' => 0, 'gotit' => 0, 'other' => 0]],
+            ['date' => '2026-10-01', 'interviews' => ['vinnet' => 1, 'gotit' => 1, 'other' => 0], 'gifts' => ['vinnet' => 1, 'gotit' => 1, 'other' => 0], 'amount' => ['vinnet' => 100000, 'gotit' => 50000, 'other' => 0]],
+            ['date' => '2026-10-03', 'interviews' => ['vinnet' => 1, 'gotit' => 0, 'other' => 0], 'gifts' => ['vinnet' => 0, 'gotit' => 0, 'other' => 0], 'amount' => ['vinnet' => 0, 'gotit' => 0, 'other' => 0]],
         ], $data['daily']);
         $this->assertSame(1, $data['weekday_hours'][3][9]);
         $this->assertSame(1, $data['weekday_hours'][3][20]);

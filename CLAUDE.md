@@ -123,6 +123,7 @@ const [actionState, setActionState] = useState<ActionState>({
 - Page headers: top-level pages start with `<PageHeader title description actions />` (at most one contained button in `actions`).
 - Project sub-pages: the header and breadcrumbs come from `ProjectLayout`, with title and description from `config/ProjectNavConfig.ts` (register new pages there, with their `group`); put page actions in `<ProjectPageActions>` and read project data with `useProjectContext()`.
 - Lists: use `ResourceTable` (status `tabs`, search, `FilterChip` filters, `BulkActionBar`, `banner`, `EmptyState`, `onRowClick`) with `RowActions` for per-row actions; it wraps `ReusableTable`, which is used directly only for tables inside other components. Do not write one-off `<Table>` implementations.
+- Charts: the statistics charts live in `components/Statistics/` (`TrendChart`, `HourChart`, `WeekHourHeatmap`, `WaitDistribution`, `BreakdownTable`) and share `chartKit.tsx` (axis ticks, tooltip, legend, one tab stop with arrow keys). New charts follow the same rules: bars at most 24px wide with a rounded data end, provider colours from `PROVIDER_STYLES`, one y-axis, a legend for two or more series, a tooltip on hover and keyboard focus. Wrap a chart or page block in `SectionCard`.
 - Data display: `StatCard` for headline numbers, `CellStack` for two-line cells, `ProviderBadge` for Vinnet/GotIt, `SampleProgress` for sample progress, `UserAvatar` for people. Provider colours come from `PROVIDER_STYLES` in `config/ThemeConfig.ts`.
 - Icons: prefer `@mui/icons-material` or `@phosphor-icons/react`.
 
@@ -166,6 +167,11 @@ const [actionState, setActionState] = useState<ActionState>({
 ### Live and test respondents
 - `ProjectRespondent::environmentFor()` is the only rule: test while the project is Upcoming (`in coming`) or On hold, or when the interviewer code (In field) or location code does not start with HN, SG, DN, CT or MA.
 - A test respondent's gift is marked as received without calling Vinnet or GotIt. The stored `environment` is re-checked against the current project with `syncEnvironment()` when a gift is sent, and the Gifts page shows a Test chip.
+
+### Interview and gift statistics
+- `TransactionStatisticsService` feeds the Statistics page of a project and the Analysis tab of Finance (project id 0 = all projects, Admin and Finance only). The summary, the interview list and the Excel export read the same rows, so change the rule in one place.
+- It counts every live interview; a gift is a successful Vinnet or GotIt transaction. "To review" is a gift sent more than `REVIEW_TOLERANCE_MINUTES` before the interview ended. Offline imports are left out of the timing figures.
+- Filters live in the URL (`useStatisticsFilters`). Each breakdown ignores the filter on its own dimension, so picking an interviewer, a wait or an hour narrows the other charts.
 
 ### Vinnet (telco top-up)
 - Transactions use RSA-signed payloads. Crypto logic lives in `frontend/src/utils/CryptoCustom.ts`.

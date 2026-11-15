@@ -44,7 +44,7 @@ export const PROJECT_NAV_ITEMS: ProjectNavItem[] = [
   { label: "CATI settings", description: "Respondent batches for phone interviews.", path: "cati-settings", icon: HeadsetMicOutlined, group: "field", allowedRoles: ROLE_ACCESS.projectCatiSettings },
   { label: "Gifts", description: "Send incentives to respondents and follow each delivery.", path: "gifts", icon: CardGiftcardOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectGifts },
   { label: "Transactions", description: "Every top-up and e-voucher sent for this project.", path: "transactions", icon: ReceiptLongOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactions },
-  { label: "Statistics", title: "Transaction statistics", description: "Interview length and the time from interview to gift.", path: "transaction-statistics", icon: InsightsOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactionStatistics },
+  { label: "Statistics", title: "Transaction statistics", description: "Interviews and gifts by interviewer, day and hour, and the wait for each gift.", path: "transaction-statistics", icon: InsightsOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactionStatistics },
   { label: "Settings", description: "Project details, sample size and province prices.", path: "settings", icon: SettingsOutlined, group: "bottom", allowedRoles: ROLE_ACCESS.projectSettings },
 ];
 

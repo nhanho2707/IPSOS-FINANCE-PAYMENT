@@ -2,6 +2,7 @@
 // Shapes follow the real resources (ProjectResource, ProjectRespondentResource, ...); values are fictional.
 import quotationSchema from "../fixtures/quotation_schema.json";
 import operationsSchema from "../fixtures/operations_schema.json";
+import { statisticsInterviews, statisticsSummary } from "./mockStatistics";
 
 type Json = Record<string, unknown>;
 
@@ -112,30 +113,6 @@ const accounts = ACCOUNT_ROWS.map(([name, email, role, department, isActive, mus
     last_login_at: `2026-10-${28 - i} 08:${10 + i}:00`, created_at: `2025-0${(i % 9) + 1}-12 09:00:00`,
 }));
 
-const hourly = (peak: number) => Object.fromEntries(Array.from({ length: 24 }, (_, h) => [
-    `${String(h).padStart(2, "0")}-${String((h + 1) % 24).padStart(2, "0")}`,
-    Math.max(0, Math.round(peak * Math.exp(-((h - 14) ** 2) / 18))),
-]));
-
-const statistics = {
-    total: 1834,
-    total_amount: 158200000,
-    by_channel: { vinnet: { count: 1210, amount: 98400000 }, gotit: { count: 600, amount: 57800000 }, other: { count: 24, amount: 2000000 } },
-    interview_time_buckets: hourly(160),
-    gift_time_buckets: hourly(140),
-    gap_buckets: { "< -5 min": 14, "-5–0 min": 22, "0–15 min": 911, "15–60 min": 503, "1–6 h": 220, "6–24 h": 81, "> 1 day": 37 },
-    gap_median_minutes: 12,
-    gap_unknown: 31,
-    gap_offline: 15,
-    anomaly_tolerance_minutes: 5,
-    anomalies: Array.from({ length: 14 }, (_, i) => ({
-        respondent_id: `INS-${48210 + i * 7}`, phone: PHONES[i % 10], channel: i % 2 ? "vinnet" : "gotit", employee_id: `PVV${2040 + i}`,
-        employee_name: FULL_NAMES[i % 10], interview_end: `2026-10-${10 + (i % 9)} 10:${20 + i}:00`,
-        gift_time: `2026-10-${10 + (i % 9)} 10:${5 + i}:00`, amount: 50000, gap_minutes: -(6 + i * 4),
-    })),
-    anomalies_total: 36,
-};
-
 const person = (name: string) => ({ id: name.length, name, email: `${name.toLowerCase().replace(" ", ".")}@ipsos.com` });
 
 const versions = [
@@ -203,7 +180,13 @@ export function respond(url: string): unknown {
         return body;
     }
     if (/transactions\/show$/.test(path)) return paginated(transactions, 1834, "Successful request.");
-    if (/transactions\/statistics$/.test(path)) return { status_code: 200, data: statistics };
+    const statisticsRoute = path.match(/projects\/(\d+)\/transactions\/statistics(\/interviews)?(\/export)?$/);
+    if (statisticsRoute) {
+        const projectId = Number(statisticsRoute[1]);
+        // The export answers with a file; its content is not read by the tests.
+        if (statisticsRoute[3]) return {};
+        return statisticsRoute[2] ? statisticsInterviews(projectId, query) : statisticsSummary(projectId, query);
+    }
     if (/\/\d+\/employees$/.test(path)) return paginated(employees, 12, "List of employees requested successfully");
     if (path.endsWith("/users/show")) return paginated(accounts, 7, "Successfully");
     if (path.endsWith("/vinnet/merchantinfo")) return { status_code: 200, data: JSON.stringify({ deposited: 500000000, spent: 412350000, balance: 87650000 }) };

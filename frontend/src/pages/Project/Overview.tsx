@@ -140,9 +140,9 @@ const Overview: React.FC = () => {
                     <Grid size={{ xs: 12, sm: 6, lg: kpiWidth }}>
                         <StatCard
                             label="Paid out"
-                            value={statistics ? formatMoney(statistics.total_amount) : "—"}
+                            value={statistics ? formatMoney(statistics.amount) : "—"}
                             caption={statistics
-                                ? `${formatNumber(statistics.total)} gifts · Vinnet ${formatMoney(statistics.by_channel?.vinnet?.amount)} · GotIt ${formatMoney(statistics.by_channel?.gotit?.amount)}`
+                                ? `${formatNumber(statistics.gifts)} gifts · Vinnet ${formatMoney(statistics.by_channel?.vinnet?.amount)} · GotIt ${formatMoney(statistics.by_channel?.gotit?.amount)}`
                                 : loading ? undefined : "Not available right now"}
                             loading={loading && !statistics}
                         >

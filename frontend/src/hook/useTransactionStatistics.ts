@@ -2,47 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { ActionState } from "../components/Table/ReusableTable";
+import { StatisticsFilters, statisticsParams, TransactionStatisticsData } from "../config/StatisticsConfig";
 
-export type TransactionChannel = "vinnet" | "gotit" | "other";
-
-export interface TransactionAnomaly {
-    respondent_id: string;
-    phone: string;
-    channel: TransactionChannel;
-    employee_id: string | null;
-    employee_name: string;
-    interview_end: string;
-    gift_time: string;
-    amount: number;
-    gap_minutes: number;
-}
-
-export interface ChannelStatistics {
-    count: number;
-    amount: number;
-}
-
-export interface TransactionStatisticsData {
-    total: number;
-    total_amount: number;
-    by_channel: Record<TransactionChannel, ChannelStatistics>;
-    interview_time_buckets: Record<string, number>;
-    gift_time_buckets: Record<string, number>;
-    gap_buckets: Record<string, number>;
-    gap_median_minutes: number | null;
-    gap_unknown: number;
-    gap_offline: number;
-    anomaly_tolerance_minutes: number;
-    anomalies: TransactionAnomaly[];
-    anomalies_total: number;
-}
-
-interface StatisticsFilters {
-    dateFrom?: string | null;
-    dateTo?: string | null;
-}
-
-export function useTransactionStatistics(projectId: number, initialFilters: StatisticsFilters = {}) {
+// Project id 0 means every project (Admin and Finance only).
+export function useTransactionStatistics(projectId: number, filters: StatisticsFilters = {}) {
 
     const [ statistics, setStatistics ] = useState<TransactionStatisticsData | null>(null);
 
@@ -53,9 +16,7 @@ export function useTransactionStatistics(projectId: number, initialFilters: Stat
         message: ""
     });
 
-    const [ channel, setChannel ] = useState<TransactionChannel | "">("");
-    const [ dateFrom, setDateFrom ] = useState<string | null>(initialFilters.dateFrom ?? null);
-    const [ dateTo, setDateTo ] = useState<string | null>(initialFilters.dateTo ?? null);
+    const { channel, dateFrom, dateTo, employee, wait, weekday, hour } = filters;
 
     // Filters can change faster than the query answers; a late response for old filters must not overwrite the current one.
     const requestRef = useRef<AbortController | null>(null);
@@ -66,6 +27,7 @@ export function useTransactionStatistics(projectId: number, initialFilters: Stat
         requestRef.current = controller;
 
         try {
+            // The previous numbers stay on screen while the new ones load, so the charts do not jump.
             setActionState({ type: 'fetch', loading: true, error: false, message: "" });
 
             const token = localStorage.getItem('authToken');
@@ -77,11 +39,7 @@ export function useTransactionStatistics(projectId: number, initialFilters: Stat
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                params: {
-                    channel: channel || undefined,
-                    date_from: dateFrom || undefined,
-                    date_to: dateTo || undefined
-                },
+                params: statisticsParams({ channel, dateFrom, dateTo, employee, wait, weekday, hour }),
                 signal: controller.signal
             });
 
@@ -99,7 +57,7 @@ export function useTransactionStatistics(projectId: number, initialFilters: Stat
             setStatistics(null);
             setActionState((prev) => ({ ...prev, loading: false, error: true, message }));
         }
-    }, [projectId, channel, dateFrom, dateTo]);
+    }, [projectId, channel, dateFrom, dateTo, employee, wait, weekday, hour]);
 
     useEffect(() => {
         fetchStatistics();
@@ -110,12 +68,6 @@ export function useTransactionStatistics(projectId: number, initialFilters: Stat
     return {
         statistics,
         actionState,
-        channel,
-        setChannel,
-        dateFrom,
-        setDateFrom,
-        dateTo,
-        setDateTo,
         fetchStatistics
     };
 }

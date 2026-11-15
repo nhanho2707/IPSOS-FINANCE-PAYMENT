@@ -1,275 +1,242 @@
-import { useEffect, useState } from "react";
+import React from "react";
+import dayjs from "dayjs";
+import { Alert, Box, Grid, Tooltip, Typography } from "@mui/material";
+import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
+import { CHANNELS, EmployeeStatistics, formatMinutes, ProjectStatistics, TransactionStatisticsData } from "../config/StatisticsConfig";
+import { PROVIDER_STYLES, STATUS_TONES } from "../config/ThemeConfig";
+import { useStatisticsFilters } from "../hook/useStatisticsFilters";
+import { useTransactionStatistics } from "../hook/useTransactionStatistics";
+import { formatDateRange, formatMoney, formatNumber, formatPercent } from "../utils/format";
 import StatCard from "./StatCard";
-import { Alert, Box, Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
-import dayjs, { Dayjs } from "dayjs";
-import { TransactionChannel, useTransactionStatistics } from "../hook/useTransactionStatistics";
-import HourlyHistogramChart from "./Charts/HourlyHistogramChart";
-import SearchDatePickerFromTo from "./SearchDatePickerFromTo";
-import ReusableTable from "./Table/ReusableTable";
-import { ColumnFormat } from "../config/ColumnConfig";
-import { formatDateTime, formatNumber, formatPercent } from "../utils/format";
+import BreakdownTable, { BreakdownRow } from "./Statistics/BreakdownTable";
+import HourChart from "./Statistics/HourChart";
+import InterviewsTable from "./Statistics/InterviewsTable";
+import StatisticsFilterBar from "./Statistics/StatisticsFilterBar";
+import TrendChart from "./Statistics/TrendChart";
+import WaitDistribution from "./Statistics/WaitDistribution";
+import WeekHourHeatmap from "./Statistics/WeekHourHeatmap";
 
-const CHANNEL_LABELS: Record<TransactionChannel, string> = {
-  vinnet: "Vinnet",
-  gotit: "GotIt",
-  other: "Other"
-};
+const UNKNOWN_INTERVIEWER = "No interviewer";
 
-const CHANNELS = Object.keys(CHANNEL_LABELS) as TransactionChannel[];
+const employeeRows = (employees: EmployeeStatistics[]): BreakdownRow[] => employees.map((employee) => ({
+    ...employee,
+    key: employee.employee_id ?? "",
+    primary: employee.employee_id || UNKNOWN_INTERVIEWER,
+    secondary: employee.employee_name || undefined,
+}));
 
-// All-zero buckets are sent as empty so the chart shows its "no data" state instead of flat bars.
-const toHistogramData = (buckets: Record<string, number> | undefined) => {
-  const data = Object.entries(buckets ?? {}).map(([name, value]) => ({ name, value }));
-  return data.some((d) => d.value > 0) ? data : [];
-};
+const projectRows = (projects: ProjectStatistics[]): BreakdownRow[] => projects.map((project) => ({
+    ...project,
+    key: String(project.project_id),
+    primary: project.internal_code || `Project ${project.project_id}`,
+    secondary: project.project_name ?? undefined,
+}));
 
-const formatMinutes = (minutes: number | null | undefined) => {
-  if (minutes === null || minutes === undefined) return "—";
+interface DeltaProps {
+    current: number | null | undefined;
+    previous: number | null | undefined;
+    // Waits and reviews are better when they go down; volumes are neither good nor bad.
+    upIs?: "bad" | "neutral";
+    format?: "percent" | "minutes";
+    // "previous 30 days", with the exact dates in the tooltip.
+    period: { label: string; dates: string };
+}
 
-  const sign = minutes < 0 ? "-" : "";
-  const abs = Math.abs(minutes);
+const Delta: React.FC<DeltaProps> = ({ current, previous, upIs = "neutral", format = "percent", period }) => {
+    if (current === null || current === undefined || previous === null || previous === undefined) return null;
+    if (format === "percent" && previous === 0) return null;
 
-  if (abs < 60) return `${sign}${abs} min`;
-  if (abs < 1440) return `${sign}${Math.floor(abs / 60)}h ${abs % 60}m`;
+    const change = current - previous;
+    const text = format === "minutes" ? formatMinutes(Math.abs(change)) : formatPercent(Math.abs(change) / previous);
+    const Icon = change > 0 ? ArrowUpward : ArrowDownward;
+    const tone = upIs === "neutral" || change === 0 ? undefined : STATUS_TONES[change > 0 ? "danger" : "success"].fg;
 
-  return `${sign}${Math.floor(abs / 1440)}d ${Math.floor((abs % 1440) / 60)}h`;
+    return (
+        <Typography variant="caption" component="p" sx={{ display: "flex", alignItems: "center", gap: 0.25, mt: "auto", pt: 0.5, color: "text.secondary" }}>
+            {change === 0 ? "No change" : (
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", fontWeight: 600, color: tone ?? "text.primary" }}>
+                    <Icon sx={{ fontSize: 14 }} />
+                    {text}
+                </Box>
+            )}
+            <Tooltip title={period.dates} placement="bottom-start">
+                <Box component="span" sx={{ ml: 0.25, whiteSpace: "nowrap" }}>vs {period.label}</Box>
+            </Tooltip>
+        </Typography>
+    );
 };
 
 interface TransactionStatisticsPanelProps {
-  projectId: number;
+    // 0 shows every project.
+    projectId: number;
+    // The range shown when the URL names none; null means all time.
+    defaultDays?: number | null;
+    leading?: React.ReactNode;
+    onSelectProject?: (projectId: number) => void;
 }
 
-const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({ projectId }) => {
-  const {
-    statistics,
-    actionState,
-    channel,
-    setChannel,
-    dateFrom,
-    setDateFrom,
-    dateTo,
-    setDateTo
-  } = useTransactionStatistics(projectId);
+const share = (part: number, whole: number) => (whole > 0 ? formatPercent(part / whole) : "—");
 
-  const [anomalyPage, setAnomalyPage] = useState(0);
-  const [anomalyRowsPerPage, setAnomalyRowsPerPage] = useState(10);
-  // SearchDatePickerFromTo keeps its own picker state, so it is remounted to clear the dates.
-  const [datePickerKey, setDatePickerKey] = useState(0);
+const channelCaption = (statistics: TransactionStatisticsData | null) =>
+    CHANNELS.filter((channel) => (statistics?.by_channel[channel]?.interviews ?? 0) > 0)
+        .map((channel) => `${PROVIDER_STYLES[channel].label} ${formatNumber(statistics?.by_channel[channel].interviews)}`)
+        .join(" · ");
 
-  useEffect(() => {
-    setAnomalyPage(0);
-  }, [statistics]);
+// Interviews and gifts for one project or all of them: headline numbers, charts that filter each
+// other, the breakdown by interviewer and the interviews themselves.
+const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({ projectId, defaultDays = null, leading, onSelectProject }) => {
+    const { filters, dateFrom, dateTo, setDateRange, setChannel, toggleEmployee, toggleWait, toggleSlot, clearSlot, reset, isFiltered } = useStatisticsFilters(defaultDays);
+    const { statistics, actionState } = useTransactionStatistics(projectId, filters);
 
-  const handleDateRangeChange = (from: Dayjs | null, to: Dayjs | null) => {
-    setDateFrom(from ? from.format("YYYY-MM-DD") : null);
-    setDateTo(to ? to.format("YYYY-MM-DD") : null);
-  };
+    const loading = Boolean(actionState.loading);
+    const previous = statistics?.previous ?? null;
+    const previousDays = previous ? dayjs(previous.date_to).diff(dayjs(previous.date_from), "day") + 1 : 0;
+    const period = {
+        label: previousDays === 1 ? "the day before" : `previous ${previousDays} days`,
+        dates: previous ? formatDateRange(previous.date_from, previous.date_to) ?? "" : "",
+    };
+    const interviews = statistics?.interviews ?? 0;
+    const gifts = statistics?.gifts ?? 0;
+    const measured = statistics?.wait.measured ?? 0;
+    const reviewTotal = statistics?.review_total ?? 0;
+    const tolerance = statistics?.wait.tolerance_minutes ?? 5;
 
-  const handleClearDates = () => {
-    setDateFrom(null);
-    setDateTo(null);
-    setDatePickerKey((key) => key + 1);
-  };
+    return (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <StatisticsFilterBar
+                filters={filters}
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+                onDateRangeChange={setDateRange}
+                onChannelChange={setChannel}
+                onClearEmployee={() => filters.employee && toggleEmployee(filters.employee)}
+                onClearWait={() => filters.wait && toggleWait(filters.wait)}
+                onClearSlot={clearSlot}
+                onReset={reset}
+                isFiltered={isFiltered}
+                leading={leading}
+            />
 
-  const total = statistics?.total ?? 0;
-  const anomalies = statistics?.anomalies ?? [];
-  const anomaliesTotal = statistics?.anomalies_total ?? 0;
-  const gapUnknown = statistics?.gap_unknown ?? 0;
-  const gapOffline = statistics?.gap_offline ?? 0;
-  const toleranceText = statistics ? ` > ${statistics.anomaly_tolerance_minutes} min` : "";
-  const measuredTotal = total - gapUnknown - gapOffline;
-  const gapExcludedCaption = [
-    gapUnknown > 0 ? `${gapUnknown} interviews missing an end time` : null,
-    gapOffline > 0 ? `${gapOffline} offline interviews (no actual interview time)` : null
-  ].filter(Boolean).join(", ");
-  const pagedAnomalies = anomalies.slice(
-    anomalyPage * anomalyRowsPerPage,
-    anomalyPage * anomalyRowsPerPage + anomalyRowsPerPage
-  );
+            {actionState.error && <Alert severity="error">{actionState.message}</Alert>}
 
-  const channelBreakdown = (field: "count" | "amount") =>
-    CHANNELS.filter((c) => (statistics?.by_channel?.[c]?.count ?? 0) > 0)
-      .map((c) => {
-        const value = statistics?.by_channel[c][field] ?? 0;
-        return `${CHANNEL_LABELS[c]}: ${field === "amount" ? formatNumber(value) : value}`;
-      })
-      .join(" · ");
+            {/* While new numbers load the previous ones stay in place, slightly faded, so nothing jumps. */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, opacity: loading && statistics ? 0.6 : 1, transition: "opacity 0.15s" }} aria-busy={loading}>
+                <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
+                        <StatCard label="Interviews" value={formatNumber(interviews)} caption={channelCaption(statistics)} loading={loading && !statistics}>
+                            {previous && <Delta current={interviews} previous={previous.interviews} period={period} />}
+                        </StatCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
+                        <StatCard label="Gifts sent" value={formatNumber(gifts)} caption={`${share(gifts, interviews)} of interviews`} loading={loading && !statistics}>
+                            {previous && <Delta current={gifts} previous={previous.gifts} period={period} />}
+                        </StatCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
+                        <StatCard
+                            label="Gift value"
+                            value={formatMoney(statistics?.amount)}
+                            caption={gifts > 0 ? `${formatMoney((statistics?.amount ?? 0) / gifts)} per gift` : undefined}
+                            loading={loading && !statistics}
+                        >
+                            {previous && <Delta current={statistics?.amount} previous={previous.amount} period={period} />}
+                        </StatCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 6, lg: 2.4 }}>
+                        <StatCard
+                            label="Median wait for the gift"
+                            value={formatMinutes(statistics?.wait.median_minutes)}
+                            caption={`Measured on ${formatNumber(measured)} ${measured === 1 ? "gift" : "gifts"}`}
+                            loading={loading && !statistics}
+                        >
+                            {previous && <Delta current={statistics?.wait.median_minutes} previous={previous.median_wait_minutes} upIs="bad" format="minutes" period={period} />}
+                        </StatCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 12, md: 6, lg: 2.4 }}>
+                        <StatCard
+                            label="To review"
+                            value={formatNumber(reviewTotal)}
+                            tone={reviewTotal > 0 ? "danger" : "default"}
+                            caption={`Sent before the interview ended${measured > 0 ? ` · ${share(reviewTotal, measured)} of measured gifts` : ""}`}
+                            loading={loading && !statistics}
+                        >
+                            {previous && <Delta current={reviewTotal} previous={previous.review_total} upIs="bad" period={period} />}
+                        </StatCard>
+                    </Grid>
+                </Grid>
 
-  const anomalyColumns: ColumnFormat[] = [
-    { label: "Respondent ID", name: "respondent_id", type: "string", width: 112 },
-    { label: "Phone", name: "phone", type: "string", width: 116 },
-    {
-      label: "Channel",
-      name: "channel",
-      type: "string",
-      width: 84,
-      renderCell: (row) => CHANNEL_LABELS[row.channel as TransactionChannel] ?? row.channel
-    },
-    { label: "Interviewer ID", name: "employee_id", type: "string", width: 112 },
-    { label: "PVV", name: "employee_name", type: "string" },
-    {
-      label: "Interview ended",
-      name: "interview_end",
-      type: "date",
-      renderCell: (row) => formatDateTime(row.interview_end)
-    },
-    {
-      label: "Gift received",
-      name: "gift_time",
-      type: "date",
-      renderCell: (row) => formatDateTime(row.gift_time)
-    },
-    {
-      label: "Gift value",
-      name: "amount",
-      type: "number",
-      align: "right",
-      width: 96,
-      renderCell: (row) => formatNumber(row.amount)
-    },
-    {
-      label: "Gap",
-      name: "gap_minutes",
-      type: "number",
-      align: "right",
-      width: 88,
-      renderCell: (row) => (
-        <Typography component="span" color="error" sx={{ fontWeight: 600, fontSize: "inherit" }}>
-          {formatMinutes(row.gap_minutes)}
-        </Typography>
-      )
-    }
-  ];
+                <TrendChart
+                    title="Over time"
+                    daily={statistics?.daily ?? []}
+                    dateFrom={filters.dateFrom ?? null}
+                    dateTo={filters.dateTo ?? null}
+                    onSelectRange={setDateRange}
+                />
 
-  return (
-    <Box>
-      <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", mb: 3, mt: 2 }}>
-        <TextField
-          select
-          size="small"
-          label="Channel"
-          value={channel}
-          onChange={(e) => setChannel(e.target.value as TransactionChannel | "")}
-          sx={{ minWidth: 160 }}
-        >
-          <MenuItem value="">All</MenuItem>
-          {CHANNELS.map((c) => (
-            <MenuItem key={c} value={c}>
-              {CHANNEL_LABELS[c]}
-            </MenuItem>
-          ))}
-        </TextField>
+                <BreakdownTable
+                    title="By interviewer"
+                    description="Interviews and gifts for each interviewer code. Pick a row to filter everything else."
+                    nameLabel="Interviewer ID"
+                    secondaryLabel="Interviewer"
+                    rows={employeeRows(statistics?.by_employee ?? [])}
+                    loading={loading}
+                    selectedKey={filters.employee ?? null}
+                    onSelect={(row) => row.key && toggleEmployee(row.key)}
+                    selectHint="show only this interviewer"
+                    searchPlaceholder="Search interviewer"
+                    exportFileName="interviews_by_interviewer.xlsx"
+                />
 
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Interview date:
-        </Typography>
+                {projectId === 0 && (
+                    <BreakdownTable
+                        title="By project"
+                        description="Interviews and gifts for each project. Pick a row to open that project here."
+                        nameLabel="Project code"
+                        secondaryLabel="Project name"
+                        rows={projectRows(statistics?.by_project ?? [])}
+                        loading={loading}
+                        onSelect={(row) => onSelectProject?.(Number(row.key))}
+                        selectHint="show only this project"
+                        searchPlaceholder="Search project"
+                        exportFileName="interviews_by_project.xlsx"
+                    />
+                )}
 
-        <SearchDatePickerFromTo
-          key={datePickerKey}
-          fromValue={dateFrom ? dayjs(dateFrom) : null}
-          toValue={dateTo ? dayjs(dateTo) : null}
-          buttonLabel="Filter"
-          loadingButton={actionState.loading}
-          onSearchChange={handleDateRangeChange}
-        />
+                <Grid container spacing={2.5}>
+                    <Grid size={{ xs: 12, lg: 7 }}>
+                        <HourChart
+                            interviewHours={statistics?.interview_hours ?? []}
+                            giftHours={statistics?.gift_hours ?? []}
+                            selectedHour={filters.hour ?? null}
+                            onSelectHour={(hour) => toggleSlot(null, hour)}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, lg: 5 }}>
+                        <WaitDistribution
+                            wait={statistics?.wait ?? { median_minutes: null, measured: 0, unknown: 0, offline: 0, tolerance_minutes: tolerance, buckets: [] }}
+                            selected={filters.wait ?? null}
+                            onSelect={toggleWait}
+                        />
+                    </Grid>
+                </Grid>
 
-        {(dateFrom || dateTo) && (
-          <Button size="small" onClick={handleClearDates}>
-            Clear date filter
-          </Button>
-        )}
-      </Box>
+                <WeekHourHeatmap
+                    weekdayHours={statistics?.weekday_hours ?? []}
+                    selectedWeekday={filters.weekday ?? null}
+                    selectedHour={filters.hour ?? null}
+                    onSelect={toggleSlot}
+                />
+            </Box>
 
-      {actionState.error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {actionState.message}
-        </Alert>
-      )}
-
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Respondents who received a gift"
-            value={formatNumber(total)}
-            caption={channelBreakdown("count")}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Total gift value (VND)"
-            value={formatNumber(statistics?.total_amount)}
-            caption={channelBreakdown("amount")}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Median time: interview end → gift received"
-            value={formatMinutes(statistics?.gap_median_minutes)}
-            caption={gapExcludedCaption ? `Excludes: ${gapExcludedCaption}` : undefined}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label={`Anomalies (gift received before interview ended${toleranceText})`}
-            value={anomaliesTotal}
-            tone={anomaliesTotal > 0 ? "danger" : "default"}
-            caption={measuredTotal > 0 ? `${formatPercent(anomaliesTotal / measuredTotal)} of measurable interviews` : undefined}
-          />
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={12}>
-          <HourlyHistogramChart
-            title="Interview start time (Vietnam time)"
-            data={toHistogramData(statistics?.interview_time_buckets)}
-            valueLabel="Interviews"
-          />
-        </Grid>
-        <Grid size={12}>
-          <HourlyHistogramChart
-            title="Gift received time (Vietnam time)"
-            data={toHistogramData(statistics?.gift_time_buckets)}
-            valueLabel="Gifts received"
-          />
-        </Grid>
-        <Grid size={12}>
-          {/* The backend owns the bucket labels (they embed the tolerance) and sends them in display order. */}
-          <HourlyHistogramChart
-            title="Gap: interview end → gift received"
-            data={toHistogramData(statistics?.gap_buckets)}
-            valueLabel="Gifts received"
-          />
-        </Grid>
-      </Grid>
-
-      <ReusableTable
-        topToolbar={
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Needs review (gift received before interview ended{toleranceText})
-            </Typography>
-            {anomaliesTotal > anomalies.length && (
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Showing the {anomalies.length}/{anomaliesTotal} largest gaps. Narrow the filters to see all.
-              </Typography>
-            )}
-          </Box>
-        }
-        columns={anomalyColumns}
-        data={pagedAnomalies}
-        actionStatus={{ type: actionState.type, loading: actionState.loading }}
-        page={anomalyPage}
-        rowsPerPage={anomalyRowsPerPage}
-        total={anomalies.length}
-        onPageChange={(event, newPage) => setAnomalyPage(newPage)}
-        onRowsPerPageChange={(event) => {
-          setAnomalyRowsPerPage(parseInt(event.target.value, 10));
-          setAnomalyPage(0);
-        }}
-      />
-    </Box>
-  );
+            <InterviewsTable
+                projectId={projectId}
+                filters={filters}
+                toleranceMinutes={tolerance}
+                activeEmployee={filters.employee ?? null}
+                onFilterEmployee={toggleEmployee}
+            />
+        </Box>
+    );
 };
 
 export default TransactionStatisticsPanel;

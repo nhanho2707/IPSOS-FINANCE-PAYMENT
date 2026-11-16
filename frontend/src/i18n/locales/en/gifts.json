@@ -1,0 +1,104 @@
+{
+    "status": {
+        "pending": "Pending",
+        "success": "Sent",
+        "failed": "Failed",
+        "refused": "Refused"
+    },
+    "all": "All",
+    "emptyTab": {
+        "pending": "No gifts waiting to be sent",
+        "success": "No gifts sent yet",
+        "failed": "No failed gifts",
+        "refused": "No refused gifts"
+    },
+    "bulkResult": {
+        "title_one": "Sent {{sent}} of {{n}} gift",
+        "title_other": "Sent {{sent}} of {{n}} gifts",
+        "stopped_one": "Sending stopped after {{max}} failures in a row, so {{n}} respondent was not sent. Check the cause (for example the account balance) before sending again.",
+        "stopped_other": "Sending stopped after {{max}} failures in a row, so {{n}} respondents were not sent. Check the cause (for example the account balance) before sending again.",
+        "userStopped_one": "You stopped the run; {{n}} respondent was not sent.",
+        "userStopped_other": "You stopped the run; {{n}} respondents were not sent.",
+        "failedFallback": "Failed",
+        "more_one": "…and {{n}} more failure",
+        "more_other": "…and {{n}} more failures"
+    },
+    "test": {
+        "chip": "Test",
+        "hint": "Sending marks this gift as received without paying it through Vinnet or GotIt."
+    },
+    "importResult": {
+        "title_one": "Imported {{n}} respondent: {{live}} live, {{test}} test",
+        "title_other": "Imported {{n}} respondents: {{live}} live, {{test}} test",
+        "testNote": "Sending a gift to a test respondent marks it as received without paying it.",
+        "projectIs": "This project is <b>{{status}}</b>, so every respondent counts as a test until it is In field.",
+        "rule": "A respondent is a test while the project is Upcoming or On hold, or when its interviewer code (once In field) or location code does not start with HN, SG, DN, CT or MA. This is checked again when each gift is sent, so respondents with valid codes are paid once the project is In field."
+    },
+    "remove": {
+        "title": "Remove respondent",
+        "confirm": "Remove",
+        "message": "Remove {{id}} from this project? Their gift has not been sent yet.",
+        "menu": "Remove respondent",
+        "onlyPending": "Only respondents still waiting for a gift can be removed"
+    },
+    "toast": {
+        "noPending": "No respondents are waiting for a gift.",
+        "pendingLoadFailed": "Could not load pending respondents. Please try again.",
+        "unexpectedStop": "Sending stopped because of an unexpected error. Check the list before trying again.",
+        "missingColumns": "Import failed: the file is missing these columns: {{columns}}.",
+        "noRows": "Import failed: the file has no respondent rows."
+    },
+    "send": {
+        "title": "Send gifts",
+        "confirm_one": "Send {{n}} gift",
+        "confirm_other": "Send {{n}} gifts",
+        "message_one": "Send gifts to the {{n}} selected respondent? Each gift is charged to the provider account as it is sent.",
+        "message_other": "Send gifts to the {{n}} selected respondents? Each gift is charged to the provider account as it is sent.",
+        "one": "Send gift",
+        "bulk": "Send gifts",
+        "stop": "Stop",
+        "stopping": "Stopping…"
+    },
+    "columns": {
+        "selectPage": "Select pending respondents on this page",
+        "selectRow": "Select {{id}}",
+        "respondent": "Respondent",
+        "giftPhone": "Gift phone: {{phone}}",
+        "surveyPhone": "Survey phone: {{phone}}",
+        "email": "Email: {{email}}",
+        "interviewer": "Interviewer",
+        "province": "Province",
+        "channel": "Channel",
+        "amount": "Amount",
+        "status": "Status",
+        "actionsFor": "Actions for {{id}}"
+    },
+    "banner": {
+        "failed_one": "{{n}} gift failed. The reason is listed under each one.",
+        "failed_other": "{{n}} gifts failed. The reason is listed under each one.",
+        "failedSearch_one": "{{n}} gift failed for this search. The reason is listed under each one.",
+        "failedSearch_other": "{{n}} gifts failed for this search. The reason is listed under each one.",
+        "showFailed": "Show failed"
+    },
+    "bulk": {
+        "selected_one": "{{n}} respondent selected",
+        "selected_other": "{{n}} respondents selected",
+        "total": "{{amount}} in total",
+        "selectAllPending": "Select all pending",
+        "progress_one": "Sending {{done}} of {{n}} gift — {{sent}} sent, {{failed}} failed. Keep this page open.",
+        "progress_other": "Sending {{done}} of {{n}} gifts — {{sent}} sent, {{failed}} failed. Keep this page open."
+    },
+    "import": "Import respondents",
+    "searchPlaceholder": "Search phone number",
+    "empty": {
+        "notFound": "No respondents found",
+        "nothingMatches": "Nothing matches “{{term}}”.",
+        "nothingMatchesIn": "Nothing matches “{{term}}” in {{status}} gifts.",
+        "noneTitle": "No respondents yet",
+        "noneDescription": "Import the respondent list (InstanceID, Shell_ChainID, PhoneNumber, Channel…) to start sending gifts."
+    },
+    "errors": {
+        "importFailed": "Import failed.",
+        "load": "Failed to fetch respondents"
+    }
+}

@@ -12,6 +12,7 @@ import StatusChip from "../StatusChip";
 import ReusableTable from "../Table/ReusableTable";
 import CellStack from "../Table/CellStack";
 import SortHeader from "./SortHeader";
+import { useTranslation } from "react-i18next";
 
 export interface BreakdownRow extends BreakdownStatistics {
     key: string;
@@ -24,9 +25,9 @@ type SortColumn = "primary" | keyof BreakdownStatistics;
 interface BreakdownTableProps {
     title: string;
     description: string;
-    // Header of the first column and of the matching Excel columns.
     nameLabel: string;
-    secondaryLabel: string;
+    // The Excel file keeps English headers in every language, so a sheet reads the same whoever exported it.
+    exportHeaders: { sheet: string; name: string; secondary: string };
     rows: BreakdownRow[];
     loading: boolean;
     selectedKey?: string | null;
@@ -49,7 +50,8 @@ const compare = (a: BreakdownRow, b: BreakdownRow, column: SortColumn): number =
 };
 
 // Interviews, gifts and waits for each interviewer or project, sortable and exportable.
-const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nameLabel, secondaryLabel, rows, loading, selectedKey, onSelect, selectHint, searchPlaceholder, exportFileName }) => {
+const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nameLabel, exportHeaders, rows, loading, selectedKey, onSelect, selectHint, searchPlaceholder, exportFileName }) => {
+    const { t } = useTranslation();
     const [ search, setSearch ] = useState("");
     const [ sort, setSort ] = useState<{ column: SortColumn; direction: SortDirection }>({ column: "interviews", direction: "desc" });
     const [ page, setPage ] = useState(0);
@@ -86,8 +88,8 @@ const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nam
 
     const exportRows = () => {
         const sheet = XLSX.utils.json_to_sheet(visibleRows.map((row) => ({
-            [nameLabel]: row.primary,
-            [secondaryLabel]: row.secondary ?? "",
+            [exportHeaders.name]: row.primary,
+            [exportHeaders.secondary]: row.secondary ?? "",
             "Interviews": row.interviews,
             "Gifts": row.gifts,
             "Gift value": row.amount,
@@ -96,7 +98,7 @@ const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nam
         })));
         const book = XLSX.utils.book_new();
 
-        XLSX.utils.book_append_sheet(book, sheet, title.slice(0, 31));
+        XLSX.utils.book_append_sheet(book, sheet, exportHeaders.sheet.slice(0, 31));
         XLSX.writeFile(book, exportFileName);
     };
 
@@ -121,10 +123,10 @@ const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nam
             ),
         },
         {
-            label: "Interviews",
+            label: t("statistics.breakdown.interviews"),
             name: "interviews",
             type: "number",
-            renderHeader: header("interviews", "Interviews", false),
+            renderHeader: header("interviews", t("statistics.breakdown.interviews"), false),
             renderCell: (row: BreakdownRow) => (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
                     <Box component="span" sx={{ width: 48, flexShrink: 0, textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
@@ -137,41 +139,41 @@ const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nam
             ),
         },
         {
-            label: "Gifts",
+            label: t("statistics.breakdown.gifts"),
             name: "gifts",
             type: "number",
             align: "right",
             width: 88,
-            renderHeader: header("gifts", "Gifts"),
+            renderHeader: header("gifts", t("statistics.breakdown.gifts")),
             renderCell: (row: BreakdownRow) => formatNumber(row.gifts),
         },
         {
-            label: "Gift value",
+            label: t("statistics.breakdown.giftValue"),
             name: "amount",
             type: "number",
             align: "right",
             width: 132,
-            renderHeader: header("amount", "Gift value"),
+            renderHeader: header("amount", t("statistics.breakdown.giftValue")),
             renderCell: (row: BreakdownRow) => formatMoney(row.amount),
         },
         {
-            label: "Median wait",
+            label: t("statistics.breakdown.medianWait"),
             name: "median_wait_minutes",
             type: "number",
             align: "right",
-            width: 120,
-            renderHeader: header("median_wait_minutes", "Median wait"),
+            width: 136,
+            renderHeader: header("median_wait_minutes", t("statistics.breakdown.medianWait")),
             renderCell: (row: BreakdownRow) => formatMinutes(row.median_wait_minutes),
         },
         {
-            label: "To review",
+            label: t("statistics.breakdown.toReview"),
             name: "review",
             type: "number",
             align: "right",
-            width: 104,
-            renderHeader: header("review", "To review"),
+            width: 128,
+            renderHeader: header("review", t("statistics.breakdown.toReview")),
             renderCell: (row: BreakdownRow) => row.review > 0
-                ? <StatusChip label={formatNumber(row.review)} tone="danger" tooltip="Gifts sent before the interview ended" />
+                ? <StatusChip label={formatNumber(row.review)} tone="danger" tooltip={t("statistics.breakdown.reviewTooltip")} />
                 : <Box component="span" sx={{ color: NEUTRAL[400] }}>0</Box>,
         },
     ];
@@ -195,7 +197,7 @@ const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nam
                             disabled={visibleRows.length === 0}
                             onClick={exportRows}
                         >
-                            Export Excel
+                            {t("statistics.breakdown.exportExcel")}
                         </Button>
                     </Box>
                 </Box>
@@ -213,7 +215,7 @@ const BreakdownTable: React.FC<BreakdownTableProps> = ({ title, description, nam
                 setPage(0);
             }}
             onRowClick={onSelect}
-            emptyState={<EmptyState dense title={search ? `Nothing matches “${search}”` : "No interviews for these filters"} />}
+            emptyState={<EmptyState dense title={search ? t("statistics.breakdown.nothingMatches", { term: search }) : t("statistics.breakdown.noInterviews")} />}
         />
     );
 };

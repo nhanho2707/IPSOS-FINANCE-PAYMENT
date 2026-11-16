@@ -2,10 +2,11 @@ import React from "react";
 import { Box } from "@mui/material";
 import { interpolateRgb } from "d3";
 import { BRAND, NEUTRAL } from "../../config/ThemeConfig";
-import { formatHourRange, WEEKDAY_LABELS } from "../../config/StatisticsConfig";
+import { formatHourRange, weekdayLabel, WEEKDAYS } from "../../config/StatisticsConfig";
 import { formatNumber } from "../../utils/format";
 import SectionCard from "../SectionCard";
 import { AXIS_TEXT, ChartEmpty, ChartTooltip, useActiveMark, useElementWidth } from "./chartKit";
+import { useTranslation } from "react-i18next";
 
 const LABEL_WIDTH = 36;
 const HEADER_HEIGHT = 18;
@@ -30,6 +31,7 @@ interface WeekHourHeatmapProps {
 }
 
 const WeekHourHeatmap: React.FC<WeekHourHeatmapProps> = ({ weekdayHours, selectedWeekday, selectedHour, onSelect }) => {
+    const { t } = useTranslation();
     const { ref, width } = useElementWidth<HTMLDivElement>();
     const select = (index: number) => onSelect(Math.floor(index / 24) + 1, index % 24);
     const { active, setActive, containerProps } = useActiveMark({ count: 7 * 24, onSelect: select, columns: 24 });
@@ -45,8 +47,8 @@ const WeekHourHeatmap: React.FC<WeekHourHeatmapProps> = ({ weekdayHours, selecte
 
     return (
         <SectionCard
-            title="Week at a glance"
-            description="Interviews started by weekday and hour (Vietnam time). Pick a cell to filter."
+            title={t("statistics.heatmap.title")}
+            description={t("statistics.heatmap.description")}
             action={max > 0 ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, typography: "caption", color: "text.secondary", flexShrink: 0 }}>
                     1
@@ -59,19 +61,19 @@ const WeekHourHeatmap: React.FC<WeekHourHeatmapProps> = ({ weekdayHours, selecte
                 ref={ref}
                 {...containerProps}
                 role="group"
-                aria-label="Interviews started by weekday and hour. Use the arrow keys to read each hour, Enter to filter."
+                aria-label={t("statistics.heatmap.groupLabel")}
                 sx={{ position: "relative", outlineOffset: 4, borderRadius: "4px" }}
             >
                 {max === 0 ? <ChartEmpty height={HEIGHT} /> : (
-                    <svg width={width} height={HEIGHT} role="img" aria-label="Interviews started by weekday and hour" style={{ display: "block" }}>
+                    <svg width={width} height={HEIGHT} role="img" aria-label={t("statistics.heatmap.imgLabel")} style={{ display: "block" }}>
                         {HOURS.filter((hour) => hour % labelEvery === 0).map((hour) => (
                             <text key={hour} x={LABEL_WIDTH + hour * cellWidth + cellWidth / 2} y={11} textAnchor="middle" style={AXIS_TEXT}>
                                 {String(hour).padStart(2, "0")}
                             </text>
                         ))}
-                        {WEEKDAY_LABELS.map((label, row) => (
-                            <g key={label} transform={`translate(0,${HEADER_HEIGHT + row * ROW_HEIGHT})`}>
-                                <text x={0} y={ROW_HEIGHT / 2} dy="0.32em" style={AXIS_TEXT}>{label}</text>
+                        {WEEKDAYS.map((weekday, row) => (
+                            <g key={weekday} transform={`translate(0,${HEADER_HEIGHT + row * ROW_HEIGHT})`}>
+                                <text x={0} y={ROW_HEIGHT / 2} dy="0.32em" style={AXIS_TEXT}>{weekdayLabel(weekday)}</text>
                                 {HOURS.map((hour) => {
                                     const value = weekdayHours[row]?.[hour] ?? 0;
                                     const index = row * 24 + hour;
@@ -106,13 +108,13 @@ const WeekHourHeatmap: React.FC<WeekHourHeatmapProps> = ({ weekdayHours, selecte
                         x={LABEL_WIDTH + activeHour * cellWidth + cellWidth}
                         containerWidth={width}
                         top={Math.max(0, HEADER_HEIGHT + activeRow * ROW_HEIGHT - 56)}
-                        title={`${WEEKDAY_LABELS[activeRow]}, ${formatHourRange(activeHour)}`}
-                        rows={[{ label: "Interviews started", value: formatNumber(weekdayHours[activeRow]?.[activeHour] ?? 0) }]}
+                        title={`${weekdayLabel(activeRow + 1)}, ${formatHourRange(activeHour)}`}
+                        rows={[{ label: t("statistics.hours.started"), value: formatNumber(weekdayHours[activeRow]?.[activeHour] ?? 0) }]}
                     />
                 )}
                 <Box aria-live="polite" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
                     {activeRow !== null && activeHour !== null
-                        ? `${WEEKDAY_LABELS[activeRow]}, ${formatHourRange(activeHour)}: ${weekdayHours[activeRow]?.[activeHour] ?? 0} interviews started`
+                        ? t("statistics.heatmap.announce", { slot: `${weekdayLabel(activeRow + 1)}, ${formatHourRange(activeHour)}`, count: weekdayHours[activeRow]?.[activeHour] ?? 0 })
                         : ""}
                 </Box>
             </Box>

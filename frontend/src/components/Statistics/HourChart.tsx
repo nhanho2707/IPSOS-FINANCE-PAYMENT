@@ -6,6 +6,7 @@ import { formatHourRange } from "../../config/StatisticsConfig";
 import { formatNumber } from "../../utils/format";
 import SectionCard from "../SectionCard";
 import { AXIS_TEXT, axisFormatter, axisTicks, ChartEmpty, ChartLegend, ChartTooltip, columnPath, DIMMED_OPACITY, GRID_STROKE, useActiveMark, useElementWidth } from "./chartKit";
+import { useTranslation } from "react-i18next";
 
 const HEIGHT = 220;
 const MARGIN = { top: 12, right: 8, bottom: 26, left: 36 };
@@ -22,6 +23,7 @@ interface HourChartProps {
 
 // Interviews and gifts on one count axis: bars for when interviews start, a line for when gifts arrive.
 const HourChart: React.FC<HourChartProps> = ({ interviewHours, giftHours, selectedHour, onSelectHour }) => {
+    const { t } = useTranslation();
     const { ref, width } = useElementWidth<HTMLDivElement>();
     const { active, setActive, containerProps } = useActiveMark({ count: 24, onSelect: onSelectHour });
 
@@ -38,22 +40,22 @@ const HourChart: React.FC<HourChartProps> = ({ interviewHours, giftHours, select
     const labelEvery = innerWidth < 420 ? 6 : 3;
 
     return (
-        <SectionCard title="Time of day" description="When interviews start and when gifts arrive (Vietnam time). Pick an hour to filter.">
+        <SectionCard title={t("statistics.hours.title")} description={t("statistics.hours.description")}>
             <Box sx={{ mb: 1 }}>
                 <ChartLegend items={[
-                    { label: "Interviews started", color: INTERVIEW_COLOR },
-                    { label: "Gifts received", color: GIFT_COLOR, line: true },
+                    { label: t("statistics.hours.started"), color: INTERVIEW_COLOR },
+                    { label: t("statistics.hours.received"), color: GIFT_COLOR, line: true },
                 ]} />
             </Box>
             <Box
                 ref={ref}
                 {...containerProps}
                 role="group"
-                aria-label="Interviews started and gifts received by hour. Use the arrow keys to read each hour, Enter to filter."
+                aria-label={t("statistics.hours.groupLabel")}
                 sx={{ position: "relative", outlineOffset: 4, borderRadius: "4px" }}
             >
                 {!hasData ? <ChartEmpty height={HEIGHT} /> : (
-                    <svg width={width} height={HEIGHT} role="img" aria-label="Interviews started and gifts received by hour" style={{ display: "block" }}>
+                    <svg width={width} height={HEIGHT} role="img" aria-label={t("statistics.hours.imgLabel")} style={{ display: "block" }}>
                         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
                             {ticks.map((tick) => (
                                 <g key={tick}>
@@ -113,13 +115,13 @@ const HourChart: React.FC<HourChartProps> = ({ interviewHours, giftHours, select
                         containerWidth={width}
                         title={formatHourRange(active)}
                         rows={[
-                            { label: "Interviews started", value: formatNumber(interviewHours[active] ?? 0), color: INTERVIEW_COLOR },
-                            { label: "Gifts received", value: formatNumber(giftHours[active] ?? 0), color: GIFT_COLOR, line: true },
+                            { label: t("statistics.hours.started"), value: formatNumber(interviewHours[active] ?? 0), color: INTERVIEW_COLOR },
+                            { label: t("statistics.hours.received"), value: formatNumber(giftHours[active] ?? 0), color: GIFT_COLOR, line: true },
                         ]}
                     />
                 )}
                 <Box aria-live="polite" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
-                    {active !== null ? `${formatHourRange(active)}: ${interviewHours[active] ?? 0} interviews started, ${giftHours[active] ?? 0} gifts received` : ""}
+                    {active !== null ? t("statistics.hours.announce", { hour: formatHourRange(active), started: interviewHours[active] ?? 0, received: giftHours[active] ?? 0 }) : ""}
                 </Box>
             </Box>
         </SectionCard>

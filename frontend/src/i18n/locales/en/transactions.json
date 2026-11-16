@@ -1,0 +1,25 @@
+{
+    "columns": {
+        "employeeId": "Interviewer ID",
+        "fullName": "Full name",
+        "province": "Province",
+        "interviewStart": "Interview start",
+        "interviewEnd": "Interview end",
+        "shellChainId": "Shell_ChainID",
+        "respondentPhone": "Res. phone number",
+        "phone": "Phone number",
+        "serviceCode": "Service code",
+        "channel": "Channel",
+        "amount": "Amount"
+    },
+    "searchPlaceholder": "Search phone number",
+    "empty": {
+        "notFound": "No transactions found",
+        "nothingMatches": "Nothing matches “{{term}}”.",
+        "noneTitle": "No transactions yet",
+        "noneDescription": "Gifts sent from the Gifts page and the interview links appear here."
+    },
+    "errors": {
+        "load": "Failed to fetch transactions"
+    }
+}

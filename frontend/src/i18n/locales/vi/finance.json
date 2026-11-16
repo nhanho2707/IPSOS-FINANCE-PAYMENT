@@ -1,0 +1,59 @@
+{
+    "title": "Tài chính",
+    "description": "Số dư nhà cung cấp, chi tiêu và phân tích bài phỏng vấn, xuất giao dịch.",
+    "sections": "Các mục Tài chính",
+    "tabs": {
+        "overview": "Tổng quan",
+        "analysis": "Phân tích",
+        "exports": "Xuất file"
+    },
+    "periods": {
+        "30": "30 ngày",
+        "90": "90 ngày",
+        "365": "12 tháng"
+    },
+    "periodLabel": "Khoảng thời gian",
+    "spendingOver": "Chi tiêu trong",
+    "runway": {
+        "none": "Không có quà nào được trả trong {{days}} ngày qua.",
+        "lessThanWeek": "Còn chưa tới một tuần theo mức chi {{days}} ngày qua. Dự kiến hết khoảng {{date}}.",
+        "moreThanYear": "Còn hơn một năm theo mức chi {{days}} ngày qua.",
+        "weeks_one": "Còn khoảng {{n}} tuần theo mức chi {{days}} ngày qua. Dự kiến hết khoảng {{date}}.",
+        "weeks_other": "Còn khoảng {{n}} tuần theo mức chi {{days}} ngày qua. Dự kiến hết khoảng {{date}}."
+    },
+    "balance": {
+        "low": "Số dư thấp",
+        "below": "Dưới {{amount}}",
+        "caption": "Số dư · đã chi {{spent}} / {{deposited}} đã nạp",
+        "share": "Tỷ lệ tiền nạp {{provider}} đã chi",
+        "addDeposit": "Nạp tiền"
+    },
+    "topProjects": {
+        "title": "Dự án chi nhiều nhất",
+        "description": "Theo giá trị quà, {{period}} qua. Chọn một dự án để phân tích.",
+        "empty": "Không có quà nào được trả trong khoảng này",
+        "aria": "{{code}} {{name}}: {{amount}}, {{gifts}} quà"
+    },
+    "giftsPaid": "Quà đã trả",
+    "project": "Dự án",
+    "allProjects": "Tất cả dự án",
+    "export": {
+        "title": "Xuất giao dịch",
+        "description": "File Excel để đối soát, theo ngày hoặc theo dự án.",
+        "byDate": "Theo ngày",
+        "dates": "Ngày",
+        "byProject": "Theo dự án",
+        "projects": "Dự án",
+        "chooseProjects": "Chọn dự án",
+        "button": "Xuất",
+        "failed": "Xuất file không thành công: {{error}}"
+    },
+    "deposit": {
+        "title": "Nạp tiền vào GotIt",
+        "description": "Ghi nhận số tiền đã chuyển vào tài khoản GotIt. Số dư cập nhật ngay.",
+        "submit": "Nạp tiền",
+        "amount": "Số tiền (VND)",
+        "notSaved": "Chưa lưu được khoản nạp. Kiểm tra số tiền rồi thử lại.",
+        "added": "Đã nạp {{amount}} vào tài khoản GotIt."
+    }
+}

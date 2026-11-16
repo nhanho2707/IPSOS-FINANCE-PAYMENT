@@ -331,4 +331,49 @@ test.describe("language", () => {
         await expect(page.getByRole("option", { name: "Tài chính" })).toBeVisible();
         await capture(page, testInfo, "command-palette-vi", { fullPage: false });
     });
+
+    test("project pages, Finance and statistics read in Vietnamese", async ({ page }, testInfo) => {
+        await signInAs(page, "Admin");
+        await page.addInitScript(() => localStorage.setItem("language", "vi"));
+
+        await page.goto(PROJECTS);
+        await expect(page.getByRole("heading", { name: "Dự án", level: 1 })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Dự án mới" })).toBeVisible();
+        await expect(page.getByPlaceholder("Tìm theo tên, mã hoặc Symphony")).toBeVisible();
+        await capture(page, testInfo, "projects-vi");
+
+        await page.goto(`${PROJECT}/overview`);
+        await expect(page.getByText("Quà đã gửi")).toBeVisible();
+        await expect(page.getByText("Thông tin dự án")).toBeVisible();
+        await expect(page.getByText("01/10 – 30/11/2026")).toBeVisible();
+        await capture(page, testInfo, "project-overview-vi");
+
+        await page.goto(`${PROJECT}/gifts`);
+        await expect(page.getByRole("button", { name: "Nhập đáp viên" })).toBeVisible();
+        await expect(page.getByRole("tab", { name: /Thất bại/ })).toBeVisible();
+        await expect(page.getByText("12 quà gửi lỗi. Lý do ghi dưới từng quà.")).toBeVisible();
+        await expect(page.getByText("Số hàng mỗi trang:")).toBeVisible();
+        await capture(page, testInfo, "gifts-vi");
+
+        await page.goto("/transaction-manager/transactions");
+        await expect(page.getByRole("heading", { name: "Tài chính", level: 1 })).toBeVisible();
+        await expect(page.getByText("Số dư thấp")).toBeVisible();
+        await expect(page.getByText(/Còn khoảng \d+ tuần theo mức chi 30 ngày qua/).first()).toBeVisible();
+        await capture(page, testInfo, "finance-vi");
+
+        await page.getByRole("tab", { name: "Phân tích" }).click();
+        await expect(page.getByRole("heading", { name: "Theo PVV" })).toBeVisible();
+        await expect(page.getByText("so với 30 ngày trước đó").first()).toBeVisible();
+        await expect(page.getByRole("button", { name: /^Trước khi PV kết thúc/ })).toBeVisible();
+        await capture(page, testInfo, "finance-analysis-vi");
+
+        // The Excel file keeps its English headers whatever the language.
+        const download = page.waitForEvent("download");
+        await page.getByRole("button", { name: "Xuất Excel" }).first().click();
+        const file = await (await download).path();
+        const sheet = XLSX.readFile(file).Sheets["By interviewer"];
+        expect(XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })[0]).toEqual(
+            ["Interviewer ID", "Interviewer", "Interviews", "Gifts", "Gift value", "Median wait (minutes)", "Needs review"]
+        );
+    });
 });

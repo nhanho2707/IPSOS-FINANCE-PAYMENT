@@ -20,30 +20,16 @@ import StatusChip from "../../components/StatusChip";
 import { getStatusTone, TRANSACTION_STATUS_TONE } from "../../config/ThemeConfig";
 import { useToast } from "../../contexts/ToastContext";
 import { formatMoney, formatNumber, formatPhone, formatStatus } from "../../utils/format";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "../../i18n/i18n";
 
 const MAX_FAILURES_SHOWN = 30;
 
-const GIFT_STATUS_LABELS: Record<GiftStatus, string> = {
-    pending: "Pending",
-    success: "Sent",
-    failed: "Failed",
-    refused: "Refused",
-};
+const GIFT_STATUSES: GiftStatus[] = ["pending", "success", "failed", "refused"];
 
-const GIFT_TABS: { value: GiftStatus | "all"; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "pending", label: GIFT_STATUS_LABELS.pending },
-    { value: "success", label: GIFT_STATUS_LABELS.success },
-    { value: "failed", label: GIFT_STATUS_LABELS.failed },
-    { value: "refused", label: GIFT_STATUS_LABELS.refused },
-];
+const GIFT_TAB_VALUES: (GiftStatus | "all")[] = ["all", ...GIFT_STATUSES];
 
-const EMPTY_TAB_TITLES: Record<GiftStatus, string> = {
-    pending: "No gifts waiting to be sent",
-    success: "No gifts sent yet",
-    failed: "No failed gifts",
-    refused: "No refused gifts",
-};
+const giftStatusLabel = (status: GiftStatus): string => i18n.t(`gifts.status.${status}`);
 
 interface BulkSendProgress {
     done: number,
@@ -57,9 +43,8 @@ interface BulkSendOutcome {
     total: number
 };
 
-const plural = (count: number, one: string, other: string) => `${formatNumber(count)} ${count === 1 ? one : other}`;
-
 const BulkSendResultBanner: React.FC<{ outcome: BulkSendOutcome; onClose: () => void }> = ({ outcome, onClose }) => {
+    const { t } = useTranslation();
     const { result: { results, stoppedOnFailures }, total } = outcome;
     const failures = results.filter(r => !r.success);
     const successCount = results.length - failures.length;
@@ -68,25 +53,24 @@ const BulkSendResultBanner: React.FC<{ outcome: BulkSendOutcome; onClose: () => 
 
     return (
         <Alert severity={severity} onClose={onClose}>
-            <AlertTitle>Sent {formatNumber(successCount)} of {plural(total, "gift", "gifts")}</AlertTitle>
+            <AlertTitle>{t("gifts.bulkResult.title", { count: total, n: formatNumber(total), sent: formatNumber(successCount) })}</AlertTitle>
             {stoppedOnFailures && (
                 <Typography variant="body2">
-                    Sending stopped after {MAX_CONSECUTIVE_GIFT_FAILURES} failures in a row, so {plural(notSent, "respondent was", "respondents were")} not sent.
-                    Check the cause (for example the account balance) before sending again.
+                    {t("gifts.bulkResult.stopped", { count: notSent, n: formatNumber(notSent), max: MAX_CONSECUTIVE_GIFT_FAILURES })}
                 </Typography>
             )}
             {!stoppedOnFailures && notSent > 0 && (
                 <Typography variant="body2">
-                    You stopped the run; {plural(notSent, "respondent was", "respondents were")} not sent.
+                    {t("gifts.bulkResult.userStopped", { count: notSent, n: formatNumber(notSent) })}
                 </Typography>
             )}
             {failures.length > 0 && (
                 <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5, typography: "body2" }}>
                     {failures.slice(0, MAX_FAILURES_SHOWN).map(f => (
-                        <li key={f.row.id}>{f.row.respondent_id} ({f.row.phone_number}): {f.message || "Failed"}</li>
+                        <li key={f.row.id}>{f.row.respondent_id} ({f.row.phone_number}): {f.message || t("gifts.bulkResult.failedFallback")}</li>
                     ))}
                     {failures.length > MAX_FAILURES_SHOWN && (
-                        <li>…and {plural(failures.length - MAX_FAILURES_SHOWN, "more failure", "more failures")}</li>
+                        <li>{t("gifts.bulkResult.more", { count: failures.length - MAX_FAILURES_SHOWN, n: formatNumber(failures.length - MAX_FAILURES_SHOWN) })}</li>
                     )}
                 </Box>
             )}
@@ -94,31 +78,36 @@ const BulkSendResultBanner: React.FC<{ outcome: BulkSendOutcome; onClose: () => 
     );
 };
 
-const TEST_RESPONDENT_HINT = "Sending marks this gift as received without paying it through Vinnet or GotIt.";
 const TEST_PROJECT_STATUSES = ["in coming", "on hold"];
 
-const ImportResultBanner: React.FC<{ result: OfflineImportResult; onClose: () => void }> = ({ result, onClose }) => (
-    <Alert severity="warning" onClose={onClose}>
-        <AlertTitle>
-            Imported {plural(result.imported, "respondent", "respondents")}: {formatNumber(result.live)} live, {formatNumber(result.test)} test
-        </AlertTitle>
-        <Typography variant="body2">
-            Sending a gift to a test respondent marks it as received without paying it.
-            {result.projectStatus && TEST_PROJECT_STATUSES.includes(result.projectStatus) && (
-                <> This project is <b>{formatStatus(result.projectStatus)}</b>, so every respondent counts as a test until it is In field.</>
-            )}
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-            A respondent is a test while the project is Upcoming or On hold, or when its interviewer code (once In field) or
-            location code does not start with HN, SG, DN, CT or MA. This is checked again when each gift is sent, so
-            respondents with valid codes are paid once the project is In field.
-        </Typography>
-    </Alert>
-);
+const ImportResultBanner: React.FC<{ result: OfflineImportResult; onClose: () => void }> = ({ result, onClose }) => {
+    const { t } = useTranslation();
+
+    return (
+        <Alert severity="warning" onClose={onClose}>
+            <AlertTitle>
+                {t("gifts.importResult.title", { count: result.imported, n: formatNumber(result.imported), live: formatNumber(result.live), test: formatNumber(result.test) })}
+            </AlertTitle>
+            <Typography variant="body2">
+                {t("gifts.importResult.testNote")}
+                {result.projectStatus && TEST_PROJECT_STATUSES.includes(result.projectStatus) && (
+                    <>
+                        {" "}
+                        <Trans i18nKey="gifts.importResult.projectIs" values={{ status: formatStatus(result.projectStatus) }} components={{ b: <b /> }} />
+                    </>
+                )}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+                {t("gifts.importResult.rule")}
+            </Typography>
+        </Alert>
+    );
+};
 
 const Gifts: React.FC = () => {
     const { projectId } = useProjectContext();
     const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const { openDialog, closeDialog, dialogProps } = useDialog();
 
@@ -167,10 +156,10 @@ const Gifts: React.FC = () => {
 
     const handleRemoveClick = (row: OfflineProjectRespondentData) => {
         openDialog({
-            title: "Remove respondent",
+            title: t("gifts.remove.title"),
             tone: "danger",
-            confirmText: "Remove",
-            message: `Remove ${row.respondent_id} from this project? Their gift has not been sent yet.`,
+            confirmText: t("gifts.remove.confirm"),
+            message: t("gifts.remove.message", { id: row.respondent_id }),
             showConfirmButton: true,
             onConfirm: () => handleRemoveConfirmDialog(row)
         });
@@ -230,11 +219,11 @@ const Gifts: React.FC = () => {
             setSelectedRows(Object.fromEntries(rows.map(r => [r.id, r])));
 
             if (rows.length === 0) {
-                showToast("No respondents are waiting for a gift.", "info");
+                showToast(t("gifts.toast.noPending"), "info");
             }
         } catch(error){
             console.error('Failed to fetch pending respondents', error);
-            showToast("Could not load pending respondents. Please try again.", "error");
+            showToast(t("gifts.toast.pendingLoadFailed"), "error");
         } finally {
             setLoadingSelectAllPending(false);
         }
@@ -263,7 +252,7 @@ const Gifts: React.FC = () => {
             setBulkOutcome({ result: bulkResult, total: rows.length });
         } catch(error){
             console.error('Failed to send gifts', error);
-            showToast("Sending stopped because of an unexpected error. Check the list before trying again.", "error");
+            showToast(t("gifts.toast.unexpectedStop"), "error");
         } finally {
             setBulkProgress(null);
         }
@@ -280,9 +269,9 @@ const Gifts: React.FC = () => {
         if (rows.length === 0) return;
 
         openDialog({
-            title: "Send gifts",
-            confirmText: `Send ${plural(rows.length, "gift", "gifts")}`,
-            message: `Send gifts to the ${plural(rows.length, "selected respondent", "selected respondents")}? Each gift is charged to the provider account as it is sent.`,
+            title: t("gifts.send.title"),
+            confirmText: t("gifts.send.confirm", { count: rows.length, n: formatNumber(rows.length) }),
+            message: t("gifts.send.message", { count: rows.length, n: formatNumber(rows.length) }),
             showConfirmButton: true,
             onConfirm: () => handleBulkSendConfirm(rows)
         });
@@ -302,7 +291,7 @@ const Gifts: React.FC = () => {
                     indeterminate={selectedOnPageCount > 0 && selectedOnPageCount < pendingRowsOnPage.length}
                     disabled={bulkSending || pendingRowsOnPage.length === 0}
                     onChange={handleTogglePage}
-                    slotProps={{ input: { 'aria-label': 'Select pending respondents on this page' } }}
+                    slotProps={{ input: { 'aria-label': t("gifts.columns.selectPage") } }}
                 />
             ),
             renderCell: (row: OfflineProjectRespondentData) => (
@@ -311,12 +300,12 @@ const Gifts: React.FC = () => {
                     checked={Boolean(selectedRows[row.id])}
                     disabled={bulkSending || row.status !== 'pending'}
                     onChange={() => handleToggleRow(row)}
-                    slotProps={{ input: { 'aria-label': `Select ${row.respondent_id}` } }}
+                    slotProps={{ input: { 'aria-label': t("gifts.columns.selectRow", { id: row.respondent_id }) } }}
                 />
             )
         },
         {
-            label: "Respondent",
+            label: t("gifts.columns.respondent"),
             name: "respondent_id",
             type: "string",
             flex: 1.8,
@@ -326,16 +315,16 @@ const Gifts: React.FC = () => {
                     secondary={formatPhone(row.phone_number)}
                     title={[
                         row.respondent_id,
-                        `Gift phone: ${formatPhone(row.phone_number)}`,
-                        row.respondent_phone_number && `Survey phone: ${formatPhone(row.respondent_phone_number)}`,
-                        row.email && `Email: ${row.email}`,
+                        t("gifts.columns.giftPhone", { phone: formatPhone(row.phone_number) }),
+                        row.respondent_phone_number && t("gifts.columns.surveyPhone", { phone: formatPhone(row.respondent_phone_number) }),
+                        row.email && t("gifts.columns.email", { email: row.email }),
                     ].filter(Boolean).join(" · ")}
                     numeric
                 />
             )
         },
         {
-            label: "Interviewer",
+            label: t("gifts.columns.interviewer"),
             name: "employee_id",
             type: "string",
             flex: 1.4,
@@ -347,20 +336,20 @@ const Gifts: React.FC = () => {
             )
         },
         {
-            label: "Province",
+            label: t("gifts.columns.province"),
             name: "province_name",
             type: "string",
             flex: 1
         },
         {
-            label: "Channel",
+            label: t("gifts.columns.channel"),
             name: "channel",
             type: "string",
             width: 96,
             renderCell: (row: OfflineProjectRespondentData) => <ProviderBadge provider={row.channel} />
         },
         {
-            label: "Amount",
+            label: t("gifts.columns.amount"),
             name: "price_level",
             type: "number",
             align: "right",
@@ -370,7 +359,7 @@ const Gifts: React.FC = () => {
             )
         },
         {
-            label: "Status",
+            label: t("gifts.columns.status"),
             name: "status",
             type: "string",
             width: 176,
@@ -378,12 +367,12 @@ const Gifts: React.FC = () => {
                 <Box sx={{ minWidth: 0 }}>
                     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                         <StatusChip
-                            label={GIFT_STATUS_LABELS[row.status] ?? row.status}
+                            label={GIFT_STATUSES.includes(row.status) ? giftStatusLabel(row.status) : row.status}
                             tone={getStatusTone(row.status, TRANSACTION_STATUS_TONE)}
                         />
                         {row.environment === "test" && (
-                            <Tooltip title={TEST_RESPONDENT_HINT}>
-                                <span><StatusChip label="Test" tone="info" /></span>
+                            <Tooltip title={t("gifts.test.hint")}>
+                                <span><StatusChip label={t("gifts.test.chip")} tone="info" /></span>
                             </Tooltip>
                         )}
                     </Stack>
@@ -412,7 +401,7 @@ const Gifts: React.FC = () => {
 
                 return (
                     <RowActions
-                        menuLabel={`Actions for ${row.respondent_id}`}
+                        menuLabel={t("gifts.columns.actionsFor", { id: row.respondent_id })}
                         primary={isPending && (
                             <Button
                                 onClick={() => handleSendGiftClick(row)}
@@ -425,17 +414,17 @@ const Gifts: React.FC = () => {
                                 disabled={bulkSending}
                                 sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                             >
-                                Send gift
+                                {t("gifts.send.one")}
                             </Button>
                         )}
                         items={[
                             {
-                                label: "Remove respondent",
+                                label: t("gifts.remove.menu"),
                                 icon: DeleteOutlineOutlined,
                                 tone: "danger",
                                 onClick: () => handleRemoveClick(row),
                                 disabled: !isPending || bulkSending,
-                                disabledReason: !isPending ? "Only respondents still waiting for a gift can be removed" : undefined,
+                                disabledReason: !isPending ? t("gifts.remove.onlyPending") : undefined,
                             },
                         ]}
                     />
@@ -479,7 +468,7 @@ const Gifts: React.FC = () => {
             );
 
             if (sheetRows.length && missingColumns.length > 0) {
-                showToast(`Import failed: the file is missing these columns: ${missingColumns.join(", ")}.`, "error");
+                showToast(t("gifts.toast.missingColumns", { columns: missingColumns.join(", ") }), "error");
                 return;
             }
 
@@ -489,7 +478,7 @@ const Gifts: React.FC = () => {
                 .filter(row => OFFLINE_RESPONDENT_IMPORT_COLUMNS.some(col => row[col] !== ""));
 
             if (!rows.length) {
-                showToast("Import failed: the file has no respondent rows.", "error");
+                showToast(t("gifts.toast.noRows"), "error");
                 return;
             }
 
@@ -526,7 +515,7 @@ const Gifts: React.FC = () => {
     const selectedTotal = Object.values(selectedRows).reduce((sum, row) => sum + (Number(row.price_level) || 0), 0);
 
     const showStatus = (value: string) => {
-        setStatusFilter(GIFT_TABS.find(tab => tab.value === value)?.value ?? "all");
+        setStatusFilter(GIFT_TAB_VALUES.find(tabValue => tabValue === value) ?? "all");
         setPage(0);
     };
 
@@ -537,25 +526,31 @@ const Gifts: React.FC = () => {
     const failedBanner = failedCount > 0 && statusFilter !== "failed" ? (
         <Alert
             severity="warning"
-            action={<Button color="inherit" size="small" onClick={() => showStatus("failed")}>Show failed</Button>}
+            action={<Button color="inherit" size="small" onClick={() => showStatus("failed")}>{t("gifts.banner.showFailed")}</Button>}
         >
-            {plural(failedCount, "gift", "gifts")} failed{searchTerm ? " for this search" : ""}. The reason is listed under each one.
+            {t(searchTerm ? "gifts.banner.failedSearch" : "gifts.banner.failed", { count: failedCount, n: formatNumber(failedCount) })}
         </Alert>
     ) : null;
 
     const bulkBar = (selectedCount > 0 || bulkSending) ? (
         <BulkActionBar
-            label={plural(selectedCount, "respondent selected", "respondents selected")}
-            summary={selectedTotal > 0 ? `${formatMoney(selectedTotal)} in total` : undefined}
+            label={t("gifts.bulk.selected", { count: selectedCount, n: formatNumber(selectedCount) })}
+            summary={selectedTotal > 0 ? t("gifts.bulk.total", { amount: formatMoney(selectedTotal) }) : undefined}
             onClear={() => setSelectedRows({})}
             extra={
                 <Button size="small" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
-                    Select all pending
+                    {t("gifts.bulk.selectAllPending")}
                 </Button>
             }
             progress={bulkProgress ? {
                 value: bulkProgress.total > 0 ? (bulkProgress.done / bulkProgress.total) * 100 : 0,
-                label: `Sending ${formatNumber(bulkProgress.done)} of ${plural(bulkProgress.total, "gift", "gifts")} — ${formatNumber(bulkProgress.success)} sent, ${formatNumber(bulkProgress.failed)} failed. Keep this page open.`,
+                label: t("gifts.bulk.progress", {
+                    count: bulkProgress.total,
+                    n: formatNumber(bulkProgress.total),
+                    done: formatNumber(bulkProgress.done),
+                    sent: formatNumber(bulkProgress.success),
+                    failed: formatNumber(bulkProgress.failed),
+                }),
             } : undefined}
             actions={bulkSending ? (
                 <Button
@@ -566,11 +561,11 @@ const Gifts: React.FC = () => {
                     disabled={stopRequested}
                     onClick={handleStopBulkSend}
                 >
-                    {stopRequested ? 'Stopping…' : 'Stop'}
+                    {stopRequested ? t("gifts.send.stopping") : t("gifts.send.stop")}
                 </Button>
             ) : (
                 <Button size="small" variant="contained" startIcon={<CardGiftcardIcon />} onClick={handleBulkSendClick}>
-                    Send gifts
+                    {t("gifts.send.bulk")}
                 </Button>
             )}
         />
@@ -580,7 +575,7 @@ const Gifts: React.FC = () => {
         <>
             <ProjectPageActions>
                 <Button variant="outlined" color="inherit" startIcon={<FileUploadOutlined />} onClick={openImport}>
-                    Import respondents
+                    {t("gifts.import")}
                 </Button>
             </ProjectPageActions>
             <input
@@ -606,22 +601,22 @@ const Gifts: React.FC = () => {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 stickyColumns={{ first: true, last: true }}
-                tabs={GIFT_TABS.map(tab => ({
-                    value: tab.value,
-                    label: tab.label,
-                    count: tab.value === "all" ? allCount : statusCounts?.[tab.value],
-                    alert: tab.value === "failed",
+                tabs={GIFT_TAB_VALUES.map(tabValue => ({
+                    value: tabValue,
+                    label: tabValue === "all" ? t("gifts.all") : giftStatusLabel(tabValue),
+                    count: tabValue === "all" ? allCount : statusCounts?.[tabValue],
+                    alert: tabValue === "failed",
                 }))}
                 tab={statusFilter}
                 onTabChange={showStatus}
                 search={{
-                    placeholder: "Search phone number",
+                    placeholder: t("gifts.searchPlaceholder"),
                     defaultValue: searchTerm,
                     onChange: handleSearchChange,
                 }}
                 toolbarActions={selectedCount === 0 && !bulkSending && (
                     <Button size="small" color="inherit" onClick={handleSelectAllPending} loading={loadingSelectAllPending}>
-                        Select all pending
+                        {t("gifts.bulk.selectAllPending")}
                     </Button>
                 )}
                 bulkBar={bulkBar}
@@ -633,16 +628,21 @@ const Gifts: React.FC = () => {
                     </Stack>
                 )}
                 emptyState={searchTerm ? (
-                    <EmptyState title="No respondents found" description={`Nothing matches “${searchTerm}”${statusFilter !== "all" ? ` in ${GIFT_STATUS_LABELS[statusFilter].toLowerCase()} gifts` : ""}.`} />
+                    <EmptyState
+                        title={t("gifts.empty.notFound")}
+                        description={statusFilter !== "all"
+                            ? t("gifts.empty.nothingMatchesIn", { term: searchTerm, status: giftStatusLabel(statusFilter).toLowerCase() })
+                            : t("gifts.empty.nothingMatches", { term: searchTerm })}
+                    />
                 ) : statusFilter !== "all" ? (
-                    <EmptyState title={EMPTY_TAB_TITLES[statusFilter]} />
+                    <EmptyState title={t(`gifts.emptyTab.${statusFilter}`)} />
                 ) : (
                     <EmptyState
-                        title="No respondents yet"
-                        description="Import the respondent list (InstanceID, Shell_ChainID, PhoneNumber, Channel…) to start sending gifts."
+                        title={t("gifts.empty.noneTitle")}
+                        description={t("gifts.empty.noneDescription")}
                         action={
                             <Button variant="outlined" color="inherit" startIcon={<FileUploadOutlined />} onClick={openImport}>
-                                Import respondents
+                                {t("gifts.import")}
                             </Button>
                         }
                     />

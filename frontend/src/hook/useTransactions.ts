@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TransactionData } from "../config/TransactionFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
+import i18n from "../i18n/i18n";
 
 export function useTransactions(projectId: number){
 
@@ -47,7 +48,7 @@ export function useTransactions(projectId: number){
             
         }catch(error: any){
             setError(true);
-            setMessage(error.message || 'Failed to fetch Transactions');
+            setMessage(error.message || i18n.t('transactions.errors.load'));
         }finally{
             setLoading(false);
         }

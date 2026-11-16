@@ -6,10 +6,20 @@ import enCommon from "./locales/en/common.json";
 import enNav from "./locales/en/nav.json";
 import enAuth from "./locales/en/auth.json";
 import enDashboard from "./locales/en/dashboard.json";
+import enStatistics from "./locales/en/statistics.json";
+import enFinance from "./locales/en/finance.json";
+import enTransactions from "./locales/en/transactions.json";
+import enGifts from "./locales/en/gifts.json";
+import enProjects from "./locales/en/projects.json";
 import viCommon from "./locales/vi/common.json";
 import viNav from "./locales/vi/nav.json";
 import viAuth from "./locales/vi/auth.json";
 import viDashboard from "./locales/vi/dashboard.json";
+import viStatistics from "./locales/vi/statistics.json";
+import viFinance from "./locales/vi/finance.json";
+import viTransactions from "./locales/vi/transactions.json";
+import viGifts from "./locales/vi/gifts.json";
+import viProjects from "./locales/vi/projects.json";
 
 export type Language = "en" | "vi";
 
@@ -18,10 +28,16 @@ export const LANGUAGES: Language[] = ["en", "vi"];
 const STORAGE_KEY = "language";
 const DEFAULT_LANGUAGE: Language = "en";
 
-const en = { common: enCommon, nav: enNav, auth: enAuth, dashboard: enDashboard };
+const en = {
+    common: enCommon, nav: enNav, auth: enAuth, dashboard: enDashboard,
+    projects: enProjects, gifts: enGifts, transactions: enTransactions, finance: enFinance, statistics: enStatistics,
+};
 
 // Typed against English, so a key missing from a Vietnamese file fails the type check.
-const vi: typeof en = { common: viCommon, nav: viNav, auth: viAuth, dashboard: viDashboard };
+const vi: typeof en = {
+    common: viCommon, nav: viNav, auth: viAuth, dashboard: viDashboard,
+    projects: viProjects, gifts: viGifts, transactions: viTransactions, finance: viFinance, statistics: viStatistics,
+};
 
 export const resources = { en: { translation: en }, vi: { translation: vi } };
 

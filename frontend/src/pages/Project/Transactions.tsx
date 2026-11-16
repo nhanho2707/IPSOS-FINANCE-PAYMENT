@@ -2,10 +2,12 @@ import ResourceTable from "../../components/Table/ResourceTable";
 import EmptyState from "../../components/EmptyState";
 import { useTransactions } from "../../hook/useTransactions";
 import { useProjectContext } from "../../hook/useProjectContext";
-import { TransactionCellConfig } from "../../config/TransactionFieldsConfig";
+import { transactionColumns } from "../../config/TransactionFieldsConfig";
+import { useTranslation } from "react-i18next";
 
 const Transactions: React.FC = () => {
   const { projectId } = useProjectContext();
+  const { t } = useTranslation();
 
   const { transactions, loading: loadingTransactions, error: errorTransactions, message: messageTransactions, page, setPage, rowsPerPage, setRowsPerPage, total, searchTerm, setSearchTerm } = useTransactions(projectId);
 
@@ -25,7 +27,7 @@ const Transactions: React.FC = () => {
 
   return (
     <ResourceTable
-        columns={TransactionCellConfig}
+        columns={transactionColumns()}
         data={transactions}
         actionStatus={{
           type: 'fetch',
@@ -40,14 +42,14 @@ const Transactions: React.FC = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         dense
         search={{
-          placeholder: "Search phone number",
+          placeholder: t("transactions.searchPlaceholder"),
           defaultValue: searchTerm,
           onChange: handleSearchChange,
         }}
         emptyState={searchTerm ? (
-          <EmptyState title="No transactions found" description={`Nothing matches “${searchTerm}”.`} />
+          <EmptyState title={t("transactions.empty.notFound")} description={t("transactions.empty.nothingMatches", { term: searchTerm })} />
         ) : (
-          <EmptyState title="No transactions yet" description="Gifts sent from the Gifts page and the interview links appear here." />
+          <EmptyState title={t("transactions.empty.noneTitle")} description={t("transactions.empty.noneDescription")} />
         )}
     />
   )

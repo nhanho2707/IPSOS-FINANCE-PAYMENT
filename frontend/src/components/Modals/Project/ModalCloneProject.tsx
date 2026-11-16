@@ -8,6 +8,8 @@ import { CloneProjectPayload, ProjectData } from "../../../config/ProjectFieldsC
 import { getProjectHomePath } from "../../../config/ProjectNavConfig";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useProjects } from "../../../hook/useProjects";
+import { useTranslation } from "react-i18next";
+import { tKey, TranslationKey } from "../../../i18n/i18n";
 
 interface ModalCloneProjectProps {
   project: ProjectData;
@@ -16,10 +18,10 @@ interface ModalCloneProjectProps {
 
 type CloneOptionKey = 'include_prices' | 'include_quotation' | 'include_permissions';
 
-const CLONE_OPTIONS: { key: CloneOptionKey; label: string }[] = [
-  { key: 'include_prices', label: 'Gift prices & sample size by province' },
-  { key: 'include_quotation', label: 'Quotation (latest version, recreated as v1 draft)' },
-  { key: 'include_permissions', label: 'Assigned users' },
+const CLONE_OPTIONS: { key: CloneOptionKey; label: TranslationKey }[] = [
+  { key: 'include_prices', label: 'projects.form.copyPrices' },
+  { key: 'include_quotation', label: 'projects.form.copyQuotation' },
+  { key: 'include_permissions', label: 'projects.form.copyPermissions' },
 ];
 
 const buildInitialValues = (project: ProjectData): CloneProjectPayload => ({
@@ -38,6 +40,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cloneProject, actionState } = useProjects();
+  const { t } = useTranslation();
 
   const [formValues, setFormValues] = useState<CloneProjectPayload>(() => buildInitialValues(project));
 
@@ -68,11 +71,11 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
   return (
     <FormDialog
       open
-      title={`Clone project ${project.internal_code ?? ''}`.trim()}
+      title={t("projects.form.cloneTitle", { code: project.internal_code ?? "" }).trim()}
       error={cloneError}
       onClose={onClose}
       onSubmit={handleSubmit}
-      submitText="Clone"
+      submitText={t("projects.form.clone")}
       submitDisabled={!formValues.project_name.trim() || endBeforeStart}
       loading={isCloning}
     >
@@ -81,20 +84,20 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
           autoFocus
           required
           size="small"
-          label="Project name"
+          label={t("projects.form.name")}
           value={formValues.project_name}
           onChange={(e) => setFormValues((prev) => ({ ...prev, project_name: e.target.value }))}
           fullWidth
         />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
           <DatePicker
-            label="Field start (planned)"
+            label={t("projects.form.start")}
             value={start}
             onChange={(value) => setFormValues((prev) => ({ ...prev, planned_field_start: fromDate(value) }))}
             slotProps={{ textField: { size: "small" } }}
           />
           <DatePicker
-            label="Field end (planned)"
+            label={t("projects.form.end")}
             value={end}
             minDate={start ?? undefined}
             onChange={(value) => setFormValues((prev) => ({ ...prev, planned_field_end: fromDate(value) }))}
@@ -102,7 +105,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
               textField: {
                 size: "small",
                 error: endBeforeStart,
-                helperText: endBeforeStart ? "Ends before it starts" : undefined,
+                helperText: endBeforeStart ? t("projects.form.endBeforeStart") : undefined,
               },
             }}
           />
@@ -110,7 +113,7 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
 
         <Box>
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Also copy
+            {t("projects.form.alsoCopy")}
           </Typography>
           <FormGroup>
             {CLONE_OPTIONS.map((option) => (
@@ -123,13 +126,13 @@ const ModalCloneProject: React.FC<ModalCloneProjectProps> = ({ project, onClose 
                     onChange={handleOptionChange(option.key)}
                   />
                 }
-                label={option.label}
+                label={tKey(option.label)}
                 slotProps={{ typography: { variant: "body2" } }}
               />
             ))}
           </FormGroup>
           <Typography variant="caption" component="p" sx={{ color: "text.secondary", mt: 0.5 }}>
-            Platform, project types and teams are always copied. Respondents, transactions, interviewers and CATI batches are not copied.
+            {t("projects.form.copyNote")}
           </Typography>
         </Box>
       </Box>

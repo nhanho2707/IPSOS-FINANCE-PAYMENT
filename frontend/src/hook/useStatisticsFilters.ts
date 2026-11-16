@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
-import { CHANNELS, StatisticsFilters, TransactionChannel, WAIT_BUCKET_LABELS, WaitBucketKey } from "../config/StatisticsConfig";
+import { CHANNELS, StatisticsFilters, TransactionChannel, WAIT_BUCKETS, WaitBucketKey } from "../config/StatisticsConfig";
 
 const DATE_PARAM_FORMAT = "YYYY-MM-DD";
 const FILTER_PARAMS = ["from", "to", "range", "channel", "pvv", "wait", "wd", "hr"];
@@ -37,7 +37,7 @@ export function useStatisticsFilters(defaultDays: number | null = null) {
             dateTo: hasRange ? to : useDefault ? dayjs().format(DATE_PARAM_FORMAT) : null,
             channel: CHANNELS.includes(channelParam as TransactionChannel) ? (channelParam as TransactionChannel) : "",
             employee: employee || null,
-            wait: waitParam && waitParam in WAIT_BUCKET_LABELS ? (waitParam as WaitBucketKey) : null,
+            wait: WAIT_BUCKETS.find((key) => key === waitParam) ?? null,
             weekday,
             hour,
         };

@@ -99,5 +99,8 @@
         "backToProjects": "Back to projects",
         "goBack": "Go back"
     },
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "providers": {
+        "other": "Other"
+    }
 }

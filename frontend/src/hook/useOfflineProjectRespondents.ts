@@ -3,6 +3,7 @@ import { GiftStatus, GiftStatusCounts, OfflineGiftBulkSendResult, OfflineGiftSen
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
+import i18n from "../i18n/i18n";
 
 interface ImportErrorDetail {
     row: number,
@@ -29,7 +30,7 @@ const formatImportErrors = (data: ImportErrorResponse | undefined): string => {
     const errors = data?.errors;
 
     if (!errors) {
-        return data?.message ?? "Import failed.";
+        return data?.message ?? i18n.t("gifts.errors.importFailed");
     }
 
     const grouped: Record<string, number[]> = {};
@@ -119,7 +120,7 @@ export function useOfflineProjectRespondents(projectId: number) {
 
         }catch(error: any){
             setError(true);
-            setMessage(error.message || 'Failed to fetch Transactions');
+            setMessage(error.message || i18n.t('gifts.errors.load'));
         }finally{
             setLoading(false);
         }

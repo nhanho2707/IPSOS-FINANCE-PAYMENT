@@ -8,6 +8,7 @@ import { ProjectData } from "../../../config/ProjectFieldsConfig";
 import { useProjects } from "../../../hook/useProjects";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getProjectHomePath } from "../../../config/ProjectNavConfig";
+import { useTranslation } from "react-i18next";
 
 interface ModalProps {
   openModal: boolean;
@@ -39,6 +40,7 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
   const { user } = useAuth();
 
   const { addProject, actionState } = useProjects();
+  const { t } = useTranslation();
 
   const [formValues, setFormValues] = useState<ProjectData>(EMPTY_PROJECT);
 
@@ -64,11 +66,11 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
   return (
     <FormDialog
       open={openModal}
-      title="New project"
+      title={t("projects.form.newTitle")}
       error={saveError}
       onClose={onClose}
       onSubmit={handleSave}
-      submitText="Create project"
+      submitText={t("projects.form.create")}
       submitDisabled={!formValues.project_name.trim() || endBeforeStart}
       loading={isSaving}
     >
@@ -77,7 +79,7 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
           autoFocus
           required
           size="small"
-          label="Project name"
+          label={t("projects.form.name")}
           value={formValues.project_name}
           onChange={(e) => update({ project_name: e.target.value })}
           sx={{ gridColumn: "1 / -1" }}
@@ -85,7 +87,7 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
         <TextField
           select
           size="small"
-          label="Platform"
+          label={t("projects.form.platform")}
           value={formValues.platform}
           onChange={(e) => update({ platform: e.target.value })}
         >
@@ -96,7 +98,7 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
         <TextField
           select
           size="small"
-          label="Project type"
+          label={t("projects.form.type")}
           value={formValues.project_types[0] ?? ''}
           onChange={(e) => update({ project_types: [e.target.value] })}
         >
@@ -107,7 +109,7 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
         <TextField
           select
           size="small"
-          label="Teams"
+          label={t("projects.form.teams")}
           value={formValues.teams}
           onChange={(e) => {
             const value = e.target.value as unknown as string[] | string;
@@ -121,13 +123,13 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
           ))}
         </TextField>
         <DatePicker
-          label="Field start (planned)"
+          label={t("projects.form.start")}
           value={start}
           onChange={(value) => update({ planned_field_start: fromDate(value) })}
           slotProps={{ textField: { size: "small" } }}
         />
         <DatePicker
-          label="Field end (planned)"
+          label={t("projects.form.end")}
           value={end}
           minDate={start ?? undefined}
           onChange={(value) => update({ planned_field_end: fromDate(value) })}
@@ -135,7 +137,7 @@ const ModalAddProject: React.FC<ModalProps> = ({ openModal, onClose, metadata })
             textField: {
               size: "small",
               error: endBeforeStart,
-              helperText: endBeforeStart ? "Ends before it starts" : undefined,
+              helperText: endBeforeStart ? t("projects.form.endBeforeStart") : undefined,
             },
           }}
         />

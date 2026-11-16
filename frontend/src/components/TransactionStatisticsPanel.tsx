@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import { Alert, Box, Grid, Tooltip, Typography } from "@mui/material";
 import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
 import { CHANNELS, EmployeeStatistics, formatMinutes, ProjectStatistics, TransactionStatisticsData } from "../config/StatisticsConfig";
-import { PROVIDER_STYLES, STATUS_TONES } from "../config/ThemeConfig";
+import { getProviderStyle, STATUS_TONES } from "../config/ThemeConfig";
 import { useStatisticsFilters } from "../hook/useStatisticsFilters";
 import { useTransactionStatistics } from "../hook/useTransactionStatistics";
 import { formatDateRange, formatMoney, formatNumber, formatPercent } from "../utils/format";
@@ -15,20 +15,20 @@ import StatisticsFilterBar from "./Statistics/StatisticsFilterBar";
 import TrendChart from "./Statistics/TrendChart";
 import WaitDistribution from "./Statistics/WaitDistribution";
 import WeekHourHeatmap from "./Statistics/WeekHourHeatmap";
-
-const UNKNOWN_INTERVIEWER = "No interviewer";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n/i18n";
 
 const employeeRows = (employees: EmployeeStatistics[]): BreakdownRow[] => employees.map((employee) => ({
     ...employee,
     key: employee.employee_id ?? "",
-    primary: employee.employee_id || UNKNOWN_INTERVIEWER,
+    primary: employee.employee_id || i18n.t("statistics.panel.noInterviewer"),
     secondary: employee.employee_name || undefined,
 }));
 
 const projectRows = (projects: ProjectStatistics[]): BreakdownRow[] => projects.map((project) => ({
     ...project,
     key: String(project.project_id),
-    primary: project.internal_code || `Project ${project.project_id}`,
+    primary: project.internal_code || i18n.t("statistics.panel.projectNumber", { id: project.project_id }),
     secondary: project.project_name ?? undefined,
 }));
 
@@ -43,6 +43,8 @@ interface DeltaProps {
 }
 
 const Delta: React.FC<DeltaProps> = ({ current, previous, upIs = "neutral", format = "percent", period }) => {
+    const { t } = useTranslation();
+
     if (current === null || current === undefined || previous === null || previous === undefined) return null;
     if (format === "percent" && previous === 0) return null;
 
@@ -53,14 +55,14 @@ const Delta: React.FC<DeltaProps> = ({ current, previous, upIs = "neutral", form
 
     return (
         <Typography variant="caption" component="p" sx={{ display: "flex", alignItems: "center", gap: 0.25, mt: "auto", pt: 0.5, color: "text.secondary" }}>
-            {change === 0 ? "No change" : (
-                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", fontWeight: 600, color: tone ?? "text.primary" }}>
+            {change === 0 ? t("statistics.panel.noChange") : (
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", fontWeight: 600, whiteSpace: "nowrap", color: tone ?? "text.primary" }}>
                     <Icon sx={{ fontSize: 14 }} />
                     {text}
                 </Box>
             )}
             <Tooltip title={period.dates} placement="bottom-start">
-                <Box component="span" sx={{ ml: 0.25, whiteSpace: "nowrap" }}>vs {period.label}</Box>
+                <Box component="span" sx={{ ml: 0.25, whiteSpace: "nowrap" }}>{t("statistics.panel.vs", { period: period.label })}</Box>
             </Tooltip>
         </Typography>
     );
@@ -79,7 +81,7 @@ const share = (part: number, whole: number) => (whole > 0 ? formatPercent(part /
 
 const channelCaption = (statistics: TransactionStatisticsData | null) =>
     CHANNELS.filter((channel) => (statistics?.by_channel[channel]?.interviews ?? 0) > 0)
-        .map((channel) => `${PROVIDER_STYLES[channel].label} ${formatNumber(statistics?.by_channel[channel].interviews)}`)
+        .map((channel) => `${getProviderStyle(channel).label} ${formatNumber(statistics?.by_channel[channel].interviews)}`)
         .join(" · ");
 
 // Interviews and gifts for one project or all of them: headline numbers, charts that filter each
@@ -87,12 +89,13 @@ const channelCaption = (statistics: TransactionStatisticsData | null) =>
 const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({ projectId, defaultDays = null, leading, onSelectProject }) => {
     const { filters, dateFrom, dateTo, setDateRange, setChannel, toggleEmployee, toggleWait, toggleSlot, clearSlot, reset, isFiltered } = useStatisticsFilters(defaultDays);
     const { statistics, actionState } = useTransactionStatistics(projectId, filters);
+    const { t } = useTranslation();
 
     const loading = Boolean(actionState.loading);
     const previous = statistics?.previous ?? null;
     const previousDays = previous ? dayjs(previous.date_to).diff(dayjs(previous.date_from), "day") + 1 : 0;
     const period = {
-        label: previousDays === 1 ? "the day before" : `previous ${previousDays} days`,
+        label: previousDays === 1 ? t("statistics.panel.dayBefore") : t("statistics.panel.previousDays", { days: previousDays }),
         dates: previous ? formatDateRange(previous.date_from, previous.date_to) ?? "" : "",
     };
     const interviews = statistics?.interviews ?? 0;
@@ -123,20 +126,20 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, opacity: loading && statistics ? 0.6 : 1, transition: "opacity 0.15s" }} aria-busy={loading}>
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-                        <StatCard label="Interviews" value={formatNumber(interviews)} caption={channelCaption(statistics)} loading={loading && !statistics}>
+                        <StatCard label={t("statistics.panel.interviews")} value={formatNumber(interviews)} caption={channelCaption(statistics)} loading={loading && !statistics}>
                             {previous && <Delta current={interviews} previous={previous.interviews} period={period} />}
                         </StatCard>
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-                        <StatCard label="Gifts sent" value={formatNumber(gifts)} caption={`${share(gifts, interviews)} of interviews`} loading={loading && !statistics}>
+                        <StatCard label={t("statistics.panel.giftsSent")} value={formatNumber(gifts)} caption={t("statistics.panel.ofInterviews", { share: share(gifts, interviews) })} loading={loading && !statistics}>
                             {previous && <Delta current={gifts} previous={previous.gifts} period={period} />}
                         </StatCard>
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
                         <StatCard
-                            label="Gift value"
+                            label={t("statistics.panel.giftValue")}
                             value={formatMoney(statistics?.amount)}
-                            caption={gifts > 0 ? `${formatMoney((statistics?.amount ?? 0) / gifts)} per gift` : undefined}
+                            caption={gifts > 0 ? t("statistics.panel.perGift", { amount: formatMoney((statistics?.amount ?? 0) / gifts) }) : undefined}
                             loading={loading && !statistics}
                         >
                             {previous && <Delta current={statistics?.amount} previous={previous.amount} period={period} />}
@@ -144,9 +147,9 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 6, lg: 2.4 }}>
                         <StatCard
-                            label="Median wait for the gift"
+                            label={t("statistics.panel.medianWait")}
                             value={formatMinutes(statistics?.wait.median_minutes)}
-                            caption={`Measured on ${formatNumber(measured)} ${measured === 1 ? "gift" : "gifts"}`}
+                            caption={t("statistics.panel.measuredOn", { count: measured, n: formatNumber(measured) })}
                             loading={loading && !statistics}
                         >
                             {previous && <Delta current={statistics?.wait.median_minutes} previous={previous.median_wait_minutes} upIs="bad" format="minutes" period={period} />}
@@ -154,10 +157,10 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
                     </Grid>
                     <Grid size={{ xs: 12, sm: 12, md: 6, lg: 2.4 }}>
                         <StatCard
-                            label="To review"
+                            label={t("statistics.panel.toReview")}
                             value={formatNumber(reviewTotal)}
                             tone={reviewTotal > 0 ? "danger" : "default"}
-                            caption={`Sent before the interview ended${measured > 0 ? ` · ${share(reviewTotal, measured)} of measured gifts` : ""}`}
+                            caption={[t("statistics.panel.reviewCaption"), measured > 0 ? t("statistics.panel.reviewShare", { share: share(reviewTotal, measured) }) : ""].filter(Boolean).join(" · ")}
                             loading={loading && !statistics}
                         >
                             {previous && <Delta current={reviewTotal} previous={previous.review_total} upIs="bad" period={period} />}
@@ -166,7 +169,7 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
                 </Grid>
 
                 <TrendChart
-                    title="Over time"
+                    title={t("statistics.panel.overTime")}
                     daily={statistics?.daily ?? []}
                     dateFrom={filters.dateFrom ?? null}
                     dateTo={filters.dateTo ?? null}
@@ -174,30 +177,30 @@ const TransactionStatisticsPanel: React.FC<TransactionStatisticsPanelProps> = ({
                 />
 
                 <BreakdownTable
-                    title="By interviewer"
-                    description="Interviews and gifts for each interviewer code. Pick a row to filter everything else."
-                    nameLabel="Interviewer ID"
-                    secondaryLabel="Interviewer"
+                    title={t("statistics.panel.byInterviewer")}
+                    description={t("statistics.panel.byInterviewerDescription")}
+                    nameLabel={t("statistics.panel.interviewerId")}
+                    exportHeaders={{ sheet: "By interviewer", name: "Interviewer ID", secondary: "Interviewer" }}
                     rows={employeeRows(statistics?.by_employee ?? [])}
                     loading={loading}
                     selectedKey={filters.employee ?? null}
                     onSelect={(row) => row.key && toggleEmployee(row.key)}
-                    selectHint="show only this interviewer"
-                    searchPlaceholder="Search interviewer"
+                    selectHint={t("statistics.panel.showOnlyInterviewer")}
+                    searchPlaceholder={t("statistics.panel.searchInterviewer")}
                     exportFileName="interviews_by_interviewer.xlsx"
                 />
 
                 {projectId === 0 && (
                     <BreakdownTable
-                        title="By project"
-                        description="Interviews and gifts for each project. Pick a row to open that project here."
-                        nameLabel="Project code"
-                        secondaryLabel="Project name"
+                        title={t("statistics.panel.byProject")}
+                        description={t("statistics.panel.byProjectDescription")}
+                        nameLabel={t("statistics.panel.projectCode")}
+                        exportHeaders={{ sheet: "By project", name: "Project code", secondary: "Project name" }}
                         rows={projectRows(statistics?.by_project ?? [])}
                         loading={loading}
                         onSelect={(row) => onSelectProject?.(Number(row.key))}
-                        selectHint="show only this project"
-                        searchPlaceholder="Search project"
+                        selectHint={t("statistics.panel.showOnlyProject")}
+                        searchPlaceholder={t("statistics.panel.searchProject")}
                         exportFileName="interviews_by_project.xlsx"
                     />
                 )}

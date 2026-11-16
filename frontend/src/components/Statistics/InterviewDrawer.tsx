@@ -2,11 +2,13 @@ import React from "react";
 import { Box, Button, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { NEUTRAL, STATUS_TONES } from "../../config/ThemeConfig";
-import { formatMinutes, INTERVIEW_GIFT_STATUS, InterviewRow } from "../../config/StatisticsConfig";
+import { formatMinutes, interviewGiftStatus, InterviewRow } from "../../config/StatisticsConfig";
 import { formatDateTime, formatMoney, formatPhone } from "../../utils/format";
 import DetailDrawer from "../DetailDrawer";
 import ProviderBadge from "../ProviderBadge";
 import StatusChip from "../StatusChip";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n/i18n";
 
 interface InterviewDrawerProps {
     interview: InterviewRow | null;
@@ -31,25 +33,27 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
 );
 
 const waitNote = (interview: InterviewRow): string | undefined => {
-    if (interview.offline) return "Imported offline, so the wait is not measured";
+    if (interview.offline) return i18n.t("statistics.drawer.offlineWait");
     if (interview.wait_minutes === null) return undefined;
-    if (interview.wait_minutes < 0) return `${formatMinutes(-interview.wait_minutes)} before the interview ended`;
-    return `${formatMinutes(interview.wait_minutes)} after the interview ended`;
+    if (interview.wait_minutes < 0) return i18n.t("statistics.drawer.before", { duration: formatMinutes(-interview.wait_minutes) });
+    return i18n.t("statistics.drawer.after", { duration: formatMinutes(interview.wait_minutes) });
 };
 
 // One interview from start to gift, so a suspicious wait can be read in order.
 const InterviewDrawer: React.FC<InterviewDrawerProps> = ({ interview, onClose, showProject, onFilterEmployee }) => {
+    const { t } = useTranslation();
+
     if (!interview) return <DetailDrawer open={false} onClose={onClose} title="">{null}</DetailDrawer>;
 
-    const status = INTERVIEW_GIFT_STATUS[interview.gift_status];
+    const status = interviewGiftStatus(interview.gift_status);
     const length = interview.interview_start && interview.interview_end && !interview.offline
         ? dayjs(interview.interview_end).diff(dayjs(interview.interview_start), "minute")
         : null;
 
     const steps: TimelineStep[] = [
-        { label: interview.offline ? "Imported" : "Interview started", time: interview.interview_start },
-        ...(interview.offline ? [] : [{ label: "Interview ended", time: interview.interview_end, note: length !== null ? `${formatMinutes(length)} long` : undefined }]),
-        { label: interview.gifted ? "Gift received" : "No gift", time: interview.gift_time, note: interview.gifted ? waitNote(interview) : status.label, alert: interview.needs_review },
+        { label: interview.offline ? t("statistics.drawer.imported") : t("statistics.drawer.started"), time: interview.interview_start },
+        ...(interview.offline ? [] : [{ label: t("statistics.drawer.ended"), time: interview.interview_end, note: length !== null ? t("statistics.drawer.length", { duration: formatMinutes(length) }) : undefined }]),
+        { label: interview.gifted ? t("statistics.drawer.giftReceived") : t("statistics.drawer.noGift"), time: interview.gift_time, note: interview.gifted ? waitNote(interview) : status.label, alert: interview.needs_review },
     ];
 
     // The gift is listed first when it went out before the interview ended, which is the whole point of the review.
@@ -59,7 +63,7 @@ const InterviewDrawer: React.FC<InterviewDrawerProps> = ({ interview, onClose, s
         <DetailDrawer
             open
             onClose={onClose}
-            title={interview.respondent_id || "Interview"}
+            title={interview.respondent_id || t("statistics.drawer.fallbackTitle")}
             subtitle={showProject ? [interview.project_code, interview.project_name].filter(Boolean).join(" · ") : formatPhone(interview.phone)}
             footer={interview.employee_id && onFilterEmployee ? (
                 <Button
@@ -70,18 +74,18 @@ const InterviewDrawer: React.FC<InterviewDrawerProps> = ({ interview, onClose, s
                         onClose();
                     }}
                 >
-                    Show only {interview.employee_id}
+                    {t("statistics.drawer.showOnly", { code: interview.employee_id })}
                 </Button>
             ) : undefined}
         >
             <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, mb: 2.5 }}>
                 <ProviderBadge provider={interview.channel} />
                 <StatusChip label={status.label} tone={status.tone} />
-                {interview.needs_review && <StatusChip label="Needs review" tone="danger" tooltip="The gift was sent before the interview ended" />}
-                {interview.offline && <StatusChip label="Offline import" tone="neutral" />}
+                {interview.needs_review && <StatusChip label={t("statistics.drawer.needsReview")} tone="danger" tooltip={t("statistics.drawer.needsReviewTooltip")} />}
+                {interview.offline && <StatusChip label={t("statistics.drawer.offlineImport")} tone="neutral" />}
             </Box>
 
-            <Typography variant="h3" component="h3" sx={{ mb: 1.5 }}>Timeline</Typography>
+            <Typography variant="h3" component="h3" sx={{ mb: 1.5 }}>{t("statistics.drawer.timeline")}</Typography>
             <Box component="ol" sx={{ listStyle: "none", m: 0, mb: 3, p: 0 }}>
                 {ordered.map((step, index) => (
                     <Box component="li" key={step.label} sx={{ position: "relative", display: "flex", gap: 1.5, pb: index === ordered.length - 1 ? 0 : 2.25 }}>
@@ -104,12 +108,12 @@ const InterviewDrawer: React.FC<InterviewDrawerProps> = ({ interview, onClose, s
                 ))}
             </Box>
 
-            <Typography variant="h3" component="h3" sx={{ mb: 0.5 }}>Details</Typography>
-            <Field label="Respondent ID">{interview.respondent_id || "—"}</Field>
-            <Field label="Phone">{formatPhone(interview.phone)}</Field>
-            <Field label="Interviewer">{[interview.employee_id, interview.employee_name].filter(Boolean).join(" · ") || "—"}</Field>
-            {showProject && <Field label="Project">{[interview.project_code, interview.project_name].filter(Boolean).join(" · ") || "—"}</Field>}
-            <Field label="Gift value">{interview.gifted ? formatMoney(interview.amount) : "—"}</Field>
+            <Typography variant="h3" component="h3" sx={{ mb: 0.5 }}>{t("statistics.drawer.details")}</Typography>
+            <Field label={t("statistics.drawer.respondentId")}>{interview.respondent_id || "—"}</Field>
+            <Field label={t("statistics.drawer.phone")}>{formatPhone(interview.phone)}</Field>
+            <Field label={t("statistics.drawer.interviewer")}>{[interview.employee_id, interview.employee_name].filter(Boolean).join(" · ") || "—"}</Field>
+            {showProject && <Field label={t("statistics.drawer.project")}>{[interview.project_code, interview.project_name].filter(Boolean).join(" · ") || "—"}</Field>}
+            <Field label={t("statistics.drawer.giftValue")}>{interview.gifted ? formatMoney(interview.amount) : "—"}</Field>
         </DetailDrawer>
     );
 };

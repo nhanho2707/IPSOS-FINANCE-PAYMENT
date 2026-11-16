@@ -1,4 +1,5 @@
 import { alpha, createTheme, ThemeOptions } from "@mui/material/styles";
+import i18n from "../i18n/i18n";
 
 export const BRAND = {
   accent: "#009d9c", // charts, focus rings, selection marks: 3.3:1 on white, so never for small text
@@ -82,8 +83,13 @@ export const PROVIDER_STYLES: Record<string, { label: string; color: string }> =
   other: { label: "Other", color: NEUTRAL[400] },
 };
 
-export const getProviderStyle = (provider: string | null | undefined) =>
-  PROVIDER_STYLES[provider?.trim().toLowerCase() ?? ""] ?? { label: provider || "—", color: NEUTRAL[400] };
+// Vinnet and GotIt are names; "Other" is translated.
+export const getProviderStyle = (provider: string | null | undefined): { label: string; color: string } => {
+  const key = provider?.trim().toLowerCase() ?? "";
+  const style = PROVIDER_STYLES[key];
+  if (!style) return { label: provider || "—", color: NEUTRAL[400] };
+  return key === "other" ? { ...style, label: i18n.t("common.providers.other") } : style;
+};
 
 export const getStatusTone = (
   status: string | null | undefined,

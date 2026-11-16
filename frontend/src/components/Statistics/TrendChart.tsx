@@ -3,18 +3,15 @@ import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { scaleBand, scaleLinear } from "d3";
 import dayjs, { Dayjs } from "dayjs";
 import { CHANNELS, DailyStatistics, TransactionChannel } from "../../config/StatisticsConfig";
-import { NEUTRAL, PROVIDER_STYLES } from "../../config/ThemeConfig";
+import { getProviderStyle, NEUTRAL, PROVIDER_STYLES } from "../../config/ThemeConfig";
 import { formatDate, formatDateRange, formatMoney, formatNumber } from "../../utils/format";
 import SectionCard from "../SectionCard";
 import { AXIS_TEXT, axisFormatter, axisTicks, ChartEmpty, ChartLegend, ChartTooltip, columnPath, GRID_STROKE, useActiveMark, useElementWidth } from "./chartKit";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n/i18n";
 
 export type TrendMetric = "interviews" | "gifts" | "amount";
 
-const METRIC_LABELS: Record<TrendMetric, string> = {
-    interviews: "Interviews",
-    gifts: "Gifts",
-    amount: "Gift value",
-};
 
 type Granularity = "day" | "week" | "month";
 
@@ -79,10 +76,17 @@ const buildBuckets = (daily: DailyStatistics[], metric: TrendMetric, from: strin
     return { buckets: Array.from(buckets.values()), granularity };
 };
 
+// Vietnamese dates stay numeric (dd/mm), as everywhere else in the app.
+const axisDateFormat = (granularity: Granularity): string => {
+    if (i18n.language === "vi") return granularity === "month" ? "MM/YY" : "DD/MM";
+    return granularity === "month" ? "MMM YY" : "D MMM";
+};
+
 const bucketLabel = (bucket: Bucket, granularity: Granularity): string => {
-    if (granularity === "month") return bucket.from.format("MMMM YYYY");
+    const vietnamese = i18n.language === "vi";
+    if (granularity === "month") return bucket.from.format(vietnamese ? "MM/YYYY" : "MMMM YYYY");
     if (granularity === "week") return formatDateRange(bucket.from, bucket.to) ?? "";
-    return bucket.from.format("ddd, D MMM YYYY");
+    return bucket.from.format(vietnamese ? "ddd, DD/MM/YYYY" : "ddd, D MMM YYYY");
 };
 
 interface TrendChartProps {
@@ -97,6 +101,7 @@ interface TrendChartProps {
 }
 
 const TrendChart: React.FC<TrendChartProps> = ({ title, daily, dateFrom, dateTo, metrics = ["interviews", "gifts", "amount"], defaultMetric = metrics[0], onSelectRange }) => {
+    const { t } = useTranslation();
     const [ metric, setMetric ] = useState<TrendMetric>(defaultMetric);
     const { ref, width } = useElementWidth<HTMLDivElement>();
     const { buckets, granularity } = useMemo(() => buildBuckets(daily, metric, dateFrom, dateTo), [daily, metric, dateFrom, dateTo]);
@@ -119,42 +124,43 @@ const TrendChart: React.FC<TrendChartProps> = ({ title, daily, dateFrom, dateTo,
     const barWidth = Math.max(2, Math.min(24, x.bandwidth()));
     const labelEvery = Math.max(1, Math.ceil(buckets.length / Math.max(1, Math.floor(innerWidth / 72))));
     const activeBucket = active !== null ? buckets[active] : null;
-    const unit = granularity === "day" ? "day" : granularity === "week" ? "week" : "month";
+    const unit = t(`statistics.trend.units.${granularity}`);
+    const metricLabel = t(`statistics.trend.metrics.${metric}`);
     const hasData = buckets.some((bucket) => bucket.total > 0);
 
     return (
         <SectionCard
             title={title}
-            description={`${METRIC_LABELS[metric]} per ${unit}, by interview date${canSelect ? ". Pick a bar to zoom in." : "."}`}
+            description={[t("statistics.trend.description", { metric: metricLabel, unit }), canSelect ? t("statistics.trend.zoomHint") : ""].filter(Boolean).join(" ")}
             action={metrics.length > 1 ? (
                 <ToggleButtonGroup
                     exclusive
                     size="small"
                     value={metric}
                     onChange={(_event, value: TrendMetric | null) => value && setMetric(value)}
-                    aria-label="Measure"
+                    aria-label={t("statistics.trend.measure")}
                     sx={{ flexShrink: 0 }}
                 >
                     {metrics.map((option) => (
                         <ToggleButton key={option} value={option} sx={{ px: 1.25, py: 0.25, textTransform: "none", typography: "body2" }}>
-                            {METRIC_LABELS[option]}
+                            {t(`statistics.trend.metrics.${option}`)}
                         </ToggleButton>
                     ))}
                 </ToggleButtonGroup>
             ) : undefined}
         >
             <Box sx={{ mb: 1, minHeight: 16 }}>
-                <ChartLegend items={presentChannels.map((channel) => ({ label: PROVIDER_STYLES[channel].label, color: PROVIDER_STYLES[channel].color }))} />
+                <ChartLegend items={presentChannels.map((channel) => ({ label: getProviderStyle(channel).label, color: PROVIDER_STYLES[channel].color }))} />
             </Box>
             <Box
                 ref={ref}
                 {...containerProps}
                 role="group"
-                aria-label={`${title}: ${METRIC_LABELS[metric]} per ${unit}. Use the arrow keys to read each ${unit}${canSelect ? ", Enter to zoom in" : ""}.`}
+                aria-label={t(canSelect ? "statistics.trend.groupLabelZoom" : "statistics.trend.groupLabel", { title, metric: metricLabel, unit })}
                 sx={{ position: "relative", outlineOffset: 4, borderRadius: "4px" }}
             >
                 {!hasData ? <ChartEmpty height={HEIGHT} /> : (
-                    <svg width={width} height={HEIGHT} role="img" aria-label={`${METRIC_LABELS[metric]} per ${unit}`} style={{ display: "block" }}>
+                    <svg width={width} height={HEIGHT} role="img" aria-label={t("statistics.trend.imgLabel", { metric: metricLabel, unit })} style={{ display: "block" }}>
                         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
                             {ticks.map((tick) => (
                                 <g key={tick}>
@@ -191,7 +197,7 @@ const TrendChart: React.FC<TrendChartProps> = ({ title, daily, dateFrom, dateTo,
                                         })}
                                         {index % labelEvery === 0 && (
                                             <text x={bandX + x.bandwidth() / 2} y={innerHeight + 18} textAnchor="middle" style={AXIS_TEXT}>
-                                                {bucket.from.format(granularity === "month" ? "MMM YY" : "D MMM")}
+                                                {bucket.from.format(axisDateFormat(granularity))}
                                             </text>
                                         )}
                                         <rect
@@ -218,11 +224,11 @@ const TrendChart: React.FC<TrendChartProps> = ({ title, daily, dateFrom, dateTo,
                         title={bucketLabel(activeBucket, granularity)}
                         rows={[
                             ...presentChannels.map((channel) => ({
-                                label: PROVIDER_STYLES[channel].label,
+                                label: getProviderStyle(channel).label,
                                 value: formatValue(activeBucket.values[channel]),
                                 color: PROVIDER_STYLES[channel].color,
                             })),
-                            ...(presentChannels.length > 1 ? [{ label: "Total", value: formatValue(activeBucket.total) }] : []),
+                            ...(presentChannels.length > 1 ? [{ label: t("statistics.trend.total"), value: formatValue(activeBucket.total) }] : []),
                         ]}
                     />
                 )}

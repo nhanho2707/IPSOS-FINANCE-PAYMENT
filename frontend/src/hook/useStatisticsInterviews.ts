@@ -10,6 +10,7 @@ import {
     StatisticsFilters,
     statisticsParams,
 } from "../config/StatisticsConfig";
+import i18n from "../i18n/i18n";
 
 const DEFAULT_SORT: Record<InterviewView, { sort: InterviewSort; direction: SortDirection }> = {
     review: { sort: "wait_minutes", direction: "asc" },
@@ -89,7 +90,7 @@ export function useStatisticsInterviews(projectId: number, filters: StatisticsFi
         } catch (error: unknown) {
             if (axios.isCancel(error)) return;
 
-            let message = 'Failed to fetch the interviews.';
+            let message: string = i18n.t('statistics.errors.interviews');
 
             if (axios.isAxiosError(error)) {
                 message = error.response?.data?.message || error.response?.data?.error || error.message;

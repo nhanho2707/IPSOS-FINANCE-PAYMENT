@@ -4,6 +4,7 @@ import { ApiConfig } from "../config/ApiConfig";
 import { CloneProjectPayload, ProjectData, ProjectStatusCounts } from "../config/ProjectFieldsConfig";
 import { Dayjs } from "dayjs";
 import { ActionState } from "../components/Table/ReusableTable";
+import i18n from "../i18n/i18n";
 
 export function useProjects() {
 
@@ -72,7 +73,7 @@ export function useProjects() {
                 ...(options?.silent ? {} : { message: response.data.message })
             }));
         }catch(error: any){
-            let message = 'Failed to fetch Projects';
+            let message: string = i18n.t('projects.errors.load');
             
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -117,7 +118,7 @@ export function useProjects() {
             await fetchProjects();
             return response.data.data;
         } catch (error) {
-            let message = 'Failed to create project';
+            let message: string = i18n.t('projects.errors.create');
             if (axios.isAxiosError(error)) {
                 message = error.response?.data.message ?? error.message;
             }
@@ -144,7 +145,7 @@ export function useProjects() {
             await fetchProjects({ silent: true });
             return response.data.data;
         } catch (error) {
-            let message = 'Failed to clone project';
+            let message: string = i18n.t('projects.errors.clone');
             if (axios.isAxiosError(error)) {
                 message = error.response?.data.message ?? error.message;
             }

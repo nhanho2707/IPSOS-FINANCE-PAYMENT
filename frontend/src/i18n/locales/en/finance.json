@@ -1,0 +1,59 @@
+{
+    "title": "Finance",
+    "description": "Provider balances, spending and interview analysis, and transaction exports.",
+    "sections": "Finance sections",
+    "tabs": {
+        "overview": "Overview",
+        "analysis": "Analysis",
+        "exports": "Exports"
+    },
+    "periods": {
+        "30": "30 days",
+        "90": "90 days",
+        "365": "12 months"
+    },
+    "periodLabel": "Period",
+    "spendingOver": "Spending over the last",
+    "runway": {
+        "none": "No gifts paid in the last {{days}} days.",
+        "lessThanWeek": "Less than a week left at the last {{days}} days' spending. Runs out around {{date}}.",
+        "moreThanYear": "More than a year left at the last {{days}} days' spending.",
+        "weeks_one": "About {{n}} week left at the last {{days}} days' spending. Runs out around {{date}}.",
+        "weeks_other": "About {{n}} weeks left at the last {{days}} days' spending. Runs out around {{date}}."
+    },
+    "balance": {
+        "low": "Low balance",
+        "below": "Below {{amount}}",
+        "caption": "Balance · spent {{spent}} of {{deposited}} deposited",
+        "share": "{{provider}} share of deposits spent",
+        "addDeposit": "Add deposit"
+    },
+    "topProjects": {
+        "title": "Top projects",
+        "description": "By gift value, last {{period}}. Pick one to analyse it.",
+        "empty": "No gifts paid in this period",
+        "aria": "{{code}} {{name}}: {{amount}}, {{gifts}} gifts"
+    },
+    "giftsPaid": "Gifts paid",
+    "project": "Project",
+    "allProjects": "All projects",
+    "export": {
+        "title": "Export transactions",
+        "description": "Excel files for reconciliation, by date or by project.",
+        "byDate": "By date",
+        "dates": "Dates",
+        "byProject": "By project",
+        "projects": "Projects",
+        "chooseProjects": "Choose projects",
+        "button": "Export",
+        "failed": "Export failed: {{error}}"
+    },
+    "deposit": {
+        "title": "Add GotIt deposit",
+        "description": "Record money transferred to the GotIt account. The balance updates right away.",
+        "submit": "Add deposit",
+        "amount": "Amount (VND)",
+        "notSaved": "The deposit was not saved. Check the amount and try again.",
+        "added": "Deposit of {{amount}} added to the GotIt account."
+    }
+}

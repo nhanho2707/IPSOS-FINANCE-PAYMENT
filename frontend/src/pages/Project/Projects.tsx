@@ -28,17 +28,14 @@ import { Dayjs } from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { formatDateRange, formatFieldTiming, formatStatus } from "../../utils/format";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n/i18n";
 
-const PROJECT_TABS = [
-  { value: "all", label: "All" },
-  ...["on going", "in coming", "planned", "on hold", "completed", "cancelled"].map((status) => ({
-    value: status,
-    label: formatStatus(status),
-  })),
-];
+const PROJECT_TAB_STATUSES = ["on going", "in coming", "planned", "on hold", "completed", "cancelled"];
 
 const Projects = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { showToast } = useToast();
   const canToggleDisabled = hasRole(user?.role, ROLE_ACCESS.projectToggleDisabled);
@@ -70,6 +67,11 @@ const Projects = () => {
     CANCELLED: 'cancelled'
   }
 
+  const projectTabs = [
+    { value: "all", label: t("projects.list.all") },
+    ...PROJECT_TAB_STATUSES.map((status) => ({ value: status, label: formatStatus(status) })),
+  ];
+
   const openProject = (project: ProjectData) => navigate(getProjectHomePath(project.id ?? 0, user?.role));
 
   const sampleTarget = (project: ProjectData) =>
@@ -77,7 +79,7 @@ const Projects = () => {
 
   const columns: ColumnFormat[] = [
     {
-      label: "Project",
+      label: t("projects.list.columns.project"),
       name: "project_name",
       type: "string",
       flex: 2.4,
@@ -97,12 +99,12 @@ const Projects = () => {
             secondary={[row.internal_code, row.symphony].filter(Boolean).join(' · ')}
             title={row.project_name}
           />
-          {row.disabled && <StatusChip label="Disabled" tone="neutral" />}
+          {row.disabled && <StatusChip label={t("projects.list.disabled")} tone="neutral" />}
         </Box>
       )
     },
     {
-      label: "Field period",
+      label: t("projects.list.columns.fieldPeriod"),
       name: "planned_field_start",
       type: "date",
       width: 208,
@@ -115,7 +117,7 @@ const Projects = () => {
       )
     },
     {
-      label: "Sample",
+      label: t("projects.list.columns.sample"),
       name: "sample_size",
       type: "string",
       width: 176,
@@ -130,7 +132,7 @@ const Projects = () => {
       )
     },
     {
-      label: "Status",
+      label: t("projects.list.columns.status"),
       name: "status",
       type: "string",
       align: "left",
@@ -147,7 +149,7 @@ const Projects = () => {
       }
     },
     {
-      label: "Owner",
+      label: t("projects.list.columns.owner"),
       name: "created_user_id",
       type: "string",
       align: "center",
@@ -166,11 +168,11 @@ const Projects = () => {
       width: 56,
       renderCell: (row: ProjectData) => (
         <RowActions
-          menuLabel={`Actions for ${row.project_name}`}
+          menuLabel={t("projects.list.actionsFor", { name: row.project_name })}
           items={[
-            { label: "Clone project", icon: ContentCopy, onClick: () => setCloneTarget(row), hidden: !canClone },
+            { label: t("projects.list.clone"), icon: ContentCopy, onClick: () => setCloneTarget(row), hidden: !canClone },
             {
-              label: row.disabled ? "Enable project" : "Disable project",
+              label: row.disabled ? t("projects.list.enable") : t("projects.list.disable"),
               icon: row.disabled ? CheckCircleOutlineOutlined : Block,
               tone: row.disabled ? "default" : "danger",
               onClick: () => handleUpdateDisabled(row, !row.disabled),
@@ -195,7 +197,7 @@ const Projects = () => {
   ): Promise<boolean> => {
     return new Promise((resolve) => {
       openDialog({
-        title: options.title ?? "Update Status",
+        title: options.title ?? t("projects.list.confirm.statusTitle"),
         message: message,
         showConfirmButton: true,
         tone: options.tone,
@@ -207,13 +209,12 @@ const Projects = () => {
   }
 
   const handleUpdateDisabled = async (project: ProjectData, disabled: boolean) => {
-    const action = disabled ? 'disable' : 'enable';
     const confirmed = await showConfirm(
-      `Are you sure you want to ${action} this project?`,
+      disabled ? t("projects.list.confirm.disableMessage") : t("projects.list.confirm.enableMessage"),
       {
-        title: disabled ? "Disable Project" : "Enable Project",
+        title: disabled ? t("projects.list.confirm.disableTitle") : t("projects.list.confirm.enableTitle"),
         tone: disabled ? "danger" : "default",
-        confirmText: disabled ? "Disable" : "Enable",
+        confirmText: disabled ? t("projects.list.confirm.disable") : t("projects.list.confirm.enable"),
       }
     );
 
@@ -224,12 +225,12 @@ const Projects = () => {
 
     try {
       await updateDisabled(project.id, disabled);
-      showToast(disabled ? "Project disabled." : "Project enabled.");
+      showToast(disabled ? t("projects.list.toast.disabled") : t("projects.list.toast.enabled"));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         showToast(error.response?.status === 403
-          ? "You do not have permission to perform this action."
-          : "Something went wrong. Please try again.",
+          ? t("projects.list.toast.noPermission")
+          : t("projects.list.toast.genericError"),
           "error"
         );
       }
@@ -241,20 +242,20 @@ const Projects = () => {
   const handleUpdateStatus = async (project: ProjectData, status: string) => {
     if(status === STATUS.IN_COMING && !project.has_submitted_quotation){
       return showToast(
-        `Submit the quotation before moving the project to "${formatStatus(STATUS.IN_COMING)}".`,
+        t("projects.list.toast.needQuotation", { status: formatStatus(STATUS.IN_COMING) }),
         "warning"
       );
     }
 
     if(project.count_employees === 0 && status === STATUS.ON_GOING){
       return showToast(
-        `Add interviewers before moving the project to "${formatStatus(STATUS.ON_GOING)}".`,
+        t("projects.list.toast.needInterviewers", { status: formatStatus(STATUS.ON_GOING) }),
         "warning"
       );
     }
 
     const confirmed = await showConfirm(
-      `Are you sure you want to change the project status to "${formatStatus(status)}"?`
+      t("projects.list.confirm.statusMessage", { status: formatStatus(status) })
     )
 
     if(!confirmed) return;
@@ -265,15 +266,15 @@ const Projects = () => {
     try
     {
       await updateProjectStatus(project.id, status);
-      showToast(`Status changed to "${formatStatus(status)}".`);
+      showToast(t("projects.list.toast.statusChanged", { status: formatStatus(status) }));
     } catch(error){
       if(axios.isAxiosError(error)){
         const statusCode = error.response?.status;
 
         if(statusCode === 403){
-          showToast("You do not have permission to change the status.", "error");
+          showToast(t("projects.list.toast.noStatusPermission"), "error");
         } else {
-          showToast("Something went wrong. Please try again.", "error");
+          showToast(t("projects.list.toast.genericError"), "error");
         }
       }
     } finally{
@@ -303,39 +304,42 @@ const Projects = () => {
 
   const fieldStartRange = formatDateRange(searchFromDate, searchToDate);
   const isFiltered = Boolean(searchTerm || fieldStartRange);
-  const statusLabel = statusFilter !== "all" ? formatStatus(statusFilter).toLowerCase() : "";
+  // Vietnamese keeps the capital; status names there are not ordinary words in the sentence.
+  const statusLabel = statusFilter !== "all" ? formatStatus(statusFilter) : "";
 
   const emptyState = !isFiltered && statusFilter !== "all" ? (
-    <EmptyState title={`No ${statusLabel} projects`} description="Projects move between the tabs when their status changes." />
+    <EmptyState title={t("projects.list.empty.statusTitle", { status: i18n.language === "vi" ? statusLabel : statusLabel.toLowerCase() })} description={t("projects.list.empty.statusDescription")} />
   ) : isFiltered ? (
     <EmptyState
-      title="No projects found"
+      title={t("projects.list.empty.notFound")}
       description={[
-        searchTerm && `Nothing matches “${searchTerm}”`,
-        fieldStartRange && `${searchTerm ? "with" : "No project has"} fieldwork starting ${fieldStartRange}`,
+        searchTerm && t("projects.list.empty.nothingMatches", { term: searchTerm }),
+        fieldStartRange && (searchTerm
+          ? t("projects.list.empty.withStart", { range: fieldStartRange })
+          : t("projects.list.empty.noneStart", { range: fieldStartRange })),
       ].filter(Boolean).join(" ") + "."}
       action={fieldStartRange ? (
         <Button variant="outlined" color="inherit" onClick={() => handleDateChange(null, null)}>
-          Search all start dates
+          {t("projects.list.empty.allStartDates")}
         </Button>
       ) : undefined}
     />
   ) : (
     <EmptyState
-      title="No projects yet"
-      description="Create a project to start planning its quotation and fieldwork."
-      action={<Button variant="contained" startIcon={<Add />} onClick={() => setOpenModalAdd(true)}>New project</Button>}
+      title={t("projects.list.empty.noneTitle")}
+      description={t("projects.list.empty.noneDescription")}
+      action={<Button variant="contained" startIcon={<Add />} onClick={() => setOpenModalAdd(true)}>{t("projects.list.newProject")}</Button>}
     />
   );
 
   return (
     <>
       <PageHeader
-        title="Projects"
-        description="Research projects you have access to. Projects in field are listed first."
+        title={t("projects.list.title")}
+        description={t("projects.list.description")}
         actions={
           <Button variant="contained" startIcon={<Add />} onClick={() => setOpenModalAdd(true)}>
-            New project
+            {t("projects.list.newProject")}
           </Button>
         }
       />
@@ -355,7 +359,7 @@ const Projects = () => {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           onRowClick={openProject}
-          tabs={PROJECT_TABS.map((tab) => ({
+          tabs={projectTabs.map((tab) => ({
             value: tab.value,
             label: tab.label,
             count: !statusCounts
@@ -371,21 +375,21 @@ const Projects = () => {
           }}
           stickyColumns={{ last: canClone || canToggleDisabled }}
           search={{
-            placeholder: "Search name, code or Symphony",
+            placeholder: t("projects.list.searchPlaceholder"),
             defaultValue: searchTerm,
             onChange: handleSearchChange,
           }}
           filters={
             <>
               <DateRangeFilter
-                label="Field start"
+                label={t("projects.list.fieldStart")}
                 from={searchFromDate}
                 to={searchToDate}
                 onChange={handleDateChange}
               />
               {canToggleDisabled && (
                 <FilterChip
-                  label="Include disabled"
+                  label={t("projects.list.includeDisabled")}
                   active={showDisabled}
                   onClick={() => {
                     setShowDisabled(!showDisabled);

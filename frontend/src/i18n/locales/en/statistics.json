@@ -1,0 +1,186 @@
+{
+    "wait": {
+        "early": "Before the interview ended",
+        "le15": "Within 15 min",
+        "le60": "15–60 min",
+        "le360": "1–6 hours",
+        "le1440": "6–24 hours",
+        "gt1440": "More than a day"
+    },
+    "weekdays": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+    },
+    "giftStatus": {
+        "success": "Gift sent",
+        "pending": "Pending",
+        "refused": "Refused",
+        "failed": "Failed",
+        "none": "No transaction"
+    },
+    "duration": {
+        "minutes": "{{m}} min",
+        "hours": "{{h}}h {{m}}m",
+        "days": "{{d}}d {{h}}h"
+    },
+    "panel": {
+        "noInterviewer": "No interviewer",
+        "projectNumber": "Project {{id}}",
+        "noChange": "No change",
+        "vs": "vs {{period}}",
+        "dayBefore": "the day before",
+        "previousDays": "previous {{days}} days",
+        "interviews": "Interviews",
+        "giftsSent": "Gifts sent",
+        "ofInterviews": "{{share}} of interviews",
+        "giftValue": "Gift value",
+        "perGift": "{{amount}} per gift",
+        "medianWait": "Median wait for the gift",
+        "measuredOn_one": "Measured on {{n}} gift",
+        "measuredOn_other": "Measured on {{n}} gifts",
+        "toReview": "To review",
+        "reviewCaption": "Sent before the interview ended",
+        "reviewShare": "{{share}} of measured gifts",
+        "overTime": "Over time",
+        "byInterviewer": "By interviewer",
+        "byInterviewerDescription": "Interviews and gifts for each interviewer code. Pick a row to filter everything else.",
+        "interviewerId": "Interviewer ID",
+        "interviewer": "Interviewer",
+        "showOnlyInterviewer": "show only this interviewer",
+        "searchInterviewer": "Search interviewer",
+        "byProject": "By project",
+        "byProjectDescription": "Interviews and gifts for each project. Pick a row to open that project here.",
+        "projectCode": "Project code",
+        "projectName": "Project name",
+        "showOnlyProject": "show only this project",
+        "searchProject": "Search project"
+    },
+    "breakdown": {
+        "interviews": "Interviews",
+        "gifts": "Gifts",
+        "giftValue": "Gift value",
+        "medianWait": "Median wait",
+        "toReview": "To review",
+        "reviewTooltip": "Gifts sent before the interview ended",
+        "exportExcel": "Export Excel",
+        "nothingMatches": "Nothing matches “{{term}}”",
+        "noInterviews": "No interviews for these filters"
+    },
+    "hours": {
+        "title": "Time of day",
+        "description": "When interviews start and when gifts arrive (Vietnam time). Pick an hour to filter.",
+        "started": "Interviews started",
+        "received": "Gifts received",
+        "groupLabel": "Interviews started and gifts received by hour. Use the arrow keys to read each hour, Enter to filter.",
+        "imgLabel": "Interviews started and gifts received by hour",
+        "announce": "{{hour}}: {{started}} interviews started, {{received}} gifts received"
+    },
+    "heatmap": {
+        "title": "Week at a glance",
+        "description": "Interviews started by weekday and hour (Vietnam time). Pick a cell to filter.",
+        "groupLabel": "Interviews started by weekday and hour. Use the arrow keys to read each hour, Enter to filter.",
+        "imgLabel": "Interviews started by weekday and hour",
+        "announce": "{{slot}}: {{count}} interviews started"
+    },
+    "waitChart": {
+        "title": "Wait for the gift",
+        "description": "From the end of the interview to the gift. Pick a row to filter.",
+        "earlyNote": "More than {{minutes}} min early",
+        "aria": "{{label}}: {{gifts}} gifts, {{share}}",
+        "noEnd": "{{n}} without an interview end time",
+        "offline": "{{n}} offline imports",
+        "notMeasured": "Not measured: {{items}}.",
+        "and": " and "
+    },
+    "trend": {
+        "metrics": {
+            "interviews": "Interviews",
+            "gifts": "Gifts",
+            "amount": "Gift value"
+        },
+        "units": {
+            "day": "day",
+            "week": "week",
+            "month": "month"
+        },
+        "description": "{{metric}} per {{unit}}, by interview date.",
+        "zoomHint": "Pick a bar to zoom in.",
+        "measure": "Measure",
+        "groupLabel": "{{title}}: {{metric}} per {{unit}}. Use the arrow keys to read each {{unit}}.",
+        "groupLabelZoom": "{{title}}: {{metric}} per {{unit}}. Use the arrow keys to read each {{unit}}, Enter to zoom in.",
+        "imgLabel": "{{metric}} per {{unit}}",
+        "total": "Total"
+    },
+    "chartEmpty": "No data for these filters",
+    "filters": {
+        "interviewDate": "Interview date",
+        "channel": "Channel",
+        "interviewer": "Interviewer",
+        "wait": "Wait",
+        "time": "Time",
+        "reset": "Reset"
+    },
+    "interviews": {
+        "title": "Interviews",
+        "description": "The interviews behind the numbers above. “To review” lists gifts sent more than {{minutes}} min before the interview ended.",
+        "views": {
+            "review": "To review",
+            "all": "All interviews",
+            "no_gift": "No gift"
+        },
+        "empty": {
+            "review": "No gift was sent before its interview ended",
+            "all": "No interviews for these filters",
+            "no_gift": "Every interview received a gift"
+        },
+        "nothingMatches": "Nothing matches “{{term}}”",
+        "search": "Search ID, phone or interviewer",
+        "exportExcel": "Export Excel",
+        "exportFailed": "Export failed: {{error}}",
+        "columns": {
+            "respondent": "Respondent",
+            "project": "Project",
+            "channel": "Channel",
+            "interviewer": "Interviewer",
+            "interview": "Interview",
+            "giftReceived": "Gift received",
+            "giftValue": "Gift value",
+            "wait": "Wait"
+        },
+        "offlineImport": "Offline import",
+        "endedAt": "Ended {{time}}",
+        "noEnd": "No end time"
+    },
+    "drawer": {
+        "fallbackTitle": "Interview",
+        "showOnly": "Show only {{code}}",
+        "needsReview": "Needs review",
+        "needsReviewTooltip": "The gift was sent before the interview ended",
+        "offlineImport": "Offline import",
+        "timeline": "Timeline",
+        "imported": "Imported",
+        "started": "Interview started",
+        "ended": "Interview ended",
+        "length": "{{duration}} long",
+        "giftReceived": "Gift received",
+        "noGift": "No gift",
+        "offlineWait": "Imported offline, so the wait is not measured",
+        "before": "{{duration}} before the interview ended",
+        "after": "{{duration}} after the interview ended",
+        "details": "Details",
+        "respondentId": "Respondent ID",
+        "phone": "Phone",
+        "interviewer": "Interviewer",
+        "project": "Project",
+        "giftValue": "Gift value"
+    },
+    "errors": {
+        "summary": "Failed to fetch transaction statistics.",
+        "interviews": "Failed to fetch the interviews."
+    }
+}

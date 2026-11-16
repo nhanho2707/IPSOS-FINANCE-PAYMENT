@@ -1,5 +1,6 @@
 import { ColumnFormat } from "../config/ColumnConfig";
 import { formatDateTime, formatMoney } from "../utils/format";
+import i18n from "../i18n/i18n";
 
 export interface TransactionData {
     id: string,
@@ -30,73 +31,74 @@ export interface TransactionData {
     created_at: string
 };
 
-export const TransactionCellConfig: ColumnFormat[] = [
+// A function, so the headers are read in the current language.
+export const transactionColumns = (): ColumnFormat[] => [
     {
-        label: "Interviewer ID",
+        label: i18n.t("transactions.columns.employeeId"),
         name: "employee_id",
         type: "string",
         flex: 1
     },
     {
-        label: "Full Name",
+        label: i18n.t("transactions.columns.fullName"),
         name: "full_name",
         type: "string",
         flex: 1.4
     },
     {
-        label: "Province",
+        label: i18n.t("transactions.columns.province"),
         name: "province_name",
         type: "string",
         flex: 1.2
     },
     {
-        label: "Interview Start",
+        label: i18n.t("transactions.columns.interviewStart"),
         name: "interview_start",
         type: "string",
         flex: 1.8,
         renderCell: (row: TransactionData) => formatDateTime(row.interview_start)
     },
     {
-        label: "Interview End",
+        label: i18n.t("transactions.columns.interviewEnd"),
         name: "interview_end",
         type: "string",
         flex: 1.8,
         renderCell: (row: TransactionData) => formatDateTime(row.interview_end)
     },
     {
-        label: "Shell_ChainID",
+        label: i18n.t("transactions.columns.shellChainId"),
         name: "shell_chainid",
         type: "string",
         flex: 1
     },
     {
-        label: "Res. Phone Number",
+        label: i18n.t("transactions.columns.respondentPhone"),
         name: "respondent_phone_number",
         type: "string",
         flex: 1.25,
         align: "right"
     },
     {
-        label: "Phone Number",
+        label: i18n.t("transactions.columns.phone"),
         name: "phone_number",
         type: "string",
         flex: 1.25,
         align: "right"
     },
     {
-        label: "Service Code",
+        label: i18n.t("transactions.columns.serviceCode"),
         name: "service_code",
         type: "string",
         flex: 1.05
     },
     {
-        label: "Channel",
+        label: i18n.t("transactions.columns.channel"),
         name: "channel",
         type: "string",
         flex: 0.9
     },
     {
-        label: "Amount",
+        label: i18n.t("transactions.columns.amount"),
         name: "amount",
         type: "number",
         flex: 1,

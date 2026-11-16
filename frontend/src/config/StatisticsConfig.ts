@@ -1,4 +1,5 @@
 import { StatusTone } from "./ThemeConfig";
+import i18n from "../i18n/i18n";
 
 export type TransactionChannel = "vinnet" | "gotit" | "other";
 
@@ -9,17 +10,15 @@ export type ChannelValues = Record<TransactionChannel, number>;
 export type WaitBucketKey = "early" | "le15" | "le60" | "le360" | "le1440" | "gt1440";
 
 // The backend owns the bucket boundaries; "early" is a gift sent before the interview ended.
-export const WAIT_BUCKET_LABELS: Record<WaitBucketKey, string> = {
-    early: "Before the interview ended",
-    le15: "Within 15 min",
-    le60: "15–60 min",
-    le360: "1–6 hours",
-    le1440: "6–24 hours",
-    gt1440: "More than a day",
-};
+export const WAIT_BUCKETS: WaitBucketKey[] = ["early", "le15", "le60", "le360", "le1440", "gt1440"];
 
-// Monday first, matching the ISO weekday (1–7) the API filters on.
-export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const waitBucketLabel = (key: WaitBucketKey): string => i18n.t(`statistics.wait.${key}`);
+
+// The ISO weekday (1 = Monday … 7 = Sunday) the API filters on.
+export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+export const weekdayLabel = (weekday: number): string =>
+    i18n.t(`statistics.weekdays.${String(weekday) as "1"}`);
 
 export interface DailyStatistics {
     date: string;
@@ -92,13 +91,18 @@ export interface StatisticsFilters {
 
 export type InterviewGiftStatus = "success" | "pending" | "refused" | "failed" | "none";
 
-export const INTERVIEW_GIFT_STATUS: Record<InterviewGiftStatus, { label: string; tone: StatusTone }> = {
-    success: { label: "Gift sent", tone: "success" },
-    pending: { label: "Pending", tone: "warning" },
-    refused: { label: "Refused", tone: "neutral" },
-    failed: { label: "Failed", tone: "danger" },
-    none: { label: "No transaction", tone: "neutral" },
+const INTERVIEW_GIFT_STATUS_TONES: Record<InterviewGiftStatus, StatusTone> = {
+    success: "success",
+    pending: "warning",
+    refused: "neutral",
+    failed: "danger",
+    none: "neutral",
 };
+
+export const interviewGiftStatus = (status: InterviewGiftStatus): { label: string; tone: StatusTone } => ({
+    label: i18n.t(`statistics.giftStatus.${status}`),
+    tone: INTERVIEW_GIFT_STATUS_TONES[status],
+});
 
 export interface InterviewRow {
     id: number;
@@ -133,10 +137,10 @@ export const formatMinutes = (minutes: number | null | undefined): string => {
     const sign = minutes < 0 ? "-" : "";
     const abs = Math.abs(minutes);
 
-    if (abs < 60) return `${sign}${abs} min`;
-    if (abs < 1440) return `${sign}${Math.floor(abs / 60)}h ${abs % 60}m`;
+    if (abs < 60) return sign + i18n.t("statistics.duration.minutes", { m: abs });
+    if (abs < 1440) return sign + i18n.t("statistics.duration.hours", { h: Math.floor(abs / 60), m: abs % 60 });
 
-    return `${sign}${Math.floor(abs / 1440)}d ${Math.floor((abs % 1440) / 60)}h`;
+    return sign + i18n.t("statistics.duration.days", { d: Math.floor(abs / 1440), h: Math.floor((abs % 1440) / 60) });
 };
 
 // 0 → "00:00–01:00"

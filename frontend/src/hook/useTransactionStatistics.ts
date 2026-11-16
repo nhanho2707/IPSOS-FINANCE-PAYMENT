@@ -3,6 +3,7 @@ import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { ActionState } from "../components/Table/ReusableTable";
 import { StatisticsFilters, statisticsParams, TransactionStatisticsData } from "../config/StatisticsConfig";
+import i18n from "../i18n/i18n";
 
 // Project id 0 means every project (Admin and Finance only).
 export function useTransactionStatistics(projectId: number, filters: StatisticsFilters = {}) {
@@ -48,7 +49,7 @@ export function useTransactionStatistics(projectId: number, filters: StatisticsF
         } catch (error: unknown) {
             if (axios.isCancel(error)) return;
 
-            let message = 'Failed to fetch transaction statistics.';
+            let message: string = i18n.t('statistics.errors.summary');
 
             if (axios.isAxiosError(error)) {
                 message = error.response?.data?.message || error.response?.data?.error || error.message;

@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { scaleLinear } from "d3";
 import { NEUTRAL } from "../../config/ThemeConfig";
+import T from "../../i18n/T";
 
 export const AXIS_TEXT = { fontSize: 11, fill: NEUTRAL[600], fontVariantNumeric: "tabular-nums" } as const;
 export const GRID_STROKE = NEUTRAL[200];
@@ -168,6 +169,6 @@ export const ChartLegend: React.FC<{ items: LegendItem[] }> = ({ items }) => (
     </Box>
 );
 
-export const ChartEmpty: React.FC<{ height: number; text?: string }> = ({ height, text = "No data for these filters" }) => (
-    <Box sx={{ height, display: "grid", placeItems: "center", typography: "body2", color: "text.secondary" }}>{text}</Box>
+export const ChartEmpty: React.FC<{ height: number; text?: string }> = ({ height, text }) => (
+    <Box sx={{ height, display: "grid", placeItems: "center", typography: "body2", color: "text.secondary" }}>{text ?? <T k="statistics.chartEmpty" />}</Box>
 );

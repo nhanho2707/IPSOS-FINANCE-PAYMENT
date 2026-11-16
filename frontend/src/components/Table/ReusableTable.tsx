@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ColumnFormat } from "../../config/ColumnConfig";
+import { ColumnFormat, DEFAULT_ROWS_PER_PAGE, ROWS_PER_PAGE_OPTIONS } from "../../config/ColumnConfig";
 import CloseIcon from "@mui/icons-material/Close";
 import {
     Alert,
@@ -107,7 +107,7 @@ const ReusableTable = <T extends object>({
     data = [],
     actionStatus,
     page = 0,
-    rowsPerPage = 10,
+    rowsPerPage = DEFAULT_ROWS_PER_PAGE,
     total = 0,
     onPageChange,
     onRowsPerPageChange,
@@ -303,7 +303,7 @@ const ReusableTable = <T extends object>({
                             component="div"
                             page={page}
                             count={total}
-                            rowsPerPageOptions={[10, 25, 50, 100]}
+                            rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                             rowsPerPage={rowsPerPage}
                             onPageChange={onPageChange ?? (() => {})}
                             onRowsPerPageChange={onRowsPerPageChange ?? (() => {})}

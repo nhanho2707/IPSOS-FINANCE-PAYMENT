@@ -5,6 +5,7 @@ import { CloneProjectPayload, ProjectData, ProjectStatusCounts } from "../config
 import { Dayjs } from "dayjs";
 import { ActionState } from "../components/Table/ReusableTable";
 import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 export function useProjects() {
 
@@ -18,7 +19,7 @@ export function useProjects() {
     });
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
 
     // null on both ends means any field start date; the status tabs and the ordering

@@ -3,6 +3,7 @@ import { EmployeeData } from "../config/EmployeeFieldsConfig";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
 import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 export function useEmployees(projectId: number) {
     const [ employees, setEmployees ] = useState<EmployeeData[]>([]);
@@ -11,7 +12,7 @@ export function useEmployees(projectId: number) {
     const [ message, setMessage ] = useState("");
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
 
     const [ meta, setMeta ] = useState<any>(null);

@@ -4,6 +4,7 @@ import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { ActionState } from "../components/Table/ReusableTable";
 import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 export const getAccountErrorMessage = (error: unknown, fallback: string): string => {
     if (axios.isAxiosError(error)) {
@@ -29,7 +30,7 @@ export function useAccounts() {
     });
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
     const [ filters, setFilters ] = useState<AccountFilters>({ role_id: "", department_id: "", status: "" });
 

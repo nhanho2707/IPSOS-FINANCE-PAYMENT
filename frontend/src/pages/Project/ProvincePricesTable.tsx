@@ -14,7 +14,7 @@ import FormDialog from "../../components/Dialogs/FormDialog";
 import EmptyState from "../../components/EmptyState";
 import { formatNumber } from "../../utils/format";
 import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
-import { ColumnFormat } from "../../config/ColumnConfig";
+import { ColumnFormat, DEFAULT_ROWS_PER_PAGE } from "../../config/ColumnConfig";
 import { ApiConfig } from "../../config/ApiConfig";
 import { useTranslation } from "react-i18next";
 
@@ -96,7 +96,7 @@ const ProvincePricesTable = ({ projectId, canEdit }: Props) => {
     const { t } = useTranslation();
     const [rows, setRows] = useState<PriceRow[]>([]);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [loading, setLoading] = useState(false);
 

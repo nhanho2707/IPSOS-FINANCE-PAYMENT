@@ -29,6 +29,7 @@ test.describe("admin", () => {
         await expect(page.getByRole("heading", { name: "Projects", level: 1 })).toBeVisible();
         await expect(page.getByRole("tab", { name: /In field\s*12/ })).toBeVisible();
         await expect(page.getByText("Vinamilk Brand Health Tracking Q4")).toBeVisible();
+        await expect(page.getByRole("combobox", { name: /Rows per page/ })).toHaveText("25");
         await capture(page, testInfo, "projects");
 
         await page.getByRole("tab", { name: /In field/ }).click();

@@ -3,6 +3,7 @@ import { TransactionData } from "../config/TransactionFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 export function useTransactions(projectId: number){
 
@@ -12,7 +13,7 @@ export function useTransactions(projectId: number){
     const [ message, setMessage ] = useState("");
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
  
 
@@ -37,7 +38,7 @@ export function useTransactions(projectId: number){
                 },
                 params: {
                     page: page + 1,
-                    perPage: rowsPerPage,
+                    per_page: rowsPerPage,
                     searchTerm: searchTerm
                 }
             });

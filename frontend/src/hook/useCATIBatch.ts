@@ -4,6 +4,7 @@ import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
 import { ActionState, ActionType } from "../components/Table/ReusableTable";
 import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 const IMPORT_CHUNK_SIZE = 500;
 
@@ -19,7 +20,7 @@ export const useCATIBatch = (projectId: number) => {
     });
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
     
     const [ meta, setMeta ] = useState<any>(null);
@@ -49,7 +50,7 @@ export const useCATIBatch = (projectId: number) => {
                 },
                 params: {
                     page: page + 1,
-                    perPage: rowsPerPage,
+                    per_page: rowsPerPage,
                     searchTerm: searchTerm
                 }
             });

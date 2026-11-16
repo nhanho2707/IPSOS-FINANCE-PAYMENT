@@ -4,6 +4,7 @@ import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
 import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 interface ImportErrorDetail {
     row: number,
@@ -80,7 +81,7 @@ export function useOfflineProjectRespondents(projectId: number) {
     const [ message, setMessage ] = useState("");
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
     const [ statusFilter, setStatusFilter ] = useState<GiftStatus | "all">("all");
     const [ statusCounts, setStatusCounts ] = useState<GiftStatusCounts | null>(null);

@@ -370,7 +370,7 @@ Lần tải đầu hiện 5 dòng `Skeleton`; tải lại khi đã có dữ li�
 #### Pagination
 
 - Nằm trong card, ngăn cách bởi `<Divider />`; ẩn khi `total` bằng 0
-- `rowsPerPageOptions`: `[10, 25, 50, 100]`
+- Mặc định 25 dòng (`DEFAULT_ROWS_PER_PAGE`), các lựa chọn `ROWS_PER_PAGE_OPTIONS` = `[10, 25, 50, 100]`, cùng ở `config/ColumnConfig.ts`. Bảng nằm giữa các biểu đồ (Phân tích) và bảng trong ngăn chi tiết giữ 10 dòng
 - Luôn truyền `total`, `page`, `onPageChange`. Dữ liệu tải một lần (ví dụ bảng giá tỉnh) thì cắt trang ở client và truyền `total = rows.length`
 - Đổi từ khoá tìm kiếm hoặc bộ lọc thì đưa về trang đầu (`setPage(0)`)
 

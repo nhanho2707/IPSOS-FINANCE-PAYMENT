@@ -1,6 +1,7 @@
 import React, { useId } from "react";
 import { Box, Drawer, IconButton, Typography } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 interface DetailDrawerProps {
     open: boolean;
@@ -16,6 +17,7 @@ interface DetailDrawerProps {
 // and the body scrolls while the header and footer stay put.
 const DetailDrawer: React.FC<DetailDrawerProps> = ({ open, onClose, title, subtitle, children, footer, width = 560 }) => {
     const titleId = useId();
+    const { t } = useTranslation();
 
     return (
         <Drawer
@@ -42,7 +44,7 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({ open, onClose, title, subti
                         </Typography>
                     )}
                 </Box>
-                <IconButton aria-label="Close" edge="end" onClick={onClose} sx={{ mt: -0.5 }}>
+                <IconButton aria-label={t("common.actions.close")} edge="end" onClick={onClose} sx={{ mt: -0.5 }}>
                     <Close fontSize="small" />
                 </IconButton>
             </Box>

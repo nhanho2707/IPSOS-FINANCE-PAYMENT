@@ -15,6 +15,7 @@ import RadioRow from "./RadioRow";
 import RichTextRow from "./RichTextRow";
 import RangeRow from "./RangeRow";
 import { FieldSchema } from "../../../utils/renderFields";
+import { useTranslation } from "react-i18next";
 
 export type GroupItem = {
     group_name: string;
@@ -216,6 +217,7 @@ type Props = {
 };
 
 const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
+    const { t } = useTranslation();
     const groups = Array.isArray(row.value) ? row.value : [];
 
     const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -284,7 +286,7 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                             onClick={() => setAddDialogOpen(true)}
                             sx={{ mt: groups.length > 0 ? 0.5 : 0 }}
                         >
-                            Add Group
+                            {t("quotation.form.addGroupButton")}
                         </Button>
                     )}
                 </TableCell>
@@ -296,14 +298,14 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                 maxWidth="xs"
                 fullWidth
             >
-                <DialogTitle>Add Respondent Group</DialogTitle>
+                <DialogTitle>{t("quotation.form.addGroupTitle")}</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
                         fullWidth
                         size="small"
-                        label="Group name"
-                        placeholder="e.g. Main, Booster..."
+                        label={t("quotation.form.groupName")}
+                        placeholder={t("quotation.form.groupPlaceholder")}
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
                         onKeyDown={(e) => {
@@ -313,13 +315,13 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button onClick={handleCloseDialog}>{t("quotation.form.cancel")}</Button>
                     <Button
                         variant="contained"
                         disabled={!newGroupName.trim()}
                         onClick={handleAdd}
                     >
-                        Add
+                        {t("quotation.form.add")}
                     </Button>
                 </DialogActions>
             </Dialog>

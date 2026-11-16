@@ -12,6 +12,8 @@ import { FeedbackThread, FeedbackThreadEntry } from "../../../config/QuotationCo
 import { formatDateTime, formatStatus } from "../../../utils/format";
 import StatusChip from "../../../components/StatusChip";
 import { FEEDBACK_STATUS_TONE, getStatusTone } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n/i18n";
 
 export interface SectionRowData {
     [key: string]: any
@@ -33,11 +35,12 @@ type Props = {
 }
 
 // Field-specific overrides that don't belong in the generic backend schema
-const FIELD_OVERRIDES: Record<string, Partial<FieldSchema>> = {
+// A function, so the confirmation text is read in the current language.
+const fieldOverrides = (): Record<string, Partial<FieldSchema>> => ({
     internal_code: { disabled: true, rule: 'maskXXXX_XXXX' },
     project_name:  { rule: 'uppercaseNoSpecial' },
-    project_types: { confirmMessage: 'Changing project type may affect other fields. Are you sure you want to change?' },
-};
+    project_types: { confirmMessage: i18n.t("quotation.form.projectTypeChange") },
+});
 
 
 function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolved' | 'rejected' {
@@ -49,7 +52,7 @@ function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolve
 
 function rejectionTooltip(thread: FeedbackThread): string {
     const lastRejection = [...thread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
-    return lastRejection?.content ? `Reason: ${lastRejection.content}` : 'Rejected';
+    return lastRejection?.content ? i18n.t("quotation.feedback.reason", { reason: lastRejection.content }) : i18n.t("quotation.feedback.rejected");
 }
 
 function statusColor(status: ReturnType<typeof getThreadStatus>): string {
@@ -100,6 +103,7 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
 }
 
 const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSave, onFeedbackResponse}: Props) => {
+    const { t } = useTranslation();
     const [ draft, setDraft ] = useState<SectionRowData>(row.value || {});
     const [ feedbackOpen, setFeedbackOpen ] = useState(false);
     const [ feedbackText, setFeedbackText ] = useState('');
@@ -136,7 +140,7 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
     const renderField = (fieldSchema: FieldSchema) => {
         let disabled = false;
         let options = fieldSchema.options ?? [];
-        const field: FieldSchema = { ...fieldSchema, ...FIELD_OVERRIDES[fieldSchema.name] };
+        const field: FieldSchema = { ...fieldSchema, ...fieldOverrides()[fieldSchema.name] };
 
         switch (field.type) {
             case 'text':
@@ -314,7 +318,7 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: 'wrap' }}>
                         <span>{row.label}</span>
                         {showIcon && (
-                            <Tooltip title={threadStatus === 'pending' ? 'Has pending feedback' : threadStatus === 'resolved' ? 'Resolved' : threadStatus === 'rejected' ? 'Rejected' : 'Add feedback'}>
+                            <Tooltip title={threadStatus === 'pending' ? t("quotation.feedback.pending") : threadStatus === 'resolved' ? t("quotation.feedback.resolved") : threadStatus === 'rejected' ? t("quotation.feedback.rejected") : t("quotation.feedback.add")}>
                                 <IconButton
                                     size="small"
                                     onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
@@ -340,7 +344,7 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
             </TableRow>
 
             <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>Feedback: {row.label}</DialogTitle>
+                <DialogTitle>{t("quotation.feedback.title", { label: row.label })}</DialogTitle>
                 <DialogContent sx={{ pt: 1 }}>
                     {safeThread.length > 0 && (
                         <Box sx={{ mb: 2 }}>
@@ -358,7 +362,7 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                             fullWidth
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Write feedback for Researcher..."
+                            placeholder={t("quotation.feedback.writePlaceholder")}
                             size="small"
                         />
                     )}
@@ -370,13 +374,13 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                             fullWidth
                             value={responseText}
                             onChange={(e) => setResponseText(e.target.value)}
-                            placeholder="Optional: add a note with your response..."
+                            placeholder={t("quotation.feedback.responsePlaceholder")}
                             size="small"
                         />
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setFeedbackOpen(false)}>Close</Button>
+                    <Button onClick={() => setFeedbackOpen(false)}>{t("quotation.feedback.close")}</Button>
 
                     {onFeedbackSave && (
                         <Button
@@ -384,17 +388,17 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                             disabled={!feedbackText.trim()}
                             onClick={handleSendFeedback}
                         >
-                            Send Feedback
+                            {t("quotation.feedback.send")}
                         </Button>
                     )}
 
                     {canRespond && (
                         <>
                             <Button color="error" variant="outlined" onClick={() => handleSendResponse('rejected')}>
-                                Reject
+                                {t("quotation.feedback.reject")}
                             </Button>
                             <Button color="success" variant="contained" onClick={() => handleSendResponse('resolved')}>
-                                Mark Resolved
+                                {t("quotation.feedback.resolve")}
                             </Button>
                         </>
                     )}

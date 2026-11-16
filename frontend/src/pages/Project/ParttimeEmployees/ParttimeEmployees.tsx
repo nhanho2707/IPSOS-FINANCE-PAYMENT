@@ -1,7 +1,8 @@
 import { Button } from "@mui/material";
 import { PersonAddAltOutlined, PersonRemoveOutlined } from "@mui/icons-material";
 import { useState } from "react";
-import { EmployeeCellConfig, EmployeeData } from "../../../config/EmployeeFieldsConfig";
+import { employeeColumns, EmployeeData } from "../../../config/EmployeeFieldsConfig";
+import { useTranslation } from "react-i18next";
 import useDialog from "../../../hook/useDialog";
 import UniversalInputDialog from "../../../components/Dialogs/UniversalInputDialog";
 import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
@@ -15,6 +16,7 @@ import { ColumnFormat } from "../../../config/ColumnConfig";
 
 const ParttimeEmployees = () => {
     const { projectId } = useProjectContext();
+    const { t } = useTranslation();
 
     const { employees, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, loading: loadingEmployees, error: errorEmployees, message: messageEmployees, addEmployees, removeEmployee } = useEmployees(projectId);
 
@@ -23,10 +25,10 @@ const ParttimeEmployees = () => {
 
     const handleRemoveClick = (employee: EmployeeData) => {
         openDialog({
-            title: "Remove interviewer",
+            title: t("interviewers.remove.title"),
             tone: "danger",
-            confirmText: "Remove",
-            message: `Remove ${employee.employee_id} from this project?`,
+            confirmText: t("interviewers.remove.confirm"),
+            message: t("interviewers.remove.message", { id: employee.employee_id }),
             showConfirmButton: true,
             onConfirm: async () => {
                 try {
@@ -59,17 +61,17 @@ const ParttimeEmployees = () => {
     }
 
     const columns: ColumnFormat[] = [
-        ...EmployeeCellConfig,
+        ...employeeColumns(),
         {
-            label: "Transactions",
+            label: t("interviewers.columns.transactions"),
             name: "transactions",
             type: "string",
             align: "center",
             flex: 1,
             renderHeader: () => (
                 <div style={{ whiteSpace: "normal", lineHeight: 1.2, textAlign: "center" }}>
-                    Transactions <br />
-                    (Vinnet / Gotit / Refuse / Total)
+                    {t("interviewers.columns.transactions")} <br />
+                    {t("interviewers.columns.breakdown")}
                 </div>
             ),
             renderCell: (row: EmployeeData) => {
@@ -87,15 +89,15 @@ const ParttimeEmployees = () => {
 
                 return (
                     <RowActions
-                        menuLabel={`Actions for ${row.employee_id}`}
+                        menuLabel={t("interviewers.actionsFor", { id: row.employee_id })}
                         items={[
                             {
-                                label: "Remove from project",
+                                label: t("interviewers.remove.menu"),
                                 icon: PersonRemoveOutlined,
                                 tone: "danger",
                                 onClick: () => handleRemoveClick(row),
                                 disabled: loadingEmployees || hasTransactions,
-                                disabledReason: hasTransactions ? "Interviewers with transactions stay on the project" : undefined,
+                                disabledReason: hasTransactions ? t("interviewers.remove.hasTransactions") : undefined,
                             },
                         ]}
                     />
@@ -115,7 +117,7 @@ const ParttimeEmployees = () => {
 
     const addButton = (
         <Button variant="contained" startIcon={<PersonAddAltOutlined />} onClick={() => setOpenImportEmployeesDialog(true)}>
-            Add interviewers
+            {t("interviewers.add.title")}
         </Button>
     );
 
@@ -138,16 +140,16 @@ const ParttimeEmployees = () => {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 search={{
-                    placeholder: "Search interviewer ID or name",
+                    placeholder: t("interviewers.search"),
                     defaultValue: searchTerm,
                     onChange: handleSearchChange,
                 }}
                 emptyState={searchTerm ? (
-                    <EmptyState title="No interviewers found" description={`Nothing matches “${searchTerm}”.`} />
+                    <EmptyState title={t("interviewers.empty.notFound")} description={t("interviewers.empty.nothingMatches", { term: searchTerm })} />
                 ) : (
                     <EmptyState
-                        title="No interviewers yet"
-                        description="Add the interviewer IDs working on this project. The project needs interviewers before it can go into field."
+                        title={t("interviewers.empty.noneTitle")}
+                        description={t("interviewers.empty.noneDescription")}
                         action={addButton}
                     />
                 )}
@@ -159,10 +161,10 @@ const ParttimeEmployees = () => {
                 open={openImportEmployeesDialog}
                 onClose={() => setOpenImportEmployeesDialog(false)}
                 onSubmit={handleImportEmployees}
-                title="Add interviewers"
-                label="Interviewer IDs, one per line"
-                placeholder="Paste interviewer IDs here"
-                submitText="Add"
+                title={t("interviewers.add.title")}
+                label={t("interviewers.add.label")}
+                placeholder={t("interviewers.add.placeholder")}
+                submitText={t("interviewers.add.submit")}
             />
         </>
     )

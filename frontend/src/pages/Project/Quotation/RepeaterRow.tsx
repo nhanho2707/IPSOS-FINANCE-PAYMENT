@@ -9,6 +9,8 @@ import { FeedbackThread, FeedbackThreadEntry } from "../../../config/QuotationCo
 import { formatDateTime, formatStatus } from "../../../utils/format";
 import StatusChip from "../../../components/StatusChip";
 import { FEEDBACK_STATUS_TONE, getStatusTone } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n/i18n";
 
 export interface RepeaterRowData {
     [key: string]: any
@@ -37,7 +39,7 @@ function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolve
 
 function rejectionTooltip(thread: FeedbackThread): string {
     const lastRejection = [...thread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
-    return lastRejection?.content ? `Reason: ${lastRejection.content}` : 'Rejected';
+    return lastRejection?.content ? i18n.t("quotation.feedback.reason", { reason: lastRejection.content }) : i18n.t("quotation.feedback.rejected");
 }
 
 function statusColor(status: ReturnType<typeof getThreadStatus>): string {
@@ -88,6 +90,7 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
 }
 
 const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedbackSave, onFeedbackResponse}: Props) => {
+    const { t } = useTranslation();
 
     const [ draft, setDraft ] = useState<RepeaterRowData>({});
     const [ feedbackOpen, setFeedbackOpen ] = useState(false);
@@ -190,7 +193,7 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                             onChange={(_, newValue) => handleFieldChange(field.name, newValue)}
                             getOptionLabel={(option) => option.label}
                             isOptionEqualToValue={(option, value) => option.value === value.value}
-                            renderInput={(params) => <TextField {...params} size="small" placeholder="Select..." />}
+                            renderInput={(params) => <TextField {...params} size="small" placeholder={t("quotation.form.select")} />}
                         />
                     </Box>
                 )
@@ -211,7 +214,7 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                                     {option.label}
                                 </li>
                             )}
-                            renderInput={(params) => <TextField {...params} size="small" placeholder="Select..." />}
+                            renderInput={(params) => <TextField {...params} size="small" placeholder={t("quotation.form.select")} />}
                         />
                     </Box>
                 );
@@ -235,7 +238,7 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                     {fields.map((subField) => (
                         <Box key={subField.name} sx={cellStyle}>{subField.label}</Box>
                     ))}
-                    <Box sx={{ textAlign: "center", width: 120, padding: "8px 12px", minHeight: 40 }}>Actions</Box>
+                    <Box sx={{ textAlign: "center", width: 120, padding: "8px 12px", minHeight: 40 }}>{t("quotation.form.actions")}</Box>
                 </Box>
                 {repeaterRows.map((rowItem, rowIndex) => (
                     <Box key={rowIndex} sx={{ display: "grid", gridTemplateColumns: gridTemplate, borderBottom: "1px solid", borderBottomColor: "divider", '&:hover': { backgroundColor: "action.hover" }, '& > div:last-child': { borderRight: 'none' } }}>
@@ -280,7 +283,7 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: 'wrap' }}>
                         <span>{row.label}</span>
                         {showIcon && (
-                            <Tooltip title={threadStatus === 'pending' ? 'Has pending feedback' : threadStatus === 'resolved' ? 'Resolved' : threadStatus === 'rejected' ? 'Rejected' : 'Add feedback'}>
+                            <Tooltip title={threadStatus === 'pending' ? t("quotation.feedback.pending") : threadStatus === 'resolved' ? t("quotation.feedback.resolved") : threadStatus === 'rejected' ? t("quotation.feedback.rejected") : t("quotation.feedback.add")}>
                                 <IconButton
                                     size="small"
                                     onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
@@ -306,7 +309,7 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
             </TableRow>
 
             <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>Feedback: {row.label}</DialogTitle>
+                <DialogTitle>{t("quotation.feedback.title", { label: row.label })}</DialogTitle>
                 <DialogContent sx={{ pt: 1 }}>
                     {safeThread.length > 0 && (
                         <Box sx={{ mb: 2 }}>
@@ -322,7 +325,7 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                             multiline rows={3} fullWidth size="small"
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Write feedback for Researcher..."
+                            placeholder={t("quotation.feedback.writePlaceholder")}
                         />
                     )}
 
@@ -331,26 +334,26 @@ const RepeaterRow = memo(({ row, isEditing, onChange, feedbackThread, onFeedback
                             multiline rows={3} fullWidth size="small"
                             value={responseText}
                             onChange={(e) => setResponseText(e.target.value)}
-                            placeholder="Optional: add a note with your response..."
+                            placeholder={t("quotation.feedback.responsePlaceholder")}
                         />
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setFeedbackOpen(false)}>Close</Button>
+                    <Button onClick={() => setFeedbackOpen(false)}>{t("quotation.feedback.close")}</Button>
 
                     {onFeedbackSave && (
                         <Button variant="contained" disabled={!feedbackText.trim()} onClick={handleSendFeedback}>
-                            Send Feedback
+                            {t("quotation.feedback.send")}
                         </Button>
                     )}
 
                     {canRespond && (
                         <>
                             <Button color="error" variant="outlined" onClick={() => handleSendResponse('rejected')}>
-                                Reject
+                                {t("quotation.feedback.reject")}
                             </Button>
                             <Button color="success" variant="contained" onClick={() => handleSendResponse('resolved')}>
-                                Mark Resolved
+                                {t("quotation.feedback.resolve")}
                             </Button>
                         </>
                     )}

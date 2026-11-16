@@ -1,0 +1,137 @@
+{
+    "header": {
+        "steps": {
+            "draft": "Draft",
+            "submitted": "Submitted",
+            "fm_confirmed": "FM review",
+            "approved": "Approved"
+        },
+        "by": "By {{name}}",
+        "notSubmitted": "Not submitted yet",
+        "waitingFm": "Waiting for the Field Manager",
+        "waitingApproval": "Waiting for approval",
+        "submit": "Submit for review",
+        "approve": "Approve",
+        "confirmFm": "Confirm FM review",
+        "pendingFeedback": "Some feedback is still open. The researcher must resolve or reject all of it before the FM review can be confirmed.",
+        "newVersion": "Create new version",
+        "withdrawDraft": "Withdraw to draft",
+        "withdrawSubmitted": "Withdraw to submitted",
+        "deleteDraft": "Delete draft",
+        "version": "Version",
+        "versionN": "Version {{version}}",
+        "editing": "Editing: save the form below to keep your changes.",
+        "copyLink": "Copy link",
+        "cancelEditing": "Cancel editing",
+        "edit": "Edit",
+        "more": "More quotation actions"
+    },
+    "page": {
+        "linkCopied": "Link to version {{version}} copied.",
+        "copyFailed": "Could not copy the link. Copy it from the address bar instead.",
+        "delete": {
+            "title": "Delete version",
+            "confirm": "Delete",
+            "message": "Are you sure you want to delete version {{version}}?"
+        },
+        "submit": {
+            "title": "Submit version",
+            "confirm": "Submit",
+            "message": "Are you sure you want to submit this version?"
+        },
+        "approve": {
+            "title": "Approve version",
+            "confirm": "Approve",
+            "message": "Are you sure you want to approve this version?"
+        },
+        "withdraw": {
+            "title": "Withdraw version",
+            "confirm": "Withdraw",
+            "message": "Are you sure you want to withdraw this version? It will return to draft and can be edited again."
+        },
+        "confirmFm": {
+            "title": "Confirm FM review",
+            "confirm": "Confirm",
+            "message": "Confirm that you have finished reviewing this quotation?\n\nAfter confirming:\n• FM can no longer add feedback\n• Researcher can approve the quotation"
+        },
+        "close": "Close",
+        "tabsLabel": "Quotation sections",
+        "tabs": {
+            "general": "General",
+            "operations": "Operations",
+            "estimatedCost": "Estimated cost"
+        },
+        "generateCost": "Generate estimated cost",
+        "save": "Save",
+        "loadTemplate": "Load template",
+        "loadTemplateTitle": "Load template",
+        "loadTemplateMessage": "Reset to the default template? Current data will be lost.",
+        "reset": "Reset",
+        "newVersionTitle": "Create a new version",
+        "versionN": "Version {{version}}",
+        "submitNew": "Create"
+    },
+    "feedback": {
+        "title": "Feedback: {{label}}",
+        "pending": "Has pending feedback",
+        "resolved": "Resolved",
+        "rejected": "Rejected",
+        "add": "Add feedback",
+        "reason": "Reason: {{reason}}",
+        "writePlaceholder": "Write feedback for the researcher…",
+        "responsePlaceholder": "Optional: add a note with your response…",
+        "close": "Close",
+        "send": "Send feedback",
+        "reject": "Reject",
+        "resolve": "Mark resolved"
+    },
+    "form": {
+        "projectTypeChange": "Changing the project type may affect other fields. Are you sure you want to change it?",
+        "confirmChange": "Confirm change",
+        "select": "Select…",
+        "from": "From",
+        "to": "To",
+        "addGroupTitle": "Add respondent group",
+        "groupName": "Group name",
+        "groupPlaceholder": "e.g. Main, Booster…",
+        "cancel": "Cancel",
+        "add": "Add",
+        "save": "Save",
+        "addGroupButton": "Add group",
+        "actions": "Actions"
+    },
+    "cost": {
+        "columns": {
+            "chi_phi": "Cost",
+            "unit": "Unit",
+            "quantity": "Quantity",
+            "price": "Price",
+            "amount": "Amount",
+            "actual_expense": "Actual expense",
+            "note": "Note"
+        },
+        "newGroup": "New group",
+        "addSubGroup": "Add sub-group",
+        "addItem": "Add item",
+        "deleteGroup": "Delete group",
+        "title": "Estimated cost",
+        "noData": "No data",
+        "total": "Total",
+        "addGroup": "Add group",
+        "addItemButton": "Add item"
+    },
+    "errors": {
+        "versions": "Failed to get quotation versions.",
+        "load": "Failed to fetch the quotation.",
+        "update": "Failed to update the quotation.",
+        "delete": "Failed to delete the quotation.",
+        "clone": "Failed to clone the quotation.",
+        "submit": "Failed to submit the quotation.",
+        "confirmFm": "Failed to confirm the FM review.",
+        "approve": "Failed to approve the quotation.",
+        "withdraw": "Failed to withdraw the quotation.",
+        "feedback": "Failed to save the feedback.",
+        "response": "Failed to save the response.",
+        "operations": "Failed to get operations data."
+    }
+}

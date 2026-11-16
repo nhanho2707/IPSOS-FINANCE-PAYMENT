@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DynamicFormProps, renderField } from "../../../utils/renderFields";
+import T from "../../../i18n/T";
 
 const QuotationDynamicForm: React.FC<DynamicFormProps> = ({ schema, initialData, isEditting, onSubmit, onProjectTypeChange, feedbacks, onFeedbackSave, onFeedbackResponse }) => {
 
@@ -104,7 +105,7 @@ const QuotationDynamicForm: React.FC<DynamicFormProps> = ({ schema, initialData,
                 sx={{ mt: 2 }}
                 disabled={!isEditting}
             >
-                Save
+                <T k="quotation.form.save" />
             </Button>
         </form>
     )

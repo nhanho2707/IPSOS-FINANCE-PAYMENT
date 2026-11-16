@@ -10,6 +10,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
 import { ApiConfig } from "../../config/ApiConfig";
 import ProvincePricesTable from "./ProvincePricesTable";
+import { useTranslation } from "react-i18next";
 
 interface SettingsData {
     internal_code: string;
@@ -27,6 +28,7 @@ const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 const Settings = () => {
     const { projectId, project: selectedProject, refreshProject } = useProjectContext();
     const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const { user } = useAuth();
     const canEdit = hasRole(user?.role, ROLE_ACCESS.projectEditInfo);
@@ -56,11 +58,11 @@ const Settings = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setEditOpen(false);
-            showToast("Project information saved.");
+            showToast(t("settings.saved"));
             await refreshProject();
         } catch (error) {
             const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
-            setSaveError(message || "The changes were not saved. Please try again.");
+            setSaveError(message || t("settings.notSaved"));
         } finally {
             setSaving(false);
         }
@@ -94,11 +96,11 @@ const Settings = () => {
                     }}
                 >
                     <Typography variant="h2" component="h2">
-                        Project information
+                        {t("settings.info")}
                     </Typography>
                     {canEdit && (
                         <Button variant="outlined" color="inherit" size="small" startIcon={<EditOutlinedIcon />} onClick={openEdit} disabled={!selectedProject}>
-                            Edit
+                            {t("settings.edit")}
                         </Button>
                     )}
                 </Box>
@@ -108,29 +110,29 @@ const Settings = () => {
                         component="dl"
                         sx={{ m: 0, mb: 2.5, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "160px 1fr" }, columnGap: 2, rowGap: 1.25 }}
                     >
-                        <InfoRow label="Project name">{selectedProject?.project_name}</InfoRow>
-                        <InfoRow label="Internal code">{selectedProject?.internal_code}</InfoRow>
-                        <InfoRow label="Symphony">{selectedProject?.symphony}</InfoRow>
+                        <InfoRow label={t("settings.name")}>{selectedProject?.project_name}</InfoRow>
+                        <InfoRow label={t("settings.internalCode")}>{selectedProject?.internal_code}</InfoRow>
+                        <InfoRow label={t("settings.symphony")}>{selectedProject?.symphony}</InfoRow>
                     </Box>
                     <Box sx={{ maxWidth: 560 }}>
-                        <SecretTextBox label="Token" value={selectedProject?.remember_token || ""} />
+                        <SecretTextBox label={t("settings.token")} value={selectedProject?.remember_token || ""} />
                     </Box>
                 </Box>
             </Paper>
 
             <Box component="section" aria-labelledby="province-prices-title">
                 <Typography id="province-prices-title" variant="h2" sx={{ mb: 0.5 }}>
-                    Sample size and gift prices
+                    {t("settings.pricesTitle")}
                 </Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-                    Each gift is paid at the price set here for the respondent’s province and price level.
+                    {t("settings.pricesDescription")}
                 </Typography>
                 <ProvincePricesTable projectId={projectId} canEdit={canEdit} />
             </Box>
 
             <FormDialog
                 open={editOpen}
-                title="Edit project information"
+                title={t("settings.editTitle")}
                 error={saveError}
                 onClose={() => setEditOpen(false)}
                 onSubmit={handleSave}
@@ -138,9 +140,9 @@ const Settings = () => {
                 loading={saving}
             >
                 <Stack spacing={2}>
-                    <TextField autoFocus required size="small" label="Project name" value={formData.project_name} onChange={update("project_name")} />
-                    <TextField size="small" label="Internal code" value={formData.internal_code} onChange={update("internal_code")} />
-                    <TextField size="small" label="Symphony" value={formData.symphony} onChange={update("symphony")} />
+                    <TextField autoFocus required size="small" label={t("settings.name")} value={formData.project_name} onChange={update("project_name")} />
+                    <TextField size="small" label={t("settings.internalCode")} value={formData.internal_code} onChange={update("internal_code")} />
+                    <TextField size="small" label={t("settings.symphony")} value={formData.symphony} onChange={update("symphony")} />
                 </Stack>
             </FormDialog>
         </Box>

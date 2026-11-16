@@ -1,0 +1,32 @@
+{
+    "columns": {
+        "id": "Mã",
+        "fullName": "Họ tên",
+        "transactions": "Giao dịch",
+        "breakdown": "(Vinnet / GotIt / Từ chối / Tổng)"
+    },
+    "remove": {
+        "title": "Xoá phỏng vấn viên",
+        "confirm": "Xoá",
+        "message": "Xoá {{id}} khỏi dự án?",
+        "menu": "Xoá khỏi dự án",
+        "hasTransactions": "Phỏng vấn viên đã có giao dịch phải ở lại dự án"
+    },
+    "actionsFor": "Thao tác cho {{id}}",
+    "search": "Tìm mã hoặc tên PVV",
+    "empty": {
+        "notFound": "Không tìm thấy phỏng vấn viên",
+        "nothingMatches": "Không có kết quả cho “{{term}}”.",
+        "noneTitle": "Chưa có phỏng vấn viên",
+        "noneDescription": "Thêm mã các phỏng vấn viên làm dự án này. Dự án cần có phỏng vấn viên trước khi triển khai thực địa."
+    },
+    "add": {
+        "title": "Thêm phỏng vấn viên",
+        "label": "Mã PVV, mỗi dòng một mã",
+        "placeholder": "Dán mã PVV vào đây",
+        "submit": "Thêm"
+    },
+    "errors": {
+        "load": "Không tải được danh sách phỏng vấn viên"
+    }
+}

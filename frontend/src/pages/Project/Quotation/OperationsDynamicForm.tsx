@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Paper, Table, TableBody, TableContainer } from "@mui/material";
 import { DynamicFormProps, renderField } from "../../../utils/renderFields";
+import T from "../../../i18n/T";
 
 const OperationsDynamicForm: React.FC<DynamicFormProps> = ({
     schema,
@@ -64,7 +65,7 @@ const OperationsDynamicForm: React.FC<DynamicFormProps> = ({
                 sx={{ mt: 2 }}
                 disabled={!isEditting}
             >
-                Save
+                <T k="quotation.form.save" />
             </Button>
         </form>
     )

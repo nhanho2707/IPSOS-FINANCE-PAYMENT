@@ -20,7 +20,8 @@
     "table": {
         "noData": "No data",
         "bulkActions": "Bulk actions",
-        "bulkProgress": "Bulk progress"
+        "bulkProgress": "Bulk progress",
+        "clearSelection": "Clear selection"
     },
     "filters": {
         "clear": "Clear {{label}} filter",

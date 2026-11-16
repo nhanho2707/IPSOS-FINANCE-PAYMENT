@@ -1,0 +1,57 @@
+{
+    "columns": {
+        "name": "Tên lô",
+        "total": "Số đáp viên",
+        "status": "Trạng thái",
+        "createdBy": "Người tạo"
+    },
+    "skipped": {
+        "title_one": "Đã bỏ qua {{n}} dòng",
+        "title_other": "Đã bỏ qua {{n}} dòng",
+        "item": "{{reason}}: {{total}} (dòng {{rows}})"
+    },
+    "delete": {
+        "title": "Xoá lô",
+        "confirm": "Xoá",
+        "message": "Xoá lô “{{name}}” và {{total}} đáp viên trong lô?",
+        "used": "Phỏng vấn viên đã dùng lô này"
+    },
+    "block": {
+        "title": "Khoá lô",
+        "confirm": "Khoá",
+        "message": "Phỏng vấn viên sẽ không nhận đáp viên từ “{{name}}” cho đến khi lô được mở lại."
+    },
+    "activate": {
+        "title": "Mở lô",
+        "confirm": "Mở",
+        "message": "Phỏng vấn viên sẽ lại nhận đáp viên từ “{{name}}”."
+    },
+    "actionsFor": "Thao tác cho {{name}}",
+    "toast": {
+        "needName": "Nhập tên lô trước khi nhập file.",
+        "noRows": "Nhập không thành công: file không có dòng đáp viên nào.",
+        "missingColumns": "Nhập không thành công: file thiếu các cột {{columns}}."
+    },
+    "import": {
+        "button": "Nhập lô",
+        "title": "Nhập lô",
+        "description": "File Excel cần có các cột: {{columns}}.",
+        "choose": "Chọn file Excel…",
+        "records": "{{n}} bản ghi",
+        "batchName": "Tên lô",
+        "batchHelp": "Chọn lô có sẵn để thêm đáp viên, hoặc nhập tên mới."
+    },
+    "empty": {
+        "title": "Chưa có lô nào",
+        "description": "Nhập file Excel đáp viên để phỏng vấn viên có số điện thoại để gọi."
+    },
+    "progress": "Đang nhập {{done}}/{{total}} dòng…",
+    "errors": {
+        "import": "Không nhập được lô CATI."
+    },
+    "summary": {
+        "imported": "Đã nhập {{imported}}/{{total}} đáp viên.",
+        "skipped": "Bỏ qua {{skipped}} dòng.",
+        "stopped": "{{summary}} Dừng nhập ở dòng {{row}}: {{error}}"
+    }
+}

@@ -1,0 +1,57 @@
+{
+    "columns": {
+        "name": "Batch name",
+        "total": "Number of respondents",
+        "status": "Status",
+        "createdBy": "Created by"
+    },
+    "skipped": {
+        "title_one": "{{n}} row was skipped",
+        "title_other": "{{n}} rows were skipped",
+        "item": "{{reason}}: {{total}} (rows {{rows}})"
+    },
+    "delete": {
+        "title": "Delete batch",
+        "confirm": "Delete",
+        "message": "Delete the batch “{{name}}” and its {{total}} respondents?",
+        "used": "Interviewers have already used this batch"
+    },
+    "block": {
+        "title": "Block batch",
+        "confirm": "Block",
+        "message": "Interviewers will no longer get respondents from “{{name}}” until it is activated again."
+    },
+    "activate": {
+        "title": "Activate batch",
+        "confirm": "Activate",
+        "message": "Interviewers will get respondents from “{{name}}” again."
+    },
+    "actionsFor": "Actions for {{name}}",
+    "toast": {
+        "needName": "Enter a batch name before importing.",
+        "noRows": "Import failed: the file has no respondent rows.",
+        "missingColumns": "Import failed: the file is missing these columns: {{columns}}."
+    },
+    "import": {
+        "button": "Import batch",
+        "title": "Import batch",
+        "description": "The Excel file needs these columns: {{columns}}.",
+        "choose": "Choose Excel file…",
+        "records": "{{n}} records",
+        "batchName": "Batch name",
+        "batchHelp": "Pick an existing batch to add respondents to it, or type a new name."
+    },
+    "empty": {
+        "title": "No batches yet",
+        "description": "Import an Excel file of respondents to give interviewers numbers to call."
+    },
+    "progress": "Importing {{done}}/{{total}} rows…",
+    "errors": {
+        "import": "Failed to import the CATI batch."
+    },
+    "summary": {
+        "imported": "Imported {{imported}}/{{total}} respondents.",
+        "skipped": "Skipped {{skipped}} rows.",
+        "stopped": "{{summary}} Import stopped at row {{row}}: {{error}}"
+    }
+}

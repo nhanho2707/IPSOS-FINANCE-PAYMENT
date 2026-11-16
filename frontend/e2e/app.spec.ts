@@ -376,4 +376,35 @@ test.describe("language", () => {
             ["Interviewer ID", "Interviewer", "Interviews", "Gifts", "Gift value", "Median wait (minutes)", "Needs review"]
         );
     });
+
+    test("quotation, settings, interviewers, CATI and accounts read in Vietnamese", async ({ page }, testInfo) => {
+        await signInAs(page, "Admin");
+        await page.addInitScript(() => localStorage.setItem("language", "vi"));
+
+        await page.goto(`${PROJECT}/quotation`);
+        await expect(page.getByText("Đang chờ Field Manager")).toBeVisible();
+        await expect(page.getByRole("tab", { name: "Thông tin chung" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Sao chép link" })).toBeVisible();
+        await capture(page, testInfo, "quotation-vi", { fullPage: false });
+
+        await page.goto(`${PROJECT}/settings`);
+        await expect(page.getByRole("heading", { name: "Cỡ mẫu và giá quà" })).toBeVisible();
+        await page.getByRole("button", { name: "Sửa" }).click();
+        await expect(page.getByRole("dialog", { name: "Sửa thông tin dự án" })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await capture(page, testInfo, "settings-vi");
+
+        await page.goto(`${PROJECT}/parttime-employees`);
+        await expect(page.getByPlaceholder("Tìm mã hoặc tên PVV")).toBeVisible();
+
+        await page.goto(`${PROJECT}/cati-settings`);
+        await expect(page.getByRole("button", { name: "Nhập lô" }).first()).toBeVisible();
+
+        await page.goto("/account-management/accounts");
+        await expect(page.getByRole("heading", { name: "Tài khoản", level: 1 })).toBeVisible();
+        await page.getByRole("button", { name: "Thao tác cho nhan.ho@ipsos.com" }).click();
+        await page.getByRole("menuitem", { name: "Xem lịch sử" }).click();
+        await expect(page.getByRole("dialog", { name: "Lịch sử tài khoản" })).toBeVisible();
+        await capture(page, testInfo, "accounts-vi", { fullPage: false });
+    });
 });

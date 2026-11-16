@@ -1,6 +1,6 @@
 import { Box, Button, MenuItem, Stack, TextField, Tooltip } from "@mui/material";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { AccountAuditActionLabels, AccountAuditLog, AccountData, AccountStatusFilter, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
+import { AccountAuditLog, AccountData, AccountStatusFilter, ResetPasswordPayload } from "../../config/AccountFieldsConfig";
 import { getAccountErrorMessage, useAccounts } from "../../hook/useAccounts";
 import { useAccountAuditLogs } from "../../hook/useAccountAuditLogs";
 import ReusableTable from "../../components/Table/ReusableTable";
@@ -19,14 +19,13 @@ import { useMetadata } from "../../hook/useMetadata";
 import { useMemo, useState } from "react";
 import { BlockOutlined, CheckCircleOutlineOutlined, EditOutlined, HistoryOutlined, LockResetOutlined, PersonAddAltOutlined } from "@mui/icons-material";
 import { formatDateTime } from "../../utils/format";
+import { Trans, useTranslation } from "react-i18next";
+import { translateDataValue } from "../../i18n/i18n";
 
 type RoleOption = { id: number; name: string; department_id: number };
 type DepartmentOption = { id: number; name: string };
 
-const STATUS_FILTER_OPTIONS: { value: Exclude<AccountStatusFilter, "">; label: string }[] = [
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-];
+const STATUS_FILTER_VALUES: Exclude<AccountStatusFilter, "">[] = ["active", "inactive"];
 
 const formatAuditChanges = (log: AccountAuditLog) => {
     if (!log.changes) return "—";
@@ -42,6 +41,7 @@ const formatAuditChanges = (log: AccountAuditLog) => {
 };
 
 const AccountManagement = () => {
+    const { t } = useTranslation();
     const { data, invalidate: invalidateMetadata } = useMetadata();
     const { accounts, total, page, setPage, rowsPerPage, setRowsPerPage, searchTerm, setSearchTerm, filters, setFilters, actionState, storeAccount, updateAccount, updateAccountStatus, resetAccountPassword } = useAccounts();
 
@@ -85,7 +85,7 @@ const AccountManagement = () => {
 
     const columns: ColumnFormat[] = [
         {
-            label: "User",
+            label: t("accounts.columns.user"),
             name: "name",
             type: "string",
             flex: 2.2,
@@ -94,41 +94,41 @@ const AccountManagement = () => {
                 return (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
                         <UserAvatar name={fullName} size={28} showTooltip={false} />
-                        <CellStack primary={fullName} secondary={row.email} title={`${fullName} · ${row.email} · username ${row.name}`} />
+                        <CellStack primary={fullName} secondary={row.email} title={t("accounts.username", { name: fullName, email: row.email, username: row.name })} />
                     </Box>
                 );
             }
         },
         {
-            label: "Role",
+            label: t("accounts.columns.role"),
             name: "role",
             type: "string",
             flex: 1.4,
             renderCell: (row: AccountData) => <CellStack primary={row.role} secondary={row.department} />
         },
         {
-            label: "Status",
+            label: t("accounts.columns.status"),
             name: "is_active",
             type: "string",
             width: 184,
             renderCell: (row: AccountData) => (
                 <Stack direction="row" spacing={0.5}>
-                    <StatusChip label={row.is_active ? "Active" : "Inactive"} tone={row.is_active ? "success" : "neutral"} />
+                    <StatusChip label={row.is_active ? t("accounts.status.active") : t("accounts.status.inactive")} tone={row.is_active ? "success" : "neutral"} />
                     {row.is_active && row.must_change_password && (
-                        <StatusChip label="Temp password" tone="warning" tooltip="Must change password on next login" />
+                        <StatusChip label={t("accounts.tempPassword")} tone="warning" tooltip={t("accounts.tempPasswordTooltip")} />
                     )}
                 </Stack>
             )
         },
         {
-            label: "Last Login",
+            label: t("accounts.columns.lastLogin"),
             name: "last_login_at",
             type: "date",
             width: 148,
             renderCell: (row: AccountData) => formatDateTime(row.last_login_at)
         },
         {
-            label: "Created",
+            label: t("accounts.columns.created"),
             name: "created_at",
             type: "date",
             width: 148,
@@ -142,13 +142,13 @@ const AccountManagement = () => {
             width: 56,
             renderCell: (row: AccountData) => (
                 <RowActions
-                    menuLabel={`Actions for ${row.email}`}
+                    menuLabel={t("accounts.actionsFor", { email: row.email })}
                     items={[
-                        { label: "Edit role & department", icon: EditOutlined, onClick: () => handleOpenEditDialog(row) },
-                        { label: "Reset password", icon: LockResetOutlined, onClick: () => handleOpenResetPasswordDialog(row) },
-                        { label: "View history", icon: HistoryOutlined, onClick: () => setHistoryTarget(row) },
+                        { label: t("accounts.actions.edit"), icon: EditOutlined, onClick: () => handleOpenEditDialog(row) },
+                        { label: t("accounts.actions.reset"), icon: LockResetOutlined, onClick: () => handleOpenResetPasswordDialog(row) },
+                        { label: t("accounts.actions.history"), icon: HistoryOutlined, onClick: () => setHistoryTarget(row) },
                         {
-                            label: row.is_active ? "Deactivate account" : "Activate account",
+                            label: row.is_active ? t("accounts.actions.deactivate") : t("accounts.actions.activate"),
                             icon: row.is_active ? BlockOutlined : CheckCircleOutlineOutlined,
                             tone: row.is_active ? "danger" : "default",
                             onClick: () => setStatusTarget(row),
@@ -161,28 +161,28 @@ const AccountManagement = () => {
 
     const auditColumns: ColumnFormat[] = [
         {
-            label: "Time",
+            label: t("accounts.audit.time"),
             name: "created_at",
             type: "date",
             width: 148,
             renderCell: (row: AccountAuditLog) => formatDateTime(row.created_at)
         },
         {
-            label: "Action",
+            label: t("accounts.audit.action"),
             name: "action",
             type: "string",
             width: 160,
-            renderCell: (row: AccountAuditLog) => AccountAuditActionLabels[row.action] ?? row.action
+            renderCell: (row: AccountAuditLog) => translateDataValue("accounts.audit.actions", row.action)
         },
         {
-            label: "By",
+            label: t("accounts.audit.by"),
             name: "actor",
             type: "string",
             flex: 1,
             renderCell: (row: AccountAuditLog) => row.actor ?? "—"
         },
         {
-            label: "Details",
+            label: t("accounts.audit.details"),
             name: "changes",
             type: "string",
             flex: 1.5,
@@ -242,7 +242,7 @@ const AccountManagement = () => {
             await updateAccount(editTarget.id, formEditData);
             setOpenEditDialog(false);
         } catch (error) {
-            setDialogError(getAccountErrorMessage(error, "Failed to update Account."));
+            setDialogError(getAccountErrorMessage(error, t("accounts.errors.update")));
         }
     };
 
@@ -265,7 +265,7 @@ const AccountManagement = () => {
             await resetAccountPassword(resetPasswordTarget.id, formResetPasswordData);
             handleCloseResetPasswordDialog();
         } catch (error) {
-            setDialogError(getAccountErrorMessage(error, "Failed to reset password."));
+            setDialogError(getAccountErrorMessage(error, t("accounts.errors.reset")));
         }
     };
 
@@ -305,7 +305,7 @@ const AccountManagement = () => {
             setFormCreateData(initialAccountData);
             setOpenCreateDialog(false);
         } catch (error) {
-            setDialogError(getAccountErrorMessage(error, "Failed to store Account."));
+            setDialogError(getAccountErrorMessage(error, t("accounts.errors.store")));
         }
     }
 
@@ -324,15 +324,15 @@ const AccountManagement = () => {
 
     const createButton = (
         <Button variant="contained" startIcon={<PersonAddAltOutlined />} onClick={handleOpenCreateDialog}>
-            Create user
+            {t("accounts.create.button")}
         </Button>
     );
 
     return (
         <Box>
             <PageHeader
-                title="Accounts"
-                description="Who can sign in, with which role and department."
+                title={t("accounts.title")}
+                description={t("accounts.description")}
                 actions={createButton}
             />
 
@@ -346,7 +346,7 @@ const AccountManagement = () => {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 search={{
-                    placeholder: "Search name or email",
+                    placeholder: t("accounts.search"),
                     defaultValue: searchTerm,
                     onChange: (value) => {
                         setSearchTerm(value);
@@ -356,40 +356,40 @@ const AccountManagement = () => {
                 filters={
                     <>
                         <SelectFilter
-                            label="Department"
+                            label={t("accounts.form.department")}
                             value={filters.department_id}
                             options={data.departments.map((d: DepartmentOption) => ({ value: d.id, label: d.name }))}
                             onChange={(value) => handleFilterChange({ department_id: value, role_id: "" })}
                         />
                         <SelectFilter
-                            label="Role"
+                            label={t("accounts.form.role")}
                             value={filters.role_id}
                             options={filterRoles.map((r: RoleOption) => ({ value: r.id, label: r.name }))}
                             onChange={(value) => handleFilterChange({ role_id: value })}
                         />
                         <SelectFilter
-                            label="Status"
+                            label={t("accounts.filters.status")}
                             value={filters.status}
-                            options={STATUS_FILTER_OPTIONS}
+                            options={STATUS_FILTER_VALUES.map((value) => ({ value, label: t(`accounts.status.${value}`) }))}
                             onChange={(value) => handleFilterChange({ status: value })}
                         />
                     </>
                 }
                 stickyColumns={{ last: true }}
                 emptyState={isFiltered ? (
-                    <EmptyState title="No accounts found" description="No account matches the search and filters." />
+                    <EmptyState title={t("accounts.empty.notFound")} description={t("accounts.empty.notFoundDescription")} />
                 ) : (
-                    <EmptyState title="No accounts yet" action={createButton} />
+                    <EmptyState title={t("accounts.empty.none")} action={createButton} />
                 )}
             />
 
             <FormDialog
                 open={openCreateDialog}
-                title="Create user"
+                title={t("accounts.create.title")}
                 error={dialogError}
                 onClose={() => setOpenCreateDialog(false)}
                 onSubmit={handleCreateUser}
-                submitText="Create user"
+                submitText={t("accounts.create.button")}
                 submitDisabled={isCreateInvalid}
                 loading={actionState.loading}
             >
@@ -397,28 +397,28 @@ const AccountManagement = () => {
                     <TextField
                         autoFocus
                         size="small"
-                        label="First name"
+                        label={t("accounts.form.firstName")}
                         value={formCreateData.first_name}
                         onChange={(event) => handleChange("first_name", event.target.value)}
                         required
                     />
                     <TextField
                         size="small"
-                        label="Last name"
+                        label={t("accounts.form.lastName")}
                         value={formCreateData.last_name}
                         onChange={(event) => handleChange("last_name", event.target.value)}
                         required
                     />
                     <TextField
                         size="small"
-                        label="Username"
+                        label={t("accounts.form.username")}
                         value={formCreateData.name}
                         onChange={(event) => handleChange("name", event.target.value)}
                         required
                     />
                     <TextField
                         size="small"
-                        label="Email"
+                        label={t("accounts.form.email")}
                         type="email"
                         value={formCreateData.email}
                         onChange={(event) => handleChange("email", event.target.value)}
@@ -426,30 +426,30 @@ const AccountManagement = () => {
                     />
                     <TextField
                         size="small"
-                        label="Password"
+                        label={t("accounts.form.password")}
                         type="password"
                         value={formCreateData.password}
                         onChange={(event) => handleChange("password", event.target.value)}
                         error={isCreatePasswordTooShort}
-                        helperText={isCreatePasswordTooShort ? "At least 6 characters" : ""}
+                        helperText={isCreatePasswordTooShort ? t("accounts.form.atLeast6") : ""}
                         autoComplete="new-password"
                         required
                     />
                     <TextField
                         size="small"
-                        label="Confirm password"
+                        label={t("accounts.form.confirmPassword")}
                         type="password"
                         value={formCreateData.password_confirmation}
                         onChange={(event) => handleChange("password_confirmation", event.target.value)}
                         error={isCreatePasswordMismatch}
-                        helperText={isCreatePasswordMismatch ? "Passwords do not match" : ""}
+                        helperText={isCreatePasswordMismatch ? t("accounts.form.mismatch") : ""}
                         autoComplete="new-password"
                         required
                     />
                     <TextField
                         select
                         size="small"
-                        label="Department"
+                        label={t("accounts.form.department")}
                         value={formCreateData.department ?? ""}
                         onChange={(event) => {
                             setFormCreateData((prev) => ({
@@ -469,11 +469,11 @@ const AccountManagement = () => {
                     <TextField
                         select
                         size="small"
-                        label="Role"
+                        label={t("accounts.form.role")}
                         value={formCreateData.role}
                         onChange={(event) => handleChange("role", String(event.target.value))}
                         disabled={!formCreateData.department}
-                        helperText={!formCreateData.department ? "Choose a department first" : ""}
+                        helperText={!formCreateData.department ? t("accounts.form.departmentFirst") : ""}
                         required
                     >
                         {filteredRoles.map((r: RoleOption) => (
@@ -487,7 +487,7 @@ const AccountManagement = () => {
 
             <FormDialog
                 open={openEditDialog}
-                title="Edit role & department"
+                title={t("accounts.editTitle")}
                 description={editTarget?.email}
                 error={dialogError}
                 onClose={handleCloseEditDialog}
@@ -500,7 +500,7 @@ const AccountManagement = () => {
                     <TextField
                         select
                         size="small"
-                        label="Department"
+                        label={t("accounts.form.department")}
                         value={formEditData.department || ""}
                         onChange={(e) => setFormEditData({ role: 0, department: Number(e.target.value) })}
                         required
@@ -512,7 +512,7 @@ const AccountManagement = () => {
                     <TextField
                         select
                         size="small"
-                        label="Role"
+                        label={t("accounts.form.role")}
                         value={formEditData.role || ""}
                         onChange={(e) => setFormEditData(prev => ({ ...prev, role: Number(e.target.value) }))}
                         disabled={!formEditData.department}
@@ -527,17 +527,12 @@ const AccountManagement = () => {
 
             <FormDialog
                 open={openResetPasswordDialog}
-                title="Reset password"
-                description={
-                    <>
-                        Set a temporary password for <strong>{resetPasswordTarget?.email}</strong>.
-                        The user is signed out and must choose a new password at the next login.
-                    </>
-                }
+                title={t("accounts.reset.title")}
+                description={<Trans i18nKey="accounts.reset.description" values={{ email: resetPasswordTarget?.email ?? "" }} components={{ strong: <strong /> }} />}
                 error={dialogError}
                 onClose={handleCloseResetPasswordDialog}
                 onSubmit={handleResetPassword}
-                submitText="Reset password"
+                submitText={t("accounts.reset.submit")}
                 submitDisabled={isResetPasswordInvalid}
                 loading={actionState.loading}
                 maxWidth="xs"
@@ -546,23 +541,23 @@ const AccountManagement = () => {
                     <TextField
                         autoFocus
                         size="small"
-                        label="New password"
+                        label={t("accounts.form.newPassword")}
                         type="password"
                         value={formResetPasswordData.password}
                         onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
                         error={isResetPasswordTooShort}
-                        helperText={isResetPasswordTooShort ? "Password must be at least 6 characters" : ""}
+                        helperText={isResetPasswordTooShort ? t("accounts.form.passwordTooShort") : ""}
                         autoComplete="new-password"
                         required
                     />
                     <TextField
                         size="small"
-                        label="Confirm new password"
+                        label={t("accounts.form.confirmNewPassword")}
                         type="password"
                         value={formResetPasswordData.password_confirmation}
                         onChange={(e) => setFormResetPasswordData(prev => ({ ...prev, password_confirmation: e.target.value }))}
                         error={isResetPasswordMismatch}
-                        helperText={isResetPasswordMismatch ? "Passwords do not match" : ""}
+                        helperText={isResetPasswordMismatch ? t("accounts.form.mismatch") : ""}
                         autoComplete="new-password"
                         required
                     />
@@ -573,18 +568,18 @@ const AccountManagement = () => {
                 open={Boolean(statusTarget)}
                 onClose={() => setStatusTarget(null)}
                 onConfirm={handleConfirmStatusChange}
-                title={statusTarget?.is_active ? "Deactivate account" : "Activate account"}
+                title={statusTarget?.is_active ? t("accounts.statusDialog.deactivateTitle") : t("accounts.statusDialog.activateTitle")}
                 tone={statusTarget?.is_active ? "danger" : "default"}
-                confirmText={statusTarget?.is_active ? "Deactivate" : "Activate"}
+                confirmText={statusTarget?.is_active ? t("accounts.statusDialog.deactivate") : t("accounts.statusDialog.activate")}
                 message={statusTarget?.is_active
-                    ? `${statusTarget?.email} will be signed out immediately and will no longer be able to log in.`
-                    : `${statusTarget?.email} will be able to log in again.`}
+                    ? t("accounts.statusDialog.deactivateMessage", { email: statusTarget?.email ?? "" })
+                    : t("accounts.statusDialog.activateMessage", { email: statusTarget?.email ?? "" })}
             />
 
             <DetailDrawer
                 open={Boolean(historyTarget)}
                 onClose={() => setHistoryTarget(null)}
-                title="Account history"
+                title={t("accounts.audit.title")}
                 subtitle={historyTarget?.email}
                 width={760}
             >
@@ -600,7 +595,7 @@ const AccountManagement = () => {
                         setAuditRowsPerPage(parseInt(event.target.value, 10));
                         setAuditPage(0);
                     }}
-                    emptyText="No changes recorded yet"
+                    emptyText={t("accounts.audit.empty")}
                     inset={false}
                     dense
                 />

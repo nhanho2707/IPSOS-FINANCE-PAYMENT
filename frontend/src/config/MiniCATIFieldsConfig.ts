@@ -1,4 +1,5 @@
 import { ColumnFormat } from "./ColumnConfig";
+import i18n from "../i18n/i18n";
 
 export interface CATIRespondentData {
     id: string,
@@ -78,27 +79,28 @@ export const MiniCATICellConfig: ColumnFormat[] = [
     }
 ];
 
-export const MiniCATIBatchCellConfig: ColumnFormat[] = [
+// A function, so the headers are read in the current language.
+export const catiBatchColumns = (): ColumnFormat[] => [
     {
-        label: "Batch Name",
+        label: i18n.t("cati.columns.name"),
         name: "name",
         type: "string",
         flex: 1
     },
     {
-        label: "Number of respondents",
+        label: i18n.t("cati.columns.total"),
         name: "total_records",
         type: "number",
         flex: 1
     },
     {
-        label: "Status",
+        label: i18n.t("cati.columns.status"),
         name: "status",
         type: "string",
         flex: 1
     },
     {
-        label: "Created By",
+        label: i18n.t("cati.columns.createdBy"),
         name: "created_user_name",
         type: "string",
         flex: 1

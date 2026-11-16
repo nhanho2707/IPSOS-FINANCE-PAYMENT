@@ -1,0 +1,95 @@
+{
+    "title": "Accounts",
+    "description": "Who can sign in, with which role and department.",
+    "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "label": "Status"
+    },
+    "tempPassword": "Temp password",
+    "tempPasswordTooltip": "Must change password on next login",
+    "columns": {
+        "user": "User",
+        "role": "Role",
+        "status": "Status",
+        "lastLogin": "Last login",
+        "created": "Created"
+    },
+    "username": "{{name}} · {{email}} · username {{username}}",
+    "actionsFor": "Actions for {{email}}",
+    "actions": {
+        "edit": "Edit role & department",
+        "reset": "Reset password",
+        "history": "View history",
+        "deactivate": "Deactivate account",
+        "activate": "Activate account"
+    },
+    "audit": {
+        "time": "Time",
+        "action": "Action",
+        "by": "By",
+        "details": "Details",
+        "title": "Account history",
+        "empty": "No changes recorded yet",
+        "actions": {
+            "created": "Account created",
+            "updated": "Role / department changed",
+            "password_reset": "Password reset by admin",
+            "activated": "Account activated",
+            "deactivated": "Account deactivated"
+        }
+    },
+    "errors": {
+        "update": "Failed to update the account.",
+        "reset": "Failed to reset the password.",
+        "store": "Failed to create the account.",
+        "load": "Failed to fetch accounts.",
+        "status": "Failed to update the account status.",
+        "history": "Failed to fetch the account history."
+    },
+    "search": "Search name or email",
+    "filters": {
+        "department": "Department",
+        "role": "Role",
+        "status": "Status"
+    },
+    "empty": {
+        "notFound": "No accounts found",
+        "notFoundDescription": "No account matches the search and filters.",
+        "none": "No accounts yet"
+    },
+    "create": {
+        "button": "Create user",
+        "title": "Create user"
+    },
+    "form": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm password",
+        "atLeast6": "At least 6 characters",
+        "mismatch": "Passwords do not match",
+        "department": "Department",
+        "role": "Role",
+        "departmentFirst": "Choose a department first",
+        "newPassword": "New password",
+        "confirmNewPassword": "Confirm new password",
+        "passwordTooShort": "Password must be at least 6 characters"
+    },
+    "editTitle": "Edit role & department",
+    "reset": {
+        "title": "Reset password",
+        "submit": "Reset password",
+        "description": "Set a temporary password for <strong>{{email}}</strong>. The user is signed out and must choose a new password at the next login."
+    },
+    "statusDialog": {
+        "deactivateTitle": "Deactivate account",
+        "activateTitle": "Activate account",
+        "deactivate": "Deactivate",
+        "activate": "Activate",
+        "deactivateMessage": "{{email}} will be signed out immediately and will no longer be able to log in.",
+        "activateMessage": "{{email}} will be able to log in again."
+    }
+}

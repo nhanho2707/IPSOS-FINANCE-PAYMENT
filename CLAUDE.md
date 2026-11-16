@@ -111,12 +111,12 @@ const [actionState, setActionState] = useState<ActionState>({
 
 ### UI Language
 - The internal UI is available in English (default) and Vietnamese. Users switch in the account menu, or on the sign-in and password pages; the choice is kept in `localStorage` as `language`.
-- Text lives in `frontend/src/i18n/locales/{en,vi}/*.json` (`common`, `nav`, `auth`, `projects`, `gifts`, `transactions`, `finance`, `statistics`, `dashboard`) and is read with `useTranslation()`: `t("common.actions.save")`. Add every new string to both languages; the Vietnamese files are typed against the English ones, so a missing key fails the build.
-- Labels kept in config files (`AppNavConfig`, `ProjectNavConfig`) are `TranslationKey`s, shown with `tKey(key)` inside a component that calls `useTranslation()`. Values that come from the data are looked up with `translateDataValue()`.
+- Text lives in `frontend/src/i18n/locales/{en,vi}/*.json` (`common`, `nav`, `auth`, `projects`, `gifts`, `transactions`, `finance`, `statistics`, `quotation`, `settings`, `accounts`, `interviewers`, `cati`, `dashboard`) and is read with `useTranslation()`: `t("common.actions.save")`. Add every new string to both languages; the Vietnamese files are typed against the English ones, so a missing key fails the build.
+- Labels kept in config files (`AppNavConfig`, `ProjectNavConfig`) are `TranslationKey`s; column configs (`transactionColumns()`, `employeeColumns()`, `catiBatchColumns()`) are functions so they read the current language, shown with `tKey(key)` inside a component that calls `useTranslation()`. Values that come from the data are looked up with `translateDataValue()`.
 - Dates, statuses and field timing go through `utils/format.ts`, which follows the language (Vietnamese dates are `DD/MM/YYYY`; numbers keep `1,234,567` in both). MUI and the date pickers get their Vietnamese text from `i18n/AppLocaleProvider.tsx`.
 - Not translated: respondent-facing pages (`CustomVoucher*`) and the interviewer screen (`MiniCATI`) stay Vietnamese; Excel import/export column headers stay as they are, since they are the file format users rely on; data from the database and messages from the backend are shown as sent.
 - Counts use i18next plurals (`key_one` / `key_other`, called with `count`); pass the formatted number separately (`{{n}}`). Excel files generated in the browser keep English headers in both languages.
-- Still English in both languages until they are moved to translation keys: Quotation, Settings, Accounts, Interviewers, CATI settings, Assignment and the progress report.
+- Every page inside the app shell is translated. Quotation and operations field labels come from the Excel templates (`storage/schema/*_template.xlsx`) and are shown as written there. `ProgressReport` (`/progress`) is a mock-data prototype and stays English.
 
 ### Component Rules
 - Use **MUI v9** components (`@mui/material`). Do not introduce a second UI library.

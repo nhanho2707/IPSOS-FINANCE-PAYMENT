@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmployeeData } from "../config/EmployeeFieldsConfig";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
+import i18n from "../i18n/i18n";
 
 export function useEmployees(projectId: number) {
     const [ employees, setEmployees ] = useState<EmployeeData[]>([]);
@@ -44,7 +45,7 @@ export function useEmployees(projectId: number) {
             setTotal(response.data.meta.total);
         } catch(error: any){
             setError(true);
-            setMessage(error.message || 'Failed to fetch Employees');
+            setMessage(error.message || i18n.t('interviewers.errors.load'));
         } finally{
             setLoading(false);
         }

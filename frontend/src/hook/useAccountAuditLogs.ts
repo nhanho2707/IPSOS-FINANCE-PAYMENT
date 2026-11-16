@@ -4,6 +4,7 @@ import { ApiConfig } from "../config/ApiConfig";
 import { AccountAuditLog } from "../config/AccountFieldsConfig";
 import { ActionState } from "../components/Table/ReusableTable";
 import { getAccountErrorMessage } from "./useAccounts";
+import i18n from "../i18n/i18n";
 
 export function useAccountAuditLogs(userId: number | null) {
 
@@ -45,7 +46,7 @@ export function useAccountAuditLogs(userId: number | null) {
 
             setActionState({ type: 'fetch', loading: false, error: false, message: "" });
         } catch (error: unknown) {
-            const message = getAccountErrorMessage(error, 'Failed to fetch account history.');
+            const message = getAccountErrorMessage(error, i18n.t('accounts.errors.history'));
 
             setActionState({ type: 'fetch', loading: false, error: true, message });
         }

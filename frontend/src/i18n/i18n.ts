@@ -11,6 +11,11 @@ import enFinance from "./locales/en/finance.json";
 import enTransactions from "./locales/en/transactions.json";
 import enGifts from "./locales/en/gifts.json";
 import enProjects from "./locales/en/projects.json";
+import enQuotation from "./locales/en/quotation.json";
+import enCati from "./locales/en/cati.json";
+import enInterviewers from "./locales/en/interviewers.json";
+import enAccounts from "./locales/en/accounts.json";
+import enSettings from "./locales/en/settings.json";
 import viCommon from "./locales/vi/common.json";
 import viNav from "./locales/vi/nav.json";
 import viAuth from "./locales/vi/auth.json";
@@ -20,6 +25,11 @@ import viFinance from "./locales/vi/finance.json";
 import viTransactions from "./locales/vi/transactions.json";
 import viGifts from "./locales/vi/gifts.json";
 import viProjects from "./locales/vi/projects.json";
+import viQuotation from "./locales/vi/quotation.json";
+import viCati from "./locales/vi/cati.json";
+import viInterviewers from "./locales/vi/interviewers.json";
+import viAccounts from "./locales/vi/accounts.json";
+import viSettings from "./locales/vi/settings.json";
 
 export type Language = "en" | "vi";
 
@@ -31,12 +41,14 @@ const DEFAULT_LANGUAGE: Language = "en";
 const en = {
     common: enCommon, nav: enNav, auth: enAuth, dashboard: enDashboard,
     projects: enProjects, gifts: enGifts, transactions: enTransactions, finance: enFinance, statistics: enStatistics,
+    settings: enSettings, accounts: enAccounts, interviewers: enInterviewers, cati: enCati, quotation: enQuotation,
 };
 
 // Typed against English, so a key missing from a Vietnamese file fails the type check.
 const vi: typeof en = {
     common: viCommon, nav: viNav, auth: viAuth, dashboard: viDashboard,
     projects: viProjects, gifts: viGifts, transactions: viTransactions, finance: viFinance, statistics: viStatistics,
+    settings: viSettings, accounts: viAccounts, interviewers: viInterviewers, cati: viCati, quotation: viQuotation,
 };
 
 export const resources = { en: { translation: en }, vi: { translation: vi } };

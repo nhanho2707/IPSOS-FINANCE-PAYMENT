@@ -1,0 +1,137 @@
+{
+    "header": {
+        "steps": {
+            "draft": "Nháp",
+            "submitted": "Đã gửi",
+            "fm_confirmed": "FM xem xét",
+            "approved": "Đã duyệt"
+        },
+        "by": "Bởi {{name}}",
+        "notSubmitted": "Chưa gửi",
+        "waitingFm": "Đang chờ Field Manager",
+        "waitingApproval": "Đang chờ duyệt",
+        "submit": "Gửi để xem xét",
+        "approve": "Duyệt",
+        "confirmFm": "Xác nhận FM đã xem",
+        "pendingFeedback": "Vẫn còn góp ý chưa xử lý. Researcher phải xử lý hoặc từ chối hết trước khi FM xác nhận.",
+        "newVersion": "Tạo phiên bản mới",
+        "withdrawDraft": "Rút về nháp",
+        "withdrawSubmitted": "Rút về đã gửi",
+        "deleteDraft": "Xoá bản nháp",
+        "version": "Phiên bản",
+        "versionN": "Phiên bản {{version}}",
+        "editing": "Đang sửa: hãy lưu form bên dưới để giữ thay đổi.",
+        "copyLink": "Sao chép link",
+        "cancelEditing": "Huỷ sửa",
+        "edit": "Sửa",
+        "more": "Thao tác báo giá khác"
+    },
+    "page": {
+        "linkCopied": "Đã sao chép link phiên bản {{version}}.",
+        "copyFailed": "Không sao chép được link. Hãy sao chép từ thanh địa chỉ.",
+        "delete": {
+            "title": "Xoá phiên bản",
+            "confirm": "Xoá",
+            "message": "Bạn có chắc muốn xoá phiên bản {{version}}?"
+        },
+        "submit": {
+            "title": "Gửi phiên bản",
+            "confirm": "Gửi",
+            "message": "Bạn có chắc muốn gửi phiên bản này?"
+        },
+        "approve": {
+            "title": "Duyệt phiên bản",
+            "confirm": "Duyệt",
+            "message": "Bạn có chắc muốn duyệt phiên bản này?"
+        },
+        "withdraw": {
+            "title": "Rút phiên bản",
+            "confirm": "Rút",
+            "message": "Bạn có chắc muốn rút phiên bản này? Phiên bản sẽ về nháp và sửa lại được."
+        },
+        "confirmFm": {
+            "title": "Xác nhận FM đã xem",
+            "confirm": "Xác nhận",
+            "message": "Xác nhận bạn đã xem xong báo giá này?\n\nSau khi xác nhận:\n• FM không thêm góp ý được nữa\n• Researcher có thể duyệt báo giá"
+        },
+        "close": "Đóng",
+        "tabsLabel": "Các phần báo giá",
+        "tabs": {
+            "general": "Thông tin chung",
+            "operations": "Vận hành",
+            "estimatedCost": "Chi phí ước tính"
+        },
+        "generateCost": "Tạo chi phí ước tính",
+        "save": "Lưu",
+        "loadTemplate": "Nạp mẫu",
+        "loadTemplateTitle": "Nạp mẫu",
+        "loadTemplateMessage": "Đặt lại theo mẫu mặc định? Dữ liệu hiện tại sẽ mất.",
+        "reset": "Đặt lại",
+        "newVersionTitle": "Tạo phiên bản mới",
+        "versionN": "Phiên bản {{version}}",
+        "submitNew": "Tạo"
+    },
+    "feedback": {
+        "title": "Góp ý: {{label}}",
+        "pending": "Có góp ý đang chờ",
+        "resolved": "Đã xử lý",
+        "rejected": "Bị từ chối",
+        "add": "Thêm góp ý",
+        "reason": "Lý do: {{reason}}",
+        "writePlaceholder": "Viết góp ý cho researcher…",
+        "responsePlaceholder": "Không bắt buộc: thêm ghi chú cho phản hồi…",
+        "close": "Đóng",
+        "send": "Gửi góp ý",
+        "reject": "Từ chối",
+        "resolve": "Đánh dấu đã xử lý"
+    },
+    "form": {
+        "projectTypeChange": "Đổi loại dự án có thể ảnh hưởng đến các trường khác. Bạn có chắc muốn đổi?",
+        "confirmChange": "Xác nhận thay đổi",
+        "select": "Chọn…",
+        "from": "Từ",
+        "to": "Đến",
+        "addGroupTitle": "Thêm nhóm đáp viên",
+        "groupName": "Tên nhóm",
+        "groupPlaceholder": "VD: Main, Booster…",
+        "cancel": "Huỷ",
+        "add": "Thêm",
+        "save": "Lưu",
+        "addGroupButton": "Thêm nhóm",
+        "actions": "Thao tác"
+    },
+    "cost": {
+        "columns": {
+            "chi_phi": "Chi phí",
+            "unit": "Đơn vị",
+            "quantity": "Số lượng",
+            "price": "Đơn giá",
+            "amount": "Thành tiền",
+            "actual_expense": "Chi thực tế",
+            "note": "Ghi chú"
+        },
+        "newGroup": "Nhóm mới",
+        "addSubGroup": "Thêm nhóm con",
+        "addItem": "Thêm mục",
+        "deleteGroup": "Xoá nhóm",
+        "title": "Chi phí ước tính",
+        "noData": "Không có dữ liệu",
+        "total": "Tổng",
+        "addGroup": "Thêm nhóm",
+        "addItemButton": "Thêm mục"
+    },
+    "errors": {
+        "versions": "Không tải được các phiên bản báo giá.",
+        "load": "Không tải được báo giá.",
+        "update": "Không cập nhật được báo giá.",
+        "delete": "Không xoá được báo giá.",
+        "clone": "Không nhân bản được báo giá.",
+        "submit": "Không gửi được báo giá.",
+        "confirmFm": "Không xác nhận được FM đã xem.",
+        "approve": "Không duyệt được báo giá.",
+        "withdraw": "Không rút được báo giá.",
+        "feedback": "Không lưu được góp ý.",
+        "response": "Không lưu được phản hồi.",
+        "operations": "Không tải được dữ liệu vận hành."
+    }
+}

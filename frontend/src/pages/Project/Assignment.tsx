@@ -8,6 +8,7 @@ import { useMetadata } from "../../hook/useMetadata";
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import { UserData } from "../../config/AccountFieldsConfig";
 import { useToast } from "../../contexts/ToastContext";
+import { useTranslation } from "react-i18next";
 
 const Assignment: React.FC = () => {
     const { id } = useParams<{id: string}>();
@@ -20,6 +21,7 @@ const Assignment: React.FC = () => {
     const { actionState, getProject, assignUsers } = useProjects();
     const { data, isLoading } = useMetadata();
     const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const handleAssignUsers = async () => {
         try
@@ -31,13 +33,13 @@ const Assignment: React.FC = () => {
             const response = await assignUsers(projectId, user_ids);
 
             if (response.status_code === 400) {
-                showToast(response.error || 'Assignment failed.', 'error');
+                showToast(response.error || t('settings.assignment.failed'), 'error');
             } else {
-                showToast(response.message || 'Assignment saved.');
+                showToast(response.message || t('settings.assignment.saved'));
             }
         } catch(error){
             const message = axios.isAxiosError(error) ? error.response?.data?.error : undefined;
-            showToast(message || 'Assignment failed.', 'error');
+            showToast(message || t('settings.assignment.failed'), 'error');
         } finally {
             setLoadingAssignUsers(false);
         }
@@ -61,7 +63,7 @@ const Assignment: React.FC = () => {
         <Grid container spacing={2}>
             <Grid size={12}>
                 <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
-                    Select users to assign to this project:
+                    {t("settings.assignment.select")}
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Box sx={{ flex: 1 }}>
@@ -80,7 +82,7 @@ const Assignment: React.FC = () => {
                                 </li>
                             )}
                             renderInput={(params) => (
-                                <TextField {...params} size="small" placeholder="Select..." />
+                                <TextField {...params} size="small" placeholder={t("settings.assignment.placeholder")} />
                             )}
                         />
                     </Box>
@@ -93,7 +95,7 @@ const Assignment: React.FC = () => {
                         loadingPosition="start"
                         disabled={assignedUsers.length === 0}
                     >
-                        <span>Assign</span>
+                        <span>{t("settings.assignment.assign")}</span>
                     </Button>
                 </Box>
 

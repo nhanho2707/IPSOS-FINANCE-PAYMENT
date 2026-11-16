@@ -6,6 +6,8 @@ import { getStatusTone, QUOTATION_STATUS_TONE } from "../../../config/ThemeConfi
 import { formatDate, formatStatus } from "../../../utils/format";
 import StatusChip from "../../../components/StatusChip";
 import RowActions, { RowActionItem } from "../../../components/Table/RowActions";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n/i18n";
 
 interface QuotationVersionHeaderProps {
     versions: QuotationVersionData[];
@@ -28,12 +30,6 @@ interface QuotationVersionHeaderProps {
 }
 
 const STEPS = ["draft", "submitted", "fm_confirmed", "approved"] as const;
-const STEP_LABELS: Record<typeof STEPS[number], string> = {
-    draft: "Draft",
-    submitted: "Submitted",
-    fm_confirmed: "FM review",
-    approved: "Approved",
-};
 
 const who = (name: string | undefined, date: Date | null | undefined) =>
     [name, date ? formatDate(date) : null].filter(Boolean).join(" · ") || "—";
@@ -48,11 +44,11 @@ const stepCaption = (step: typeof STEPS[number], version: QuotationVersionData, 
         case "draft":
             return who(version.created_user?.name, version.created_at);
         case "submitted":
-            return done ? `By ${version.created_user?.name ?? "—"}` : "Not submitted yet";
+            return done ? i18n.t("quotation.header.by", { name: version.created_user?.name ?? "—" }) : i18n.t("quotation.header.notSubmitted");
         case "fm_confirmed":
-            return done ? who(version.fm_confirmed_user?.name, version.fm_confirmed_at) : waiting ? "Waiting for the Field Manager" : "";
+            return done ? who(version.fm_confirmed_user?.name, version.fm_confirmed_at) : waiting ? i18n.t("quotation.header.waitingFm") : "";
         case "approved":
-            return done ? who(version.approved_user?.name, version.approved_at) : waiting ? "Waiting for approval" : "";
+            return done ? who(version.approved_user?.name, version.approved_at) : waiting ? i18n.t("quotation.header.waitingApproval") : "";
     }
 };
 
@@ -75,6 +71,7 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
     onNewVersion,
     onCopyLink,
 }) => {
+    const { t } = useTranslation();
     const status = selectedVersion.status;
     const stepIndex = Math.max(0, STEPS.indexOf(status as typeof STEPS[number]));
     // A draft is still being worked on; once submitted, every step up to the current status is done.
@@ -85,17 +82,17 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
     const primaryAction = (() => {
         if (isEditing) return null;
         if (researcherCanAct && status === "draft") {
-            return <Button variant="contained" startIcon={<Send />} onClick={onSubmit}>Submit for review</Button>;
+            return <Button variant="contained" startIcon={<Send />} onClick={onSubmit}>{t("quotation.header.submit")}</Button>;
         }
         if (researcherCanAct && status === "fm_confirmed" && canApprove) {
-            return <Button variant="contained" startIcon={<CheckCircleOutlineOutlined />} onClick={onApprove}>Approve</Button>;
+            return <Button variant="contained" startIcon={<CheckCircleOutlineOutlined />} onClick={onApprove}>{t("quotation.header.approve")}</Button>;
         }
         if (!canMutate && status === "submitted") {
             return (
-                <Tooltip title={hasPendingFeedback ? "Some feedback is still open. The researcher must resolve or reject all of it before the FM review can be confirmed." : ""}>
+                <Tooltip title={hasPendingFeedback ? t("quotation.header.pendingFeedback") : ""}>
                     <span>
                         <Button variant="contained" startIcon={<CheckCircleOutlineOutlined />} onClick={onConfirmFm} disabled={hasPendingFeedback}>
-                            Confirm FM review
+                            {t("quotation.header.confirmFm")}
                         </Button>
                     </span>
                 </Tooltip>
@@ -105,10 +102,10 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
     })();
 
     const menuItems: RowActionItem[] = researcherCanAct ? [
-        { label: "Create new version", icon: Add, onClick: onNewVersion, disabled: isEditing },
-        { label: "Withdraw to draft", icon: Undo, onClick: onWithdraw, hidden: status !== "submitted", disabled: isEditing },
-        { label: "Withdraw to submitted", icon: Undo, onClick: onWithdraw, hidden: status !== "fm_confirmed", disabled: isEditing },
-        { label: "Delete draft", icon: DeleteOutlineOutlined, tone: "danger", onClick: onDelete, hidden: status !== "draft", disabled: isEditing },
+        { label: t("quotation.header.newVersion"), icon: Add, onClick: onNewVersion, disabled: isEditing },
+        { label: t("quotation.header.withdrawDraft"), icon: Undo, onClick: onWithdraw, hidden: status !== "submitted", disabled: isEditing },
+        { label: t("quotation.header.withdrawSubmitted"), icon: Undo, onClick: onWithdraw, hidden: status !== "fm_confirmed", disabled: isEditing },
+        { label: t("quotation.header.deleteDraft"), icon: DeleteOutlineOutlined, tone: "danger", onClick: onDelete, hidden: status !== "draft", disabled: isEditing },
     ] : [];
 
     return (
@@ -117,16 +114,16 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
                 <TextField
                     select
                     size="small"
-                    label="Version"
+                    label={t("quotation.header.version")}
                     value={selectedVersion.id}
                     disabled={isEditing}
                     onChange={(event) => onSelectVersion(versions.find(v => v.id === Number(event.target.value)) ?? null)}
                     sx={{ width: 160 }}
-                    slotProps={{ select: { renderValue: () => `Version ${selectedVersion.version}` } }}
+                    slotProps={{ select: { renderValue: () => t("quotation.header.versionN", { version: selectedVersion.version }) } }}
                 >
                     {versions.map((v) => (
                         <MenuItem key={v.id} value={v.id} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-                            <span>Version {v.version}</span>
+                            <span>{t("quotation.header.versionN", { version: v.version })}</span>
                             <StatusChip label={formatStatus(v.status)} tone={getStatusTone(v.status, QUOTATION_STATUS_TONE)} />
                         </MenuItem>
                     ))}
@@ -135,26 +132,26 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
                 {isEditing && (
                     <Typography variant="body2" sx={{
                         color: "text.secondary"
-                    }}>Editing: save the form below to keep your changes.</Typography>
+                    }}>{t("quotation.header.editing")}</Typography>
                 )}
 
                 <Box sx={{ ml: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
                     {shared && (
                         <Button variant="outlined" color="inherit" startIcon={<LinkIcon />} onClick={onCopyLink}>
-                            Copy link
+                            {t("quotation.header.copyLink")}
                         </Button>
                     )}
                     {researcherCanAct && status === "draft" && (
                         isEditing ? (
-                            <Button variant="outlined" color="inherit" startIcon={<Close />} onClick={onCancelEdit}>Cancel editing</Button>
+                            <Button variant="outlined" color="inherit" startIcon={<Close />} onClick={onCancelEdit}>{t("quotation.header.cancelEditing")}</Button>
                         ) : (
-                            <Button variant="outlined" color="inherit" startIcon={<EditOutlined />} onClick={onEdit}>Edit</Button>
+                            <Button variant="outlined" color="inherit" startIcon={<EditOutlined />} onClick={onEdit}>{t("quotation.header.edit")}</Button>
                         )
                     )}
                     {menuItems.length > 0 && (
                         // RowActions fills its table cell; here it should only take the width of its button.
                         <Box sx={{ display: "inline-flex" }}>
-                            <RowActions menuLabel="More quotation actions" items={menuItems} />
+                            <RowActions menuLabel={t("quotation.header.more")} items={menuItems} />
                         </Box>
                     )}
                     {primaryAction}
@@ -173,7 +170,7 @@ const QuotationVersionHeader: React.FC<QuotationVersionHeaderProps> = ({
                                 }
                                 sx={{ "& .MuiStepLabel-label": { typography: "body2", fontWeight: 500 } }}
                             >
-                                {STEP_LABELS[step]}
+                                {t(`quotation.header.steps.${step}`)}
                             </StepLabel>
                         </Step>
                     ))}

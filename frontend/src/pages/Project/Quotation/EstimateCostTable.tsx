@@ -8,6 +8,8 @@ import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import { formatNumber } from "../../../utils/format";
 import { alpha } from "@mui/material/styles";
 import { BRAND } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n/i18n";
 
 export interface EstimateCostItemData {
     type: 'item';
@@ -62,7 +64,7 @@ const newItem = (): EstimateCostItemData => ({
 });
 
 const newGroup = (): EstimateCostGroupData => ({
-    type: 'group', id: uid(), label: 'New Group', children: []
+    type: 'group', id: uid(), label: i18n.t("quotation.cost.newGroup"), children: []
 });
 
 const fmt = (val: number | ''): string => formatNumber(val === '' ? null : val);
@@ -114,13 +116,13 @@ const addToGroup = (nodes: EstimateCostNode[], groupId: string, child: EstimateC
     });
 
 const ITEM_COLS = [
-    { key: 'chi_phi' as const,        label: 'Cost',        type: 'text' as const,   width: 200 },
-    { key: 'unit' as const,           label: 'Unit',           type: 'text' as const,   width: 80  },
-    { key: 'quantity' as const,       label: 'Quantity',       type: 'number' as const, width: 90  },
-    { key: 'price' as const,          label: 'Price',          type: 'number' as const, width: 120 },
-    { key: 'amount' as const,         label: 'Amount',         type: 'number' as const, width: 140, readOnly: true },
-    { key: 'actual_expense' as const, label: 'Actual Expense', type: 'number' as const, width: 140 },
-    { key: 'note' as const,           label: 'Note',           type: 'text' as const,   width: 180 },
+    { key: 'chi_phi' as const,        type: 'text' as const,   width: 200 },
+    { key: 'unit' as const,           type: 'text' as const,   width: 80  },
+    { key: 'quantity' as const,       type: 'number' as const, width: 90  },
+    { key: 'price' as const,          type: 'number' as const, width: 120 },
+    { key: 'amount' as const,         type: 'number' as const, width: 140, readOnly: true },
+    { key: 'actual_expense' as const, type: 'number' as const, width: 140 },
+    { key: 'note' as const,           type: 'text' as const,   width: 180 },
 ];
 
 interface Props {
@@ -130,6 +132,7 @@ interface Props {
 }
 
 const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
+    const { t } = useTranslation();
     const nodes = value || [];
     const cellSx = { padding: "4px 10px" };
 
@@ -169,17 +172,17 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                         <TableCell sx={cellSx} />
                         {isEditing && (
                             <TableCell sx={{ padding: "2px 4px", whiteSpace: "nowrap" }}>
-                                <Tooltip title="Add sub-group">
+                                <Tooltip title={t("quotation.cost.addSubGroup")}>
                                     <IconButton size="small" onClick={() => onChange(addToGroup(nodes, node.id, newGroup()))}>
                                         <CreateNewFolderIcon fontSize="small" color="primary" />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Add item">
+                                <Tooltip title={t("quotation.cost.addItem")}>
                                     <IconButton size="small" onClick={() => onChange(addToGroup(nodes, node.id, newItem()))}>
                                         <PostAddIcon fontSize="small" color="primary" />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Delete group">
+                                <Tooltip title={t("quotation.cost.deleteGroup")}>
                                     <IconButton size="small" color="error" onClick={() => onChange(deleteNode(nodes, node.id))}>
                                         <DeleteIcon fontSize="small" />
                                     </IconButton>
@@ -235,7 +238,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
     return (
         <Box>
             <Typography variant="h3" sx={{ mb: 1 }}>
-                Estimate Cost
+                {t("quotation.cost.title")}
             </Typography>
             <Paper
                 elevation={0}
@@ -256,7 +259,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                         key={col.key}
                                         sx={{ width: col.width, whiteSpace: "nowrap" }}
                                     >
-                                        {col.label}
+                                        {t(`quotation.cost.columns.${col.key}`)}
                                     </TableCell>
                                 ))}
                                 {isEditing && <TableCell sx={{ width: 120 }} />}
@@ -269,7 +272,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                         colSpan={ITEM_COLS.length}
                                         sx={{ textAlign: "center", color: "text.secondary", py: 3 }}
                                     >
-                                        No data
+                                        {t("quotation.cost.noData")}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -283,7 +286,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                     borderTopColor: alpha(BRAND.accent, 0.25)
                                 }}>
                                     <TableCell colSpan={4} sx={{ fontWeight: 700 }}>
-                                        Total
+                                        {t("quotation.cost.total")}
                                     </TableCell>
                                     <TableCell sx={{ fontWeight: 700 }}>
                                         {formatNumber(grandTotal.amount)}
@@ -307,14 +310,14 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                         size="small"
                         onClick={() => onChange([...nodes, newGroup()])}
                     >
-                        Add Group
+                        {t("quotation.cost.addGroup")}
                     </Button>
                     <Button
                         startIcon={<AddIcon />}
                         size="small"
                         onClick={() => onChange([...nodes, newItem()])}
                     >
-                        Add Item
+                        {t("quotation.cost.addItemButton")}
                     </Button>
                 </Box>
             )}

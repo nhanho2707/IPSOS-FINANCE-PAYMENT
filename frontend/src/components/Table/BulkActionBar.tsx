@@ -52,7 +52,7 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({ label, summary, actions, 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {!progress && onClear && (
                     <Button color="inherit" size="small" onClick={onClear}>
-                        Clear selection
+                        {t("common.table.clearSelection")}
                     </Button>
                 )}
                 {actions}

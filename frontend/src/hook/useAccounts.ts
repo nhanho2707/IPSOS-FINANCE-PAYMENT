@@ -3,6 +3,7 @@ import { AccountData, AccountFilters, ResetPasswordPayload } from "../config/Acc
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { ActionState } from "../components/Table/ReusableTable";
+import i18n from "../i18n/i18n";
 
 export const getAccountErrorMessage = (error: unknown, fallback: string): string => {
     if (axios.isAxiosError(error)) {
@@ -66,7 +67,7 @@ export function useAccounts() {
                 ...(options?.silent ? {} : { message: response.data.message })
             }));
         }catch(error: unknown){
-            const message = getAccountErrorMessage(error, 'Failed to fetch Accounts.');
+            const message = getAccountErrorMessage(error, i18n.t('accounts.errors.load'));
 
             setActionState((prev) => ({
                 ...prev,
@@ -94,7 +95,7 @@ export function useAccounts() {
 
             return response.data.data;
         } catch (error: unknown) {
-            const message = getAccountErrorMessage(error, 'Failed to update Account.');
+            const message = getAccountErrorMessage(error, i18n.t('accounts.errors.update'));
 
             setActionState(prev => ({ ...prev, loading: false, error: true, message }));
             throw error;
@@ -115,7 +116,7 @@ export function useAccounts() {
 
             return response.data.data;
         } catch (error: unknown) {
-            const message = getAccountErrorMessage(error, 'Failed to update account status.');
+            const message = getAccountErrorMessage(error, i18n.t('accounts.errors.status'));
 
             setActionState(prev => ({ ...prev, loading: false, error: true, message }));
             throw error;
@@ -134,7 +135,7 @@ export function useAccounts() {
 
             return response.data;
         } catch (error: unknown) {
-            const message = getAccountErrorMessage(error, 'Failed to reset password.');
+            const message = getAccountErrorMessage(error, i18n.t('accounts.errors.reset'));
 
             setActionState(prev => ({ ...prev, loading: false, error: true, message }));
             throw error;
@@ -157,7 +158,7 @@ export function useAccounts() {
 
             return response.data;
         }catch(error: unknown){
-            const message = getAccountErrorMessage(error, 'Failed to store Account.');
+            const message = getAccountErrorMessage(error, i18n.t('accounts.errors.store'));
 
             setActionState((prev) => ({ ...prev, loading: false, error: true, message }));
             throw error;

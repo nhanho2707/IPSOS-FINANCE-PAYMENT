@@ -2,6 +2,7 @@ import { Autocomplete, TableCell, TableRow, TextField } from "@mui/material";
 import { memo, useState } from "react";
 import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
 import { Theme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 type Option = { value: string | number; label: string; parent?: string | number };
 
@@ -32,6 +33,7 @@ const toSingleString = (value: any): string => {
 };
 
 const SingleSelectRow = memo(({ row, isEditing, isDisabled, onChange, confirmMessage }: Props) => {
+    const { t } = useTranslation();
     const selected = toSingleString(row.value);
     const selectedOption = row.options.find((o) => o.label === selected) ?? null;
 
@@ -95,7 +97,7 @@ const SingleSelectRow = memo(({ row, isEditing, isDisabled, onChange, confirmMes
             {confirmMessage && (
                 <ConfirmDialog
                     open={confirmOpen}
-                    title="Confirm change"
+                    title={t("quotation.form.confirmChange")}
                     message={confirmMessage.replace("{value}", pendingOption?.label ?? "")}
                     showConfirmButton={true}
                     onClose={handleCancel}

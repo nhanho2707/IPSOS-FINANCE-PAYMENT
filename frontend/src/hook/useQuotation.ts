@@ -4,6 +4,7 @@ import axios from "axios";
 import { QuotationVersionData } from "../config/QuotationConfig";
 import { ProjectData } from "../config/ProjectFieldsConfig";
 import { ActionState } from "../components/Table/ReusableTable";
+import i18n from "../i18n/i18n";
 
 export function useQuotation(projectId?: number) {
     const [ project, setProject ] = useState<ProjectData | null>(null); 
@@ -61,7 +62,7 @@ export function useQuotation(projectId?: number) {
                 ...(options?.silent ? {} : { message: response.data.message })
             }));
         } catch(error: any){
-            let message = 'Failed to get quotation versions.';
+            let message: string = i18n.t('quotation.errors.versions');
             
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -127,7 +128,7 @@ export function useQuotation(projectId?: number) {
                 type: 'import',
                 loading: false,
                 error: true,
-                message: error.message || 'Failed to fetch Quotation'
+                message: error.message || i18n.t('quotation.errors.load')
             });
         } 
     }, [projectId]);
@@ -168,7 +169,7 @@ export function useQuotation(projectId?: number) {
                 message: response.data.message
             });
         } catch(error: any){
-            let message = 'Failed to update Quotation';
+            let message: string = i18n.t('quotation.errors.update');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -220,7 +221,7 @@ export function useQuotation(projectId?: number) {
 
             await getQuotationVersions({silent: true});
         } catch(error: any){
-            let message = 'Failed to delete Quotation';
+            let message: string = i18n.t('quotation.errors.delete');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -271,7 +272,7 @@ export function useQuotation(projectId?: number) {
 
             await getQuotationVersions({silent: true});
         } catch(error: any){
-            let message = 'Failed to clone Quotation';
+            let message: string = i18n.t('quotation.errors.clone');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -327,7 +328,7 @@ export function useQuotation(projectId?: number) {
                 message: response.data.message
             });
         } catch(error: any){
-            let message = 'Failed to submit Quotation';
+            let message: string = i18n.t('quotation.errors.submit');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -382,7 +383,7 @@ export function useQuotation(projectId?: number) {
                 message: response.data.message
             });
         } catch(error: any){
-            let message = 'Failed to confirm FM review';
+            let message: string = i18n.t('quotation.errors.confirmFm');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message;
@@ -438,7 +439,7 @@ export function useQuotation(projectId?: number) {
                 message: response.data.message
             });
         } catch(error: any){
-            let message = 'Failed to approve Quotation';
+            let message: string = i18n.t('quotation.errors.approve');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -493,7 +494,7 @@ export function useQuotation(projectId?: number) {
                 message: response.data.message
             });
         } catch(error: any){
-            let message = 'Failed to withdraw Quotation';
+            let message: string = i18n.t('quotation.errors.withdraw');
 
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message;
@@ -535,7 +536,7 @@ export function useQuotation(projectId?: number) {
 
             return version;
         } catch (error: any) {
-            let message = 'Failed to save feedback';
+            let message: string = i18n.t('quotation.errors.feedback');
 
             if (axios.isAxiosError(error)) {
                 message = error.response?.data.message || error.response?.data.error || error.message;
@@ -570,7 +571,7 @@ export function useQuotation(projectId?: number) {
 
             return version;
         } catch (error: any) {
-            let message = 'Failed to save response';
+            let message: string = i18n.t('quotation.errors.response');
 
             if (axios.isAxiosError(error)) {
                 message = error.response?.data.message || error.response?.data.error || error.message;

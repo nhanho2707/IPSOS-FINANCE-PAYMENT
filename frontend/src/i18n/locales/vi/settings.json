@@ -1,0 +1,62 @@
+{
+    "info": "Thông tin dự án",
+    "edit": "Sửa",
+    "name": "Tên dự án",
+    "internalCode": "Mã nội bộ",
+    "symphony": "Symphony",
+    "token": "Token",
+    "pricesTitle": "Cỡ mẫu và giá quà",
+    "pricesDescription": "Mỗi quà được trả theo giá đặt ở đây cho tỉnh và mức giá của đáp viên.",
+    "editTitle": "Sửa thông tin dự án",
+    "saved": "Đã lưu thông tin dự án.",
+    "notSaved": "Chưa lưu được thay đổi. Vui lòng thử lại.",
+    "assignment": {
+        "select": "Chọn người được phân công vào dự án:",
+        "placeholder": "Chọn…",
+        "assign": "Phân công",
+        "failed": "Phân công không thành công.",
+        "saved": "Đã lưu phân công."
+    },
+    "prices": {
+        "columns": {
+            "province": "Tỉnh",
+            "sampleSize": "Cỡ mẫu",
+            "priceType": "Loại đơn giá",
+            "price": "Giá (VND)",
+            "priceN": "Giá {{n}} (VND)"
+        },
+        "actionsFor": "Thao tác cho {{province}} {{type}}",
+        "delete": "Xoá giá",
+        "genericError": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+        "import": {
+            "missingColumns": "File thiếu các cột bắt buộc: {{columns}}",
+            "provinceNotFound": "không tìm thấy tỉnh “{{name}}”",
+            "provinceMissing": "thiếu tỉnh",
+            "priceType": "loại đơn giá phải là một trong {{types}}",
+            "sampleSize": "cỡ mẫu phải là số nguyên lớn hơn 0",
+            "invalid": "{{column}} không hợp lệ",
+            "mustBePositive": "{{column}} phải lớn hơn 0",
+            "fillBefore": "phải điền {{previous}} trước {{column}}",
+            "duplicate": "trùng tỉnh và loại đơn giá với dòng {{row}}",
+            "row": "Dòng {{row}}: {{errors}}",
+            "noData": "File không có dữ liệu.",
+            "failedTitle": "Nhập giá không thành công: chưa lưu giá nào",
+            "failedHint": "Sửa các dòng này trong file rồi nhập lại."
+        },
+        "empty": {
+            "title": "Chưa có giá theo tỉnh",
+            "canEdit": "Thêm cỡ mẫu và giá quà theo tỉnh, hoặc nhập từ file Excel.",
+            "readOnly": "Giá theo tỉnh sẽ hiện ở đây khi được thiết lập."
+        },
+        "add": "Thêm giá",
+        "importButton": "Nhập file",
+        "importing": "Đang nhập…",
+        "export": "Xuất file",
+        "addTitle": "Thêm giá theo tỉnh",
+        "addDescription": "Mỗi mức giá quà chỉ mở khi đã điền mức trước đó.",
+        "giftPriceN": "Giá quà {{n}}",
+        "deleteTitle": "Xoá giá",
+        "deleteConfirm": "Xoá",
+        "deleteMessage": "Bạn có chắc muốn xoá giá “{{type}}” của {{province}}?"
+    }
+}

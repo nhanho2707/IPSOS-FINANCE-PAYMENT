@@ -20,7 +20,8 @@
     "table": {
         "noData": "Không có dữ liệu",
         "bulkActions": "Thao tác hàng loạt",
-        "bulkProgress": "Tiến độ thao tác hàng loạt"
+        "bulkProgress": "Tiến độ thao tác hàng loạt",
+        "clearSelection": "Bỏ chọn"
     },
     "filters": {
         "clear": "Bỏ lọc {{label}}",

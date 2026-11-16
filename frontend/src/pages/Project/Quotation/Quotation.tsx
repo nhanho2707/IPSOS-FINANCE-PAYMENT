@@ -23,6 +23,7 @@ import CalculateIcon from '@mui/icons-material/Calculate';
 import { formatStatus } from "../../../utils/format";
 import StatusChip from "../../../components/StatusChip";
 import { getStatusTone, QUOTATION_STATUS_TONE } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
 
 const Quotation: React.FC = () => {
     const { id } = useParams<{id: string}>();
@@ -31,6 +32,7 @@ const Quotation: React.FC = () => {
 
     const { user } = useAuth();
     const { showToast } = useToast();
+    const { t } = useTranslation();
     const canMutate = hasRole(user?.role, ROLE_ACCESS.quotationMutate);
     const canApprove = hasRole(user?.role, ROLE_ACCESS.quotationApprove);
 
@@ -173,8 +175,8 @@ const Quotation: React.FC = () => {
         if (!selectedVersion) return;
         const url = `${window.location.origin}${window.location.pathname}?version=${selectedVersion.id}`;
         navigator.clipboard.writeText(url)
-            .then(() => showToast(`Link to version ${selectedVersion.version} copied.`))
-            .catch(() => showToast("Could not copy the link. Copy it from the address bar instead.", "error"));
+            .then(() => showToast(t("quotation.page.linkCopied", { version: selectedVersion.version })))
+            .catch(() => showToast(t("quotation.page.copyFailed"), "error"));
     };
 
     // FM confirmation waits until the researcher has answered every open feedback thread.
@@ -253,10 +255,10 @@ const Quotation: React.FC = () => {
 
     const handleRemove = () => {
         openDialog({
-            title: "Delete Version",
+            title: t("quotation.page.delete.title"),
             tone: "danger",
-            confirmText: "Delete",
-            message: `Are you sure that you want to remove this version "${selectedVersion?.version}"?`,
+            confirmText: t("quotation.page.delete.confirm"),
+            message: t("quotation.page.delete.message", { version: selectedVersion?.version }),
             showConfirmButton: true,
             onConfirm: async () => {
                 await destroyQuotationVersion();
@@ -274,9 +276,9 @@ const Quotation: React.FC = () => {
     const handleSubmit = () => {
 
         openDialog({
-            title: 'Submit Version',
-            confirmText: 'Submit',
-            message: `Are you sure that you want to submit this version?`,
+            title: t("quotation.page.submit.title"),
+            confirmText: t("quotation.page.submit.confirm"),
+            message: t("quotation.page.submit.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await submitQuotationVersion();
@@ -293,9 +295,9 @@ const Quotation: React.FC = () => {
 
     const handleApprove = () => {
         openDialog({
-            title: 'Approve Version',
-            confirmText: 'Approve',
-            message: `Are you sure that you want to approve this version?`,
+            title: t("quotation.page.approve.title"),
+            confirmText: t("quotation.page.approve.confirm"),
+            message: t("quotation.page.approve.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await approveQuotationVersion();
@@ -307,9 +309,9 @@ const Quotation: React.FC = () => {
 
     const handleWithdraw = () => {
         openDialog({
-            title: 'Withdraw Version',
-            confirmText: 'Withdraw',
-            message: `Are you sure that you want to withdraw this version? It will return to draft and can be edited again.`,
+            title: t("quotation.page.withdraw.title"),
+            confirmText: t("quotation.page.withdraw.confirm"),
+            message: t("quotation.page.withdraw.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await withdrawQuotationVersion();
@@ -321,9 +323,9 @@ const Quotation: React.FC = () => {
 
     const handleConfirmFm = () => {
         openDialog({
-            title: 'Confirm FM review',
-            confirmText: 'Confirm',
-            message: `Confirm that you have finished reviewing this quotation?\n\nAfter confirming:\n• FM can no longer add feedback\n• Researcher can approve the quotation`,
+            title: t("quotation.page.confirmFm.title"),
+            confirmText: t("quotation.page.confirmFm.confirm"),
+            message: t("quotation.page.confirmFm.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await confirmFmVersion();
@@ -370,7 +372,7 @@ const Quotation: React.FC = () => {
                             sx={{ mb: 1.5 }}
                             action={
                                 <IconButton
-                                    aria-label="close"
+                                    aria-label={t("quotation.page.close")}
                                     color="inherit"
                                     size="small"
                                     onClick={() => setOpenAlert(false)}
@@ -413,12 +415,12 @@ const Quotation: React.FC = () => {
             <Tabs
                 value={value}
                 onChange={handleChange}
-                aria-label="quotation tabs"
+                aria-label={t("quotation.page.tabsLabel")}
                 sx={{ borderBottom: 1, borderColor: "divider" }}
             >
-                <Tab value="one" label="General" />
-                <Tab value="two" label="Operations" />
-                {showEstimatedCost && <Tab value="three" label="Estimated cost" />}
+                <Tab value="one" label={t("quotation.page.tabs.general")} />
+                <Tab value="two" label={t("quotation.page.tabs.operations")} />
+                {showEstimatedCost && <Tab value="three" label={t("quotation.page.tabs.estimatedCost")} />}
             </Tabs>
 
             <TabPanel value={value} index="one">
@@ -455,7 +457,7 @@ const Quotation: React.FC = () => {
                         }}
                         sx={{ mt: 1 }}
                     >
-                        Generate Estimated Cost
+                        {t("quotation.page.generateCost")}
                     </Button>
                 )}
             </TabPanel>
@@ -472,20 +474,20 @@ const Quotation: React.FC = () => {
                             variant="contained"
                             onClick={handleSaveEstimateCost}
                         >
-                            Save
+                            {t("quotation.page.save")}
                         </Button>
                         <Button
                             variant="outlined"
                             onClick={() => openDialog({
-                                title: 'Load Template',
-                                message: 'Reset to the default template? Current data will be lost.',
+                                title: t("quotation.page.loadTemplateTitle"),
+                                message: t("quotation.page.loadTemplateMessage"),
                                 showConfirmButton: true,
                                 tone: 'danger',
-                                confirmText: 'Reset',
+                                confirmText: t("quotation.page.reset"),
                                 onConfirm: () => setEstimateCostItems(createDefaultEstimateCost()),
                             })}
                         >
-                            Load Template
+                            {t("quotation.page.loadTemplate")}
                         </Button>
                     </Box>
                 )}
@@ -495,7 +497,7 @@ const Quotation: React.FC = () => {
 
             <GenericDialog
                 open={openCloneNewVersion}
-                title="Create a New Version" 
+                title={t("quotation.page.newVersionTitle")}
                 children={
                     <TextField
                         select
@@ -521,7 +523,7 @@ const Quotation: React.FC = () => {
                                             width: "100%"
                                         }}
                                     >
-                                        <span>Version {v.version}</span>
+                                        <span>{t("quotation.page.versionN", { version: v.version })}</span>
                                         
                                         <StatusChip label={formatStatus(v.status)} tone={getStatusTone(v.status, QUOTATION_STATUS_TONE)} />
                                     </Box>
@@ -532,8 +534,7 @@ const Quotation: React.FC = () => {
                 } 
                 onClose={() => setOpenCloneNewVersion(false)} 
                 onSubmit={handleCloneNewVersion} 
-                submitText = "Submit"
-                cancelText = "Cancel"
+                submitText={t("quotation.page.submitNew")}
             />
         </>
     )

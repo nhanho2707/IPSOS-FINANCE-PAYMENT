@@ -3,6 +3,7 @@ import { CATIBatchData, CATIImportResult, CATIRespondentImportRow } from "../con
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
 import { ActionState, ActionType } from "../components/Table/ReusableTable";
+import i18n from "../i18n/i18n";
 
 const IMPORT_CHUNK_SIZE = 500;
 
@@ -92,7 +93,7 @@ export const useCATIBatch = (projectId: number) => {
             type: 'import',
             loading: true,
             error: false,
-            message: `Importing 0/${rows.length} rows...`
+            message: i18n.t("cati.progress", { done: 0, total: rows.length })
         });
 
         // Large files are sent in chunks so a single request never hits the server time or size limits.
@@ -116,7 +117,7 @@ export const useCATIBatch = (projectId: number) => {
             } catch(error){
                 result.error = axios.isAxiosError(error)
                     ? (error.response?.data?.message ?? error.message)
-                    : 'Failed to import CATI Batch!';
+                    : i18n.t('cati.errors.import');
                 break;
             }
 
@@ -124,19 +125,19 @@ export const useCATIBatch = (projectId: number) => {
 
             setActionState((prev) => ({
                 ...prev,
-                message: `Importing ${processed}/${rows.length} rows...`
+                message: i18n.t("cati.progress", { done: processed, total: rows.length })
             }));
         }
 
-        const summary = `Imported ${result.imported}/${result.total} respondents.`
-            + (result.skipped.length > 0 ? ` Skipped ${result.skipped.length} rows.` : '');
+        const summary = i18n.t("cati.summary.imported", { imported: result.imported, total: result.total })
+            + (result.skipped.length > 0 ? " " + i18n.t("cati.summary.skipped", { skipped: result.skipped.length }) : '');
 
         setActionState({
             type: 'import',
             loading: false,
             error: result.error !== null,
             message: result.error !== null
-                ? `${summary} Import stopped at row ${rows[processed]?.row ?? '-'}: ${result.error}`
+                ? i18n.t("cati.summary.stopped", { summary, row: rows[processed]?.row ?? '-', error: result.error })
                 : summary
         });
 

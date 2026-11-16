@@ -1,0 +1,32 @@
+{
+    "columns": {
+        "id": "ID",
+        "fullName": "Full name",
+        "transactions": "Transactions",
+        "breakdown": "(Vinnet / GotIt / Refused / Total)"
+    },
+    "remove": {
+        "title": "Remove interviewer",
+        "confirm": "Remove",
+        "message": "Remove {{id}} from this project?",
+        "menu": "Remove from project",
+        "hasTransactions": "Interviewers with transactions stay on the project"
+    },
+    "actionsFor": "Actions for {{id}}",
+    "search": "Search interviewer ID or name",
+    "empty": {
+        "notFound": "No interviewers found",
+        "nothingMatches": "Nothing matches “{{term}}”.",
+        "noneTitle": "No interviewers yet",
+        "noneDescription": "Add the interviewer IDs working on this project. The project needs interviewers before it can go into field."
+    },
+    "add": {
+        "title": "Add interviewers",
+        "label": "Interviewer IDs, one per line",
+        "placeholder": "Paste interviewer IDs here",
+        "submit": "Add"
+    },
+    "errors": {
+        "load": "Failed to fetch interviewers"
+    }
+}

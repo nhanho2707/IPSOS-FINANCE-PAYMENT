@@ -1,7 +1,8 @@
 import { Alert, AlertTitle, Autocomplete, Box, Button, TextField, Typography } from "@mui/material";
 import { BlockOutlined, CheckCircleOutlineOutlined, DeleteOutlineOutlined, FileUploadOutlined } from "@mui/icons-material";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { CATIBatchData, CATIImportResult, CATIImportSkippedRow, CATIRespondentImportRow, CATIRespondentSheetRow, MiniCATIBatchCellConfig } from "../../config/MiniCATIFieldsConfig";
+import { CATIBatchData, CATIImportResult, CATIImportSkippedRow, CATIRespondentImportRow, CATIRespondentSheetRow, catiBatchColumns } from "../../config/MiniCATIFieldsConfig";
+import { useTranslation } from "react-i18next";
 import { CATI_BATCH_STATUS_TONE, getStatusTone } from "../../config/ThemeConfig";
 import { useCATIBatch } from "../../hook/useCATIBatch";
 import { useProjectContext } from "../../hook/useProjectContext";
@@ -30,11 +31,12 @@ const SkippedRowsBanner: React.FC<{ result: CATIImportResult; onClose: () => voi
         acc[item.reason].push(item.row);
         return acc;
     }, {});
+    const { t } = useTranslation();
 
     return (
         <Alert severity="warning" onClose={onClose}>
             <AlertTitle>
-                {formatNumber(result.skipped.length)} {result.skipped.length === 1 ? "row was" : "rows were"} skipped
+                {t("cati.skipped.title", { count: result.skipped.length, n: formatNumber(result.skipped.length) })}
             </AlertTitle>
             <Box component="ul" sx={{ m: 0, pl: 2.5, typography: "body2" }}>
                 {Object.entries(grouped).map(([reason, rowNumbers]) => {
@@ -42,7 +44,7 @@ const SkippedRowsBanner: React.FC<{ result: CATIImportResult; onClose: () => voi
                     const more = rowNumbers.length > MAX_ROWS_SHOWN_PER_REASON ? `, … (+${rowNumbers.length - MAX_ROWS_SHOWN_PER_REASON})` : "";
                     return (
                         <li key={reason}>
-                            {reason}: {formatNumber(rowNumbers.length)} (rows {shown}{more})
+                            {t("cati.skipped.item", { reason, total: formatNumber(rowNumbers.length), rows: `${shown}${more}` })}
                         </li>
                     );
                 })}
@@ -55,6 +57,7 @@ const CATISettings = () => {
     const { projectId } = useProjectContext();
     const { showToast } = useToast();
     const { openDialog, dialogProps } = useDialog();
+    const { t } = useTranslation();
 
     const { batches, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, importCATIBatch, destroyBatch, updateStatus } = useCATIBatch(projectId);
 
@@ -65,10 +68,10 @@ const CATISettings = () => {
     const [ importResult, setImportResult ] = useState<CATIImportResult | null>(null);
 
     const confirmDelete = (batch: CATIBatchData) => openDialog({
-        title: "Delete batch",
+        title: t("cati.delete.title"),
         tone: "danger",
-        confirmText: "Delete",
-        message: `Delete the batch "${batch.name}" and its ${formatNumber(batch.total_records)} respondents?`,
+        confirmText: t("cati.delete.confirm"),
+        message: t("cati.delete.message", { name: batch.name, total: formatNumber(batch.total_records) }),
         showConfirmButton: true,
         onConfirm: () => destroyBatch(batch.id)
     });
@@ -77,18 +80,18 @@ const CATISettings = () => {
         const blocking = batch.status === 'active';
 
         openDialog({
-            title: blocking ? "Block batch" : "Activate batch",
-            confirmText: blocking ? "Block" : "Activate",
+            title: blocking ? t("cati.block.title") : t("cati.activate.title"),
+            confirmText: blocking ? t("cati.block.confirm") : t("cati.activate.confirm"),
             message: blocking
-                ? `Interviewers will no longer get respondents from "${batch.name}" until it is activated again.`
-                : `Interviewers will get respondents from "${batch.name}" again.`,
+                ? t("cati.block.message", { name: batch.name })
+                : t("cati.activate.message", { name: batch.name }),
             showConfirmButton: true,
             onConfirm: () => updateStatus(batch.id, blocking ? 'blocked' : 'active')
         });
     };
 
     const columns: ColumnFormat[] = [
-        ...MiniCATIBatchCellConfig.map((col): ColumnFormat => col.name !== "status" ? col : {
+        ...catiBatchColumns().map((col): ColumnFormat => col.name !== "status" ? col : {
             ...col,
             renderCell: (row: CATIBatchData) => (
                 <StatusChip label={formatStatus(row.status)} tone={getStatusTone(row.status, CATI_BATCH_STATUS_TONE)} />
@@ -102,20 +105,20 @@ const CATISettings = () => {
             width: 56,
             renderAction: (row: CATIBatchData) => (
                 <RowActions
-                    menuLabel={`Actions for ${row.name}`}
+                    menuLabel={t("cati.actionsFor", { name: row.name })}
                     items={[
                         {
-                            label: row.status === 'active' ? "Block batch" : "Activate batch",
+                            label: row.status === 'active' ? t("cati.block.title") : t("cati.activate.title"),
                             icon: row.status === 'active' ? BlockOutlined : CheckCircleOutlineOutlined,
                             onClick: () => confirmStatusChange(row),
                         },
                         {
-                            label: "Delete batch",
+                            label: t("cati.delete.title"),
                             icon: DeleteOutlineOutlined,
                             tone: "danger",
                             onClick: () => confirmDelete(row),
                             disabled: row.to_used,
-                            disabledReason: row.to_used ? "Interviewers have already used this batch" : undefined,
+                            disabledReason: row.to_used ? t("cati.delete.used") : undefined,
                         },
                     ]}
                 />
@@ -142,7 +145,7 @@ const CATISettings = () => {
         try
         {
             if (!batchName.trim()) {
-                showToast("Enter a batch name before importing.", "warning");
+                showToast(t("cati.toast.needName"), "warning");
                 return;
             }
 
@@ -156,7 +159,7 @@ const CATISettings = () => {
             });
 
             if (!jsonData.length) {
-                showToast("Import failed: the file has no respondent rows.", "error");
+                showToast(t("cati.toast.noRows"), "error");
                 return;
             }
 
@@ -167,7 +170,7 @@ const CATISettings = () => {
             );
 
             if(missingColumns.length > 0){
-                showToast(`Import failed: the file is missing these columns: ${missingColumns.join(", ")}.`, "error");
+                showToast(t("cati.toast.missingColumns", { columns: missingColumns.join(", ") }), "error");
                 return;
             }
 
@@ -201,7 +204,7 @@ const CATISettings = () => {
 
     const importButton = (
         <Button variant="contained" startIcon={<FileUploadOutlined />} onClick={() => setImportOpen(true)}>
-            Import batch
+            {t("cati.import.button")}
         </Button>
     );
 
@@ -228,8 +231,8 @@ const CATISettings = () => {
                 banner={importResult && <SkippedRowsBanner result={importResult} onClose={() => setImportResult(null)} />}
                 emptyState={
                     <EmptyState
-                        title="No batches yet"
-                        description="Import an Excel file of respondents to give interviewers numbers to call."
+                        title={t("cati.empty.title")}
+                        description={t("cati.empty.description")}
                         action={importButton}
                     />
                 }
@@ -238,11 +241,11 @@ const CATISettings = () => {
             {/* Choosing the file is the submit step: the click on the submit button lets the browser open the file picker. */}
             <FormDialog
                 open={importOpen}
-                title="Import batch"
-                description={`The Excel file needs these columns: ${REQUIRED_COLUMNS.join(", ")}.`}
+                title={t("cati.import.title")}
+                description={t("cati.import.description", { columns: REQUIRED_COLUMNS.join(", ") })}
                 onClose={() => setImportOpen(false)}
                 onSubmit={() => fileInputRef.current?.click()}
-                submitText="Choose Excel file…"
+                submitText={t("cati.import.choose")}
                 submitDisabled={!batchName.trim()}
             >
                 <Autocomplete
@@ -271,7 +274,7 @@ const CATISettings = () => {
                             <Box>
                                 <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.name}</Typography>
                                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                    {formatNumber(option.total_records)} records
+                                    {t("cati.import.records", { n: formatNumber(option.total_records) })}
                                 </Typography>
                             </Box>
                         </li>
@@ -281,8 +284,8 @@ const CATISettings = () => {
                             {...params}
                             autoFocus
                             size="small"
-                            label="Batch name"
-                            helperText="Pick an existing batch to add respondents to it, or type a new name."
+                            label={t("cati.import.batchName")}
+                            helperText={t("cati.import.batchHelp")}
                         />
                     )}
                 />

@@ -10,11 +10,14 @@ import { getProjectNavItemsForRole, PROJECT_NAV_GROUPS, ProjectNavItem, projectN
 import { useAuth } from '../contexts/AuthContext';
 import { useProjectDetail } from '../hook/useProjectDetail';
 import { ProjectOutletContext } from '../hook/useProjectContext';
+import { useTranslation } from 'react-i18next';
+import { tKey } from '../i18n/i18n';
 
 const ProjectLayout: React.FC = () => {
   const { id } = useParams<{id: string}>();
   const projectId = Number(id) || 0;
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { project, actionState, fetchProject } = useProjectDetail(projectId);
   const [ headerActionsEl, setHeaderActionsEl ] = useState<HTMLDivElement | null>(null);
 
@@ -24,7 +27,7 @@ const ProjectLayout: React.FC = () => {
 
   const toSidebarItem = (item: ProjectNavItem): SidebarNavItem => ({
     key: item.path,
-    label: item.label,
+    label: tKey(item.label),
     to: projectNavPath(projectId, item.path),
     icon: item.icon,
   });
@@ -32,7 +35,7 @@ const ProjectLayout: React.FC = () => {
   const groups: SidebarNavGroup[] = PROJECT_NAV_GROUPS
     .map((group) => ({
       key: group.key,
-      label: group.label,
+      label: group.label ? tKey(group.label) : undefined,
       items: visibleItems.filter((item) => item.group === group.key).map(toSidebarItem),
     }))
     .filter((group) => group.items.length > 0);
@@ -50,12 +53,12 @@ const ProjectLayout: React.FC = () => {
     <AppShell
       mobileTitle={
         <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
-          {project?.project_name ?? "Project"}
+          {project?.project_name ?? t("nav.shell.projectFallback")}
         </Typography>
       }
       sidebar={({ collapsed, openPalette }) => (
         <>
-          <SidebarBackLink to={PROJECTS_PATH} label="All projects" collapsed={collapsed} />
+          <SidebarBackLink to={PROJECTS_PATH} label={t("nav.shell.allProjects")} collapsed={collapsed} />
           <ProjectSwitcher
             projectId={projectId}
             project={project}
@@ -63,10 +66,10 @@ const ProjectLayout: React.FC = () => {
             collapsed={collapsed}
             onClick={() => openPalette("switch-project")}
           />
-          <SidebarNav ariaLabel="Project" groups={groups} collapsed={collapsed} />
+          <SidebarNav ariaLabel={t("nav.shell.projectNav")} groups={groups} collapsed={collapsed} />
           {bottomItems.length > 0 && (
             <Box sx={{ mt: "auto", pt: 2 }}>
-              <SidebarNav ariaLabel="Project settings" groups={[{ key: "bottom", items: bottomItems }]} collapsed={collapsed} />
+              <SidebarNav ariaLabel={t("nav.shell.projectSettingsNav")} groups={[{ key: "bottom", items: bottomItems }]} collapsed={collapsed} />
             </Box>
           )}
         </>

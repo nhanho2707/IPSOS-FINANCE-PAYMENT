@@ -7,6 +7,7 @@ import {
     DialogContentText,
     DialogTitle,
 } from "@mui/material";
+import T from "../../i18n/T";
 
 export type ConfirmDialogTone = "default" | "danger";
 
@@ -30,7 +31,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     onClose,
     onConfirm,
     showConfirmButton = true,
-    confirmText = "Confirm",
+    confirmText,
     cancelText,
     tone = "default",
     loading = false,
@@ -60,7 +61,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={onClose} color="inherit" disabled={loading}>
-                    {cancelText ?? (hasConfirm ? "Cancel" : "Close")}
+                    {cancelText ?? <T k={hasConfirm ? "common.actions.cancel" : "common.actions.close"} />}
                 </Button>
                 {hasConfirm && (
                     <Button
@@ -70,7 +71,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         loading={loading}
                         autoFocus={tone !== "danger"}
                     >
-                        {confirmText}
+                        {confirmText ?? <T k="common.actions.confirm" />}
                     </Button>
                 )}
             </DialogActions>

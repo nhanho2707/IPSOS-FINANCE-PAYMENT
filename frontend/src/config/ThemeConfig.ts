@@ -1,4 +1,4 @@
-import { alpha, createTheme } from "@mui/material/styles";
+import { alpha, createTheme, ThemeOptions } from "@mui/material/styles";
 
 export const BRAND = {
   accent: "#009d9c", // charts, focus rings, selection marks: 3.3:1 on white, so never for small text
@@ -100,7 +100,7 @@ const FONT_FAMILY = '"Inter", "Helvetica", "Arial", sans-serif';
 // keep their current rendering, which keeps the respondent pages and client dashboards unchanged.
 const rem = (px: number) => `${Number((px / 14).toFixed(4))}rem`;
 
-export const appTheme = createTheme({
+export const appThemeOptions: ThemeOptions = {
   palette: {
     primary: {
       main: BRAND.main,
@@ -259,7 +259,9 @@ export const appTheme = createTheme({
       },
     },
   },
-});
+};
+
+export const appTheme = createTheme(appThemeOptions);
 
 const toneVariables = (Object.keys(STATUS_TONES) as StatusTone[]).reduce<Record<string, string>>(
   (vars, tone) => {

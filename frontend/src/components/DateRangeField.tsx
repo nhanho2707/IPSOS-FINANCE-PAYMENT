@@ -4,6 +4,7 @@ import { CalendarMonthOutlined } from "@mui/icons-material";
 import { Dayjs } from "dayjs";
 import { DateRangeForm, DateRangePreset, recentPresets } from "./Table/FilterChip";
 import { formatDateRange } from "../utils/format";
+import { useTranslation } from "react-i18next";
 
 interface DateRangeFieldProps {
     label: string;
@@ -17,6 +18,7 @@ interface DateRangeFieldProps {
 // One field for a date range ("1 – 31 Oct 2026") instead of separate From and To pickers.
 const DateRangeField: React.FC<DateRangeFieldProps> = ({ label, from, to, onChange, presets = recentPresets(), fullWidth }) => {
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
+    const { t } = useTranslation();
 
     return (
         <>
@@ -24,7 +26,7 @@ const DateRangeField: React.FC<DateRangeFieldProps> = ({ label, from, to, onChan
                 size="small"
                 label={label}
                 value={formatDateRange(from, to) ?? ""}
-                placeholder="Choose dates"
+                placeholder={t("common.filters.chooseDates")}
                 fullWidth={fullWidth}
                 onClick={(event) => setAnchorEl(event.currentTarget)}
                 onKeyDown={(event) => {

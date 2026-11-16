@@ -1,0 +1,103 @@
+{
+    "actions": {
+        "save": "Lưu",
+        "cancel": "Huỷ",
+        "confirm": "Xác nhận",
+        "close": "Đóng",
+        "submit": "Gửi",
+        "submitReason": "Gửi lý do",
+        "retry": "Thử lại",
+        "apply": "Áp dụng",
+        "copy": "Sao chép",
+        "moreActions": "Thao tác khác",
+        "showValue": "Hiện giá trị",
+        "hideValue": "Ẩn giá trị"
+    },
+    "search": {
+        "placeholder": "Tìm kiếm…",
+        "clear": "Xoá tìm kiếm"
+    },
+    "table": {
+        "noData": "Không có dữ liệu",
+        "bulkActions": "Thao tác hàng loạt",
+        "bulkProgress": "Tiến độ thao tác hàng loạt"
+    },
+    "filters": {
+        "clear": "Bỏ lọc {{label}}",
+        "noOptions": "Không có lựa chọn",
+        "from": "Từ ngày",
+        "to": "Đến ngày",
+        "chooseDates": "Chọn ngày",
+        "startAfterEnd": "Ngày bắt đầu phải trước hoặc trùng ngày kết thúc.",
+        "presets": {
+            "thisMonth": "Tháng này",
+            "lastMonth": "Tháng trước",
+            "lastDays": "{{count}} ngày qua",
+            "thisYear": "Năm nay",
+            "lastYear": "Năm trước",
+            "nextYear": "Năm sau"
+        }
+    },
+    "toast": {
+        "copied": "Đã sao chép",
+        "copyFailed": "Không sao chép được. Vui lòng sao chép thủ công."
+    },
+    "sample": {
+        "progress": "Tiến độ mẫu",
+        "noTarget": "Chưa đặt cỡ mẫu",
+        "behind": "chậm tiến độ",
+        "behindTooltip": "Đã đạt {{percent}}%; khoảng {{expected}}% thời gian thực địa đã trôi qua",
+        "ofTarget": "{{percent}}% chỉ tiêu"
+    },
+    "unknown": "Không rõ",
+    "status": {
+        "planned": "Đã lên kế hoạch",
+        "in coming": "Sắp triển khai",
+        "on going": "Đang triển khai",
+        "completed": "Hoàn thành",
+        "on hold": "Tạm dừng",
+        "cancelled": "Đã huỷ",
+        "pending": "Đang chờ",
+        "success": "Thành công",
+        "refused": "Từ chối nhận",
+        "failed": "Thất bại",
+        "suppended": "Tạm ngưng",
+        "draft": "Nháp",
+        "submitted": "Đã gửi",
+        "fm_confirmed": "FM đã xác nhận",
+        "approved": "Đã duyệt",
+        "rejected": "Bị từ chối",
+        "resolved": "Đã xử lý",
+        "active": "Đang hoạt động",
+        "blocked": "Đã khoá"
+    },
+    "fieldTiming": {
+        "completed": "Hoàn thành",
+        "cancelled": "Đã huỷ",
+        "startsTomorrow": "Bắt đầu ngày mai",
+        "startsIn_one": "Bắt đầu sau {{count}} ngày",
+        "startsIn_other": "Bắt đầu sau {{count}} ngày",
+        "endsTomorrow": "Kết thúc ngày mai",
+        "endsIn_one": "Kết thúc sau {{count}} ngày",
+        "endsIn_other": "Kết thúc sau {{count}} ngày",
+        "endsToday": "Kết thúc hôm nay",
+        "endedYesterday": "Đã kết thúc hôm qua",
+        "endedAgo_one": "Đã kết thúc {{count}} ngày trước",
+        "endedAgo_other": "Đã kết thúc {{count}} ngày trước"
+    },
+    "language": {
+        "label": "Ngôn ngữ",
+        "en": "English",
+        "vi": "Tiếng Việt"
+    },
+    "errorPage": {
+        "notFound": "Không tìm thấy trang",
+        "forbidden": "Bạn không có quyền xem trang này",
+        "generic": "Đã có lỗi xảy ra",
+        "defaultMessage": "Xin lỗi, trang bạn tìm không tồn tại.",
+        "code": "Lỗi {{code}}",
+        "backToProjects": "Về danh sách dự án",
+        "goBack": "Quay lại"
+    },
+    "breadcrumb": "Đường dẫn"
+}

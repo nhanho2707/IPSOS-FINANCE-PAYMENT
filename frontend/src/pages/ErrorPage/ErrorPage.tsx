@@ -3,6 +3,8 @@ import { ErrorOutlineOutlined, LockOutlined, SearchOff } from "@mui/icons-materi
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import EmptyState from "../../components/EmptyState";
 import { BrandMark } from "../../components/Shell/AppShell";
+import { useTranslation } from "react-i18next";
+import { tKey, TranslationKey } from "../../i18n/i18n";
 
 interface ErrorPageState {
   errorCode?: number;
@@ -11,35 +13,34 @@ interface ErrorPageState {
 }
 
 const DEFAULT_ERROR_CODE = 404;
-const DEFAULT_ERROR_MESSAGE = "Sorry, the page you are looking for does not exist.";
-
-const ERROR_TITLES: Record<number, { title: string; icon: React.ElementType }> = {
-  404: { title: "Page not found", icon: SearchOff },
-  403: { title: "No access to this page", icon: LockOutlined },
+const ERROR_TITLES: Record<number, { title: TranslationKey; icon: React.ElementType }> = {
+  404: { title: "common.errorPage.notFound", icon: SearchOff },
+  403: { title: "common.errorPage.forbidden", icon: LockOutlined },
 };
 
 const ErrorPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   // Router state is gone after a refresh or when /error is opened directly.
-  const { errorCode = DEFAULT_ERROR_CODE, errorMessage = DEFAULT_ERROR_MESSAGE, blockedApi } =
+  const { errorCode = DEFAULT_ERROR_CODE, errorMessage = t("common.errorPage.defaultMessage"), blockedApi } =
     (location.state ?? {}) as ErrorPageState;
   const canGoBack = location.key !== "default";
 
   // Some callers send only the last digit of the HTTP status (4 for 404, 3 for 403).
   const code = errorCode < 10 ? 400 + errorCode : errorCode;
-  const { title, icon } = ERROR_TITLES[code] ?? { title: "Something went wrong", icon: ErrorOutlineOutlined };
+  const { title, icon } = ERROR_TITLES[code] ?? { title: "common.errorPage.generic" as TranslationKey, icon: ErrorOutlineOutlined };
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, px: 2, py: 6, bgcolor: "background.default" }}>
       <BrandMark />
       <Paper elevation={0} sx={{ width: "100%", maxWidth: 520, border: 1, borderColor: "divider", borderRadius: "12px" }}>
         <Typography variant="overline" component="p" sx={{ color: "text.secondary", textAlign: "center", pt: 3 }}>
-          Error {code}
+          {t("common.errorPage.code", { code })}
         </Typography>
         <EmptyState
           icon={icon}
-          title={title}
+          title={tKey(title)}
           description={
             <>
               {errorMessage}
@@ -53,11 +54,11 @@ const ErrorPage = () => {
           action={
             <Stack direction="row" spacing={1.5} sx={{ justifyContent: "center" }}>
               <Button variant="contained" component={RouterLink} to="/project-management/projects">
-                Back to projects
+                {t("common.errorPage.backToProjects")}
               </Button>
               {canGoBack && (
                 <Button variant="outlined" color="inherit" onClick={() => navigate(-1)}>
-                  Go back
+                  {t("common.errorPage.goBack")}
                 </Button>
               )}
             </Stack>

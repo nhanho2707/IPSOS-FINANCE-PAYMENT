@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { Box, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { BRAND, NEUTRAL, STATUS_TONES } from "../config/ThemeConfig";
 import { formatNumber } from "../utils/format";
+import { useTranslation } from "react-i18next";
 
 interface SampleProgressProps {
     completed: number;
@@ -28,6 +29,7 @@ export const expectedProgress = (fieldStart?: string | null, fieldEnd?: string |
 };
 
 const SampleProgress: React.FC<SampleProgressProps> = ({ completed, target, fieldStart, fieldEnd, status, hideCounts = false }) => {
+    const { t } = useTranslation();
     const percent = target > 0 ? Math.round((completed / target) * 100) : 0;
     const expected = status === "on going" ? expectedProgress(fieldStart, fieldEnd) : null;
     const behind = target > 0 && expected !== null && percent + BEHIND_TOLERANCE < expected;
@@ -40,10 +42,10 @@ const SampleProgress: React.FC<SampleProgressProps> = ({ completed, target, fiel
             : inactive ? NEUTRAL[400] : BRAND.accent;
 
     const tooltip = target === 0
-        ? "No sample size set"
+        ? t("common.sample.noTarget")
         : behind
-            ? `${percent}% done; about ${expected}% of the field period has passed`
-            : `${percent}% of the target`;
+            ? t("common.sample.behindTooltip", { percent, expected })
+            : t("common.sample.ofTarget", { percent });
 
     return (
         <Tooltip title={tooltip}>
@@ -67,13 +69,13 @@ const SampleProgress: React.FC<SampleProgressProps> = ({ completed, target, fiel
                             color: behind ? STATUS_TONES.warning.fg : "text.secondary",
                         }}
                     >
-                        {target > 0 ? `${percent}%` : "—"}{behind && " · behind"}
+                        {target > 0 ? `${percent}%` : "—"}{behind && ` · ${t("common.sample.behind")}`}
                     </Typography>
                 </Box>
                 <LinearProgress
                     variant="determinate"
                     value={Math.min(percent, 100)}
-                    aria-label="Sample progress"
+                    aria-label={t("common.sample.progress")}
                     sx={{
                         mt: 0.5,
                         height: 4,

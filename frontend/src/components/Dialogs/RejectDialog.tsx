@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { TextField } from "@mui/material";
 import GenericDialog from "./GenericDialog";
+import { useTranslation } from "react-i18next";
 
 interface RejectDialogProps {
     open: boolean;
@@ -17,8 +18,9 @@ const RejectDialog: React.FC<RejectDialogProps> = ({
     onConfirm,
     title,
     message,
-    submitText = "Submit reason",
+    submitText,
 }) => {
+    const { t } = useTranslation();
     const [rejectReason, setRejectReason] = useState<string>('');
 
     useEffect(() => {
@@ -36,8 +38,7 @@ const RejectDialog: React.FC<RejectDialogProps> = ({
             title={title}
             onClose={onClose}
             onSubmit={handleConfirm}
-            submitText={submitText}
-            cancelText="Cancel"
+            submitText={submitText ?? t("common.actions.submitReason")}
             submitDisabled={!rejectReason.trim()}
             tone="danger"
         >

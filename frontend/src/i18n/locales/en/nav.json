@@ -1,0 +1,90 @@
+{
+    "groups": {
+        "work": "Work",
+        "admin": "Admin",
+        "plan": "Plan",
+        "field": "Field",
+        "payments": "Payments"
+    },
+    "pages": {
+        "projects": "Projects",
+        "finance": "Finance",
+        "accounts": "Accounts"
+    },
+    "project": {
+        "overview": {
+            "label": "Overview",
+            "description": "Where the project stands: sample, gifts, spending and quotation."
+        },
+        "quotation": {
+            "label": "Quotation",
+            "description": "Versioned cost quotation and its approval."
+        },
+        "assignment": {
+            "label": "Assignment",
+            "description": "People who can open and work on this project."
+        },
+        "interviewers": {
+            "label": "Interviewers",
+            "description": "Interviewers on this project and the gifts sent through them."
+        },
+        "catiSettings": {
+            "label": "CATI settings",
+            "description": "Respondent batches for phone interviews."
+        },
+        "gifts": {
+            "label": "Gifts",
+            "description": "Send incentives to respondents and follow each delivery."
+        },
+        "transactions": {
+            "label": "Transactions",
+            "description": "Every top-up and e-voucher sent for this project."
+        },
+        "statistics": {
+            "label": "Statistics",
+            "title": "Transaction statistics",
+            "description": "Interviews and gifts by interviewer, day and hour, and the wait for each gift."
+        },
+        "settings": {
+            "label": "Settings",
+            "description": "Project details, sample size and province prices."
+        }
+    },
+    "shell": {
+        "main": "Main",
+        "projectNav": "Project",
+        "projectSettingsNav": "Project settings",
+        "allProjects": "All projects",
+        "projectFallback": "Project",
+        "projectNumber": "Project #{{id}}",
+        "disabled": "Disabled",
+        "search": "Search",
+        "searchWithShortcut": "Search ({{shortcut}})",
+        "searchProjects": "Search projects…",
+        "expandSidebar": "Expand sidebar",
+        "collapseSidebar": "Collapse sidebar",
+        "openNavigation": "Open navigation",
+        "closeNavigation": "Close navigation",
+        "currentProject": "Current project: {{name}}. Switch project",
+        "accountMenu": "Account menu for {{name}}",
+        "signedIn": "Signed in",
+        "logout": "Log out",
+        "switchProjectTooltip": "{{name}} · Switch project",
+        "loadProjectFailed": "Could not load project details.",
+        "projectDisabled": "This project is disabled. It is hidden from the project list until an admin enables it again."
+    },
+    "palette": {
+        "switchPlaceholder": "Switch to project…",
+        "searchPlaceholder": "Search projects or jump to a page…",
+        "switchLabel": "Switch project",
+        "results": "Results",
+        "projects": "Projects",
+        "current": "Current",
+        "noMatch": "No projects match “{{query}}”.",
+        "noProjects": "No projects yet.",
+        "goTo": "Go to",
+        "loadError": "Could not load projects. Check your connection and try again.",
+        "toMove": "to move",
+        "toOpen": "to open"
+    }
+}

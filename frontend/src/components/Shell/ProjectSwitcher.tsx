@@ -5,6 +5,7 @@ import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { getStatusTone, PROJECT_STATUS_TONE } from "../../config/ThemeConfig";
 import { formatStatus } from "../../utils/format";
 import { StatusDot } from "../StatusChip";
+import { useTranslation } from "react-i18next";
 
 interface ProjectSwitcherProps {
     projectId: number;
@@ -15,17 +16,18 @@ interface ProjectSwitcherProps {
 }
 
 const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({ projectId, project, loading, collapsed, onClick }) => {
-    const name = project?.project_name || `Project #${projectId}`;
+    const { t } = useTranslation();
+    const name = project?.project_name || t("nav.shell.projectNumber", { id: projectId });
     const tone = getStatusTone(project?.status, PROJECT_STATUS_TONE);
-    const meta = [project?.internal_code, project?.disabled ? "Disabled" : formatStatus(project?.status)]
+    const meta = [project?.internal_code, project?.disabled ? t("nav.shell.disabled") : formatStatus(project?.status)]
         .filter(Boolean)
         .join(" · ");
 
     return (
-        <Tooltip title={collapsed ? `${name} · Switch project` : ""} placement="right">
+        <Tooltip title={collapsed ? t("nav.shell.switchProjectTooltip", { name }) : ""} placement="right">
             <ButtonBase
                 onClick={onClick}
-                aria-label={`Current project: ${name}. Switch project`}
+                aria-label={t("nav.shell.currentProject", { name })}
                 sx={{
                     width: "100%",
                     display: "flex",

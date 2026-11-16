@@ -10,6 +10,7 @@ import {
     DialogContentText,
     DialogTitle,
 } from "@mui/material";
+import T from "../../i18n/T";
 
 interface FormDialogProps {
     open: boolean;
@@ -37,8 +38,8 @@ const FormDialog: React.FC<FormDialogProps> = ({
     children,
     onClose,
     onSubmit,
-    submitText = "Save",
-    cancelText = "Cancel",
+    submitText,
+    cancelText,
     submitDisabled = false,
     loading = false,
     tone = "default",
@@ -77,7 +78,7 @@ const FormDialog: React.FC<FormDialogProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={onClose} color="inherit" disabled={loading}>
-                {cancelText}
+                {cancelText ?? <T k="common.actions.cancel" />}
             </Button>
             <Button
                 type="submit"
@@ -86,7 +87,7 @@ const FormDialog: React.FC<FormDialogProps> = ({
                 disabled={submitDisabled}
                 loading={loading}
             >
-                {submitText}
+                {submitText ?? <T k="common.actions.save" />}
             </Button>
         </DialogActions>
         </Box>

@@ -2,6 +2,7 @@ import { ContentCopy, Visibility, VisibilityOff } from "@mui/icons-material";
 import { Grid, IconButton, InputAdornment, TextField, Typography } from "@mui/material"
 import { useState } from "react";
 import { useToast } from "../contexts/ToastContext";
+import { useTranslation } from "react-i18next";
 
 interface SecretTextBoxProps {
     label: string,
@@ -11,6 +12,7 @@ interface SecretTextBoxProps {
 const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
     const [ show, setShow ] = useState(false);
     const { showToast } = useToast();
+    const { t } = useTranslation();
     
     const handleToggleVisibility = () => {
         setShow((prev) => !prev);
@@ -19,9 +21,9 @@ const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(value);
-            showToast("Copied to clipboard");
+            showToast(t("common.toast.copied"));
         } catch (err) {
-            showToast("Copy failed. Please copy it manually.", "error");
+            showToast(t("common.toast.copyFailed"), "error");
         }
     };
 
@@ -40,10 +42,10 @@ const SecretTextBox: React.FC<SecretTextBoxProps> = ({label, value}) => {
                         readOnly: true, //chỉ hiển thị, không cho sửa
                         endAdornment:(
                             <InputAdornment position="end">
-                                <IconButton onClick={handleToggleVisibility} aria-label={show ? "Hide value" : "Show value"}>
+                                <IconButton onClick={handleToggleVisibility} aria-label={show ? t("common.actions.hideValue") : t("common.actions.showValue")}>
                                     {show ? <VisibilityOff /> : <Visibility />}
                                 </IconButton>
-                                <IconButton onClick={handleCopy} aria-label="Copy to clipboard">
+                                <IconButton onClick={handleCopy} aria-label={t("common.actions.copy")}>
                                     <ContentCopy />
                                 </IconButton>
                             </InputAdornment>

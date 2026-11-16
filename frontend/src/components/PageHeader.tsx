@@ -2,6 +2,7 @@ import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { Box, Breadcrumbs, Link, Typography } from "@mui/material";
 import { NavigateNext } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 export interface Crumb {
     label: string;
@@ -27,11 +28,14 @@ const crumbSx = {
     whiteSpace: "nowrap",
 };
 
-const PageHeader: React.FC<PageHeaderProps> = ({ title, description, breadcrumbs, status, actions, actionsRef }) => (
+const PageHeader: React.FC<PageHeaderProps> = ({ title, description, breadcrumbs, status, actions, actionsRef }) => {
+    const { t } = useTranslation();
+
+    return (
     <Box component="header" sx={{ mb: 3 }}>
         {breadcrumbs && breadcrumbs.length > 0 && (
             <Breadcrumbs
-                aria-label="Breadcrumb"
+                aria-label={t("common.breadcrumb")}
                 separator={<NavigateNext sx={{ fontSize: 14 }} />}
                 sx={{ mb: 0.75, typography: "caption", "& .MuiBreadcrumbs-li": { minWidth: 0 } }}
             >
@@ -92,6 +96,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, description, breadcrumbs
             </Box>
         </Box>
     </Box>
-);
+    );
+};
 
 export default PageHeader;

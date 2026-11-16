@@ -1,15 +1,19 @@
 import React, { useState } from "react";
-import { Avatar, Box, ButtonBase, Divider, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
-import { Logout, UnfoldMore } from "@mui/icons-material";
+import { Avatar, Box, ButtonBase, Divider, ListItemIcon, ListItemText, ListSubheader, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import { Check, Logout, UnfoldMore } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
+import { changeLanguage, currentLanguage, LANGUAGES } from "../../i18n/i18n";
 import { useAuth } from "../../contexts/AuthContext";
 import { BRAND } from "../../config/ThemeConfig";
 
 const UserMenu: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
     const { user, logout } = useAuth();
+    const { t } = useTranslation();
+    const language = currentLanguage();
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
 
-    const name = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Signed in";
+    const name = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || t("nav.shell.signedIn");
     const initials = `${user?.first_name?.charAt(0) ?? ""}${user?.last_name?.charAt(0) ?? ""}`.toUpperCase() || "?";
 
     const avatar = (
@@ -32,7 +36,7 @@ const UserMenu: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
             <Tooltip title={collapsed ? name : ""} placement="right">
                 <ButtonBase
                     onClick={(event) => setAnchorEl(event.currentTarget)}
-                    aria-label={`Account menu for ${name}`}
+                    aria-label={t("nav.shell.accountMenu", { name })}
                     aria-haspopup="menu"
                     aria-expanded={open ? "true" : undefined}
                     aria-controls={open ? "user-menu" : undefined}
@@ -77,6 +81,25 @@ const UserMenu: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{user?.role}</Typography>
                 </Box>
                 <Divider />
+                <ListSubheader disableSticky sx={{ typography: "overline", lineHeight: 2.5, bgcolor: "transparent" }}>
+                    {t("common.language.label")}
+                </ListSubheader>
+                {LANGUAGES.map((code) => (
+                    <MenuItem
+                        key={code}
+                        lang={code}
+                        selected={code === language}
+                        onClick={() => {
+                            setAnchorEl(null);
+                            changeLanguage(code);
+                        }}
+                        sx={{ typography: "body2" }}
+                    >
+                        <ListItemText slotProps={{ primary: { variant: "body2" } }}>{t(`common.language.${code}`)}</ListItemText>
+                        {code === language && <Check fontSize="small" sx={{ ml: 2, color: "primary.main" }} />}
+                    </MenuItem>
+                ))}
+                <Divider />
                 <MenuItem
                     onClick={() => {
                         setAnchorEl(null);
@@ -87,7 +110,7 @@ const UserMenu: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                     <ListItemIcon>
                         <Logout fontSize="small" />
                     </ListItemIcon>
-                    Log out
+                    {t("nav.shell.logout")}
                 </MenuItem>
             </Menu>
         </>

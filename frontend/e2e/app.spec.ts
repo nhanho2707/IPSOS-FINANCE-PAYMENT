@@ -290,3 +290,45 @@ test.describe("phone", () => {
         await capture(page, testInfo, "mobile-navigation", { fullPage: false });
     });
 });
+
+test.describe("language", () => {
+    test("sign-in switches to Vietnamese and keeps the choice", async ({ page }, testInfo) => {
+        await page.goto("/login");
+        await page.getByRole("button", { name: "Tiếng Việt" }).click();
+        await expect(page.getByRole("heading", { name: "Đăng nhập" })).toBeVisible();
+        await expect(page.getByRole("textbox", { name: "Mật khẩu" })).toBeVisible();
+        await expect(page.locator("html")).toHaveAttribute("lang", "vi");
+        await capture(page, testInfo, "login-vi");
+
+        await page.reload();
+        await expect(page.getByRole("heading", { name: "Đăng nhập" })).toBeVisible();
+
+        await page.getByRole("button", { name: "English" }).click();
+        await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    });
+
+    test("the account menu switches the app to Vietnamese", async ({ page }, testInfo) => {
+        await signInAs(page, "Admin");
+        await page.goto(`${PROJECT}/overview`);
+        await page.getByRole("button", { name: "Account menu for Nhan Ho" }).click();
+        await page.getByRole("menuitem", { name: "Tiếng Việt" }).click();
+
+        const sidebar = page.getByRole("complementary");
+        await expect(sidebar.getByRole("link", { name: "Quà tặng" })).toBeVisible();
+        await expect(sidebar.getByRole("link", { name: "Tất cả dự án" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Tổng quan", level: 1 })).toBeVisible();
+        await expect(page.getByRole("navigation", { name: "Đường dẫn" }).getByRole("link", { name: "Dự án" })).toBeVisible();
+        await capture(page, testInfo, "project-overview-vi");
+
+        await page.goto(PROJECTS);
+        await expect(sidebar.getByRole("link", { name: "Tài chính" })).toBeVisible();
+        await expect(page.getByText("Đang triển khai").first()).toBeVisible();
+        await expect(page.getByText(/Kết thúc sau \d+ ngày/).first()).toBeVisible();
+
+        await page.keyboard.press("Control+k");
+        await expect(page.getByPlaceholder("Tìm dự án hoặc đi đến trang…")).toBeVisible();
+        await page.keyboard.type("tài chính");
+        await expect(page.getByRole("option", { name: "Tài chính" })).toBeVisible();
+        await capture(page, testInfo, "command-palette-vi", { fullPage: false });
+    });
+});

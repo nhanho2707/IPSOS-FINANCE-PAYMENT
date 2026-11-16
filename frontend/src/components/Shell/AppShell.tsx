@@ -5,6 +5,7 @@ import { Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, Menu, Search 
 import logo from "../../assets/img/Ipsos logo.png";
 import CommandPalette, { CommandPaletteMode } from "./CommandPalette";
 import Kbd, { SEARCH_SHORTCUT_LABEL } from "./Kbd";
+import { useTranslation } from "react-i18next";
 import UserMenu from "./UserMenu";
 
 const SIDEBAR_WIDTH = 248;
@@ -65,10 +66,12 @@ export const BrandMark: React.FC<{ showName?: boolean; inverse?: boolean }> = ({
     </Box>
 );
 
-export const SidebarSearchButton: React.FC<{ collapsed: boolean; onClick: () => void }> = ({ collapsed, onClick }) =>
-    collapsed ? (
-        <Tooltip title={`Search (${SEARCH_SHORTCUT_LABEL})`} placement="right">
-            <IconButton aria-label="Search" onClick={onClick} sx={{ alignSelf: "center", mb: 1.5, color: "text.secondary" }}>
+export const SidebarSearchButton: React.FC<{ collapsed: boolean; onClick: () => void }> = ({ collapsed, onClick }) => {
+    const { t } = useTranslation();
+
+    return collapsed ? (
+        <Tooltip title={t("nav.shell.searchWithShortcut", { shortcut: SEARCH_SHORTCUT_LABEL })} placement="right">
+            <IconButton aria-label={t("nav.shell.search")} onClick={onClick} sx={{ alignSelf: "center", mb: 1.5, color: "text.secondary" }}>
                 <Search sx={{ fontSize: 18 }} />
             </IconButton>
         </Tooltip>
@@ -94,13 +97,15 @@ export const SidebarSearchButton: React.FC<{ collapsed: boolean; onClick: () => 
             }}
         >
             <Search sx={{ fontSize: 18 }} />
-            Search projects…
+            {t("nav.shell.searchProjects")}
             <Kbd sx={{ ml: "auto" }}>{SEARCH_SHORTCUT_LABEL}</Kbd>
         </ButtonBase>
     );
+};
 
 const AppShell: React.FC<AppShellProps> = ({ sidebar, mobileTitle, children }) => {
     const location = useLocation();
+    const { t } = useTranslation();
     const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY, { noSsr: true });
     const [ collapsed, setCollapsed ] = useState<boolean>(readCollapsed);
     const [ mobileOpen, setMobileOpen ] = useState(false);
@@ -148,13 +153,13 @@ const AppShell: React.FC<AppShellProps> = ({ sidebar, mobileTitle, children }) =
             >
                 {!isCollapsed && <BrandMark />}
                 {isMobile ? (
-                    <IconButton aria-label="Close navigation" size="small" onClick={() => setMobileOpen(false)} sx={{ color: "text.secondary" }}>
+                    <IconButton aria-label={t("nav.shell.closeNavigation")} size="small" onClick={() => setMobileOpen(false)} sx={{ color: "text.secondary" }}>
                         <Close fontSize="small" />
                     </IconButton>
                 ) : (
-                    <Tooltip title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
+                    <Tooltip title={isCollapsed ? t("nav.shell.expandSidebar") : t("nav.shell.collapseSidebar")} placement="right">
                         <IconButton
-                            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            aria-label={isCollapsed ? t("nav.shell.expandSidebar") : t("nav.shell.collapseSidebar")}
                             size="small"
                             onClick={toggleCollapsed}
                             sx={{ color: "text.secondary" }}
@@ -236,13 +241,13 @@ const AppShell: React.FC<AppShellProps> = ({ sidebar, mobileTitle, children }) =
                             borderColor: "divider",
                         }}
                     >
-                        <IconButton aria-label="Open navigation" onClick={() => setMobileOpen(true)}>
+                        <IconButton aria-label={t("nav.shell.openNavigation")} onClick={() => setMobileOpen(true)}>
                             <Menu />
                         </IconButton>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             {mobileTitle ?? <BrandMark />}
                         </Box>
-                        <IconButton aria-label="Search" onClick={() => openPalette("search")}>
+                        <IconButton aria-label={t("nav.shell.search")} onClick={() => openPalette("search")}>
                             <Search />
                         </IconButton>
                     </Box>

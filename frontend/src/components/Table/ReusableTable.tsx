@@ -20,6 +20,7 @@ import {
 import { Theme } from "@mui/material/styles";
 import { NEUTRAL } from "../../config/ThemeConfig";
 import EmptyState from "../EmptyState";
+import { useTranslation } from "react-i18next";
 
 export type ActionType = 'add' | 'fetch' | 'store' | 'clone' | 'approve' | 'submit' | 'import' | 'export' | 'update' | 'delete' | 'idle';
 
@@ -113,13 +114,14 @@ const ReusableTable = <T extends object>({
     topToolbar,
     header,
     getRowKey = defaultRowKey,
-    emptyText = "No data",
+    emptyText,
     emptyState,
     dense = false,
     onRowClick,
     stickyColumns,
     inset = true,
 }: ReusableTableProps<T>) => {
+    const { t } = useTranslation();
     const [openAlert, setOpenAlert] = useState(false);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [availableWidth, setAvailableWidth] = useState(0);
@@ -181,7 +183,7 @@ const ReusableTable = <T extends object>({
                     sx={{ mb: 1.5, whiteSpace: "pre-line" }}
                     action={
                         <IconButton
-                            aria-label="Close"
+                            aria-label={t("common.actions.close")}
                             color="inherit"
                             size="small"
                             onClick={() => setOpenAlert(false)}
@@ -257,7 +259,7 @@ const ReusableTable = <T extends object>({
                             ) : data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} sx={{ border: 0, p: 0 }}>
-                                        {emptyState ?? <EmptyState title={emptyText} dense />}
+                                        {emptyState ?? <EmptyState title={emptyText ?? t("common.table.noData")} dense />}
                                     </TableCell>
                                 </TableRow>
                             ) : (

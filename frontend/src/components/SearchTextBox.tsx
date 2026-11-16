@@ -2,6 +2,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 import { IconButton, InputAdornment, SxProps, TextField, Theme } from "@mui/material"
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface SearchTextBoxProps {
     placeholder?: string,
@@ -13,8 +14,9 @@ interface SearchTextBoxProps {
 
 // Every list hook fetches when its search term changes, so the term is only reported once typing pauses:
 // fewer requests, and a slow response for "ab" cannot land after the one for "abc".
-const SearchTextBox: React.FC<SearchTextBoxProps> = ({ placeholder = "Search...", onSearchChange, defaultValue = "", debounceMs = 300, sx }) => {
+const SearchTextBox: React.FC<SearchTextBoxProps> = ({ placeholder, onSearchChange, defaultValue = "", debounceMs = 300, sx }) => {
     const [ search, setSearch ] = useState(defaultValue);
+    const { t } = useTranslation();
     const timerRef = useRef<number | undefined>(undefined);
     const onSearchChangeRef = useRef(onSearchChange);
 
@@ -47,7 +49,7 @@ const SearchTextBox: React.FC<SearchTextBoxProps> = ({ placeholder = "Search..."
             onKeyDown={(event) => {
                 if (event.key === "Escape" && search) handleClear();
             }}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t("common.search.placeholder")}
             size="small"
             sx={[
                 { width: "20rem", maxWidth: "100%", "& .MuiInputBase-input": { typography: "body2" } },
@@ -62,7 +64,7 @@ const SearchTextBox: React.FC<SearchTextBoxProps> = ({ placeholder = "Search..."
                     ),
                     endAdornment: search ? (
                         <InputAdornment position="end">
-                            <IconButton aria-label="Clear search" size="small" edge="end" onClick={handleClear}>
+                            <IconButton aria-label={t("common.search.clear")} size="small" edge="end" onClick={handleClear}>
                                 <CloseIcon fontSize="small" />
                             </IconButton>
                         </InputAdornment>

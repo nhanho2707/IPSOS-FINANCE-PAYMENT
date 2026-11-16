@@ -5,47 +5,48 @@ import {
   ManageAccountsOutlined,
 } from "@mui/icons-material";
 import { hasRole, Role, ROLE_ACCESS } from "./RoleConfig";
+import type { TranslationKey } from "../i18n/i18n";
 
 export const PROJECTS_PATH = "/project-management/projects";
 
 export interface AppNavItem {
-  label: string;
+  label: TranslationKey;
   to: string;
   icon: React.ElementType;
   // null: every signed-in user.
   allowedRoles: readonly Role[] | null;
-  // Extra words the command palette matches, e.g. the old page name.
+  // Extra words the command palette matches in any language, e.g. the old page name.
   keywords?: string[];
 }
 
 export interface AppNavGroup {
-  label: string;
+  label: TranslationKey;
   items: AppNavItem[];
 }
 
 export const APP_NAV_GROUPS: AppNavGroup[] = [
   {
-    label: "Work",
+    label: "nav.groups.work",
     items: [
-      { label: "Projects", to: PROJECTS_PATH, icon: FolderOutlined, allowedRoles: null },
+      { label: "nav.pages.projects", to: PROJECTS_PATH, icon: FolderOutlined, allowedRoles: null, keywords: ["projects", "dự án"] },
       {
-        label: "Finance",
+        label: "nav.pages.finance",
         to: "/transaction-manager/transactions",
         icon: AccountBalanceWalletOutlined,
         allowedRoles: ROLE_ACCESS.transactionsPage,
-        keywords: ["transactions", "balance", "deposit", "export", "vinnet", "gotit"],
+        keywords: ["finance", "transactions", "balance", "deposit", "export", "vinnet", "gotit", "tài chính", "giao dịch", "số dư"],
       },
     ],
   },
   {
-    label: "Admin",
+    label: "nav.groups.admin",
     items: [
       {
-        label: "Accounts",
+        label: "nav.pages.accounts",
         to: "/account-management/accounts",
         icon: ManageAccountsOutlined,
         allowedRoles: ROLE_ACCESS.accountsPage,
-        keywords: ["users", "roles", "password"],
+        keywords: ["accounts", "users", "roles", "password", "tài khoản", "người dùng"],
       },
     ],
   },

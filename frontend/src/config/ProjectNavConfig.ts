@@ -12,22 +12,23 @@ import {
 } from "@mui/icons-material";
 import { ProjectData } from "./ProjectFieldsConfig";
 import { hasRole, Role, ROLE_ACCESS } from "./RoleConfig";
+import type { TranslationKey } from "../i18n/i18n";
 
 // The sidebar follows the order work happens in a project; "bottom" items sit apart at the foot of the sidebar.
 export type ProjectNavGroup = "overview" | "plan" | "field" | "payments" | "bottom";
 
-export const PROJECT_NAV_GROUPS: { key: Exclude<ProjectNavGroup, "bottom">; label?: string }[] = [
+export const PROJECT_NAV_GROUPS: { key: Exclude<ProjectNavGroup, "bottom">; label?: TranslationKey }[] = [
   { key: "overview" },
-  { key: "plan", label: "Plan" },
-  { key: "field", label: "Field" },
-  { key: "payments", label: "Payments" },
+  { key: "plan", label: "nav.groups.plan" },
+  { key: "field", label: "nav.groups.field" },
+  { key: "payments", label: "nav.groups.payments" },
 ];
 
 export interface ProjectNavItem {
-  label: string;
+  label: TranslationKey;
   // Page header title, when the short sidebar label needs more context.
-  title?: string;
-  description: string;
+  title?: TranslationKey;
+  description: TranslationKey;
   path: string;
   icon: React.ElementType;
   group: ProjectNavGroup;
@@ -37,15 +38,15 @@ export interface ProjectNavItem {
 
 // The first item a role can open is that role's landing page inside a project (getProjectHomePath).
 export const PROJECT_NAV_ITEMS: ProjectNavItem[] = [
-  { label: "Overview", description: "Where the project stands: sample, gifts, spending and quotation.", path: "overview", icon: DashboardOutlined, group: "overview", allowedRoles: ROLE_ACCESS.projectOverview },
-  { label: "Quotation", description: "Versioned cost quotation and its approval.", path: "quotation", icon: RequestQuoteOutlined, group: "plan", allowedRoles: ROLE_ACCESS.projectQuotation },
-  { label: "Assignment", description: "People who can open and work on this project.", path: "assignment", icon: AssignmentIndOutlined, group: "plan", allowedRoles: ROLE_ACCESS.projectAssignment },
-  { label: "Interviewers", description: "Interviewers on this project and the gifts sent through them.", path: "parttime-employees", icon: GroupsOutlined, group: "field", allowedRoles: ROLE_ACCESS.projectInterviewers },
-  { label: "CATI settings", description: "Respondent batches for phone interviews.", path: "cati-settings", icon: HeadsetMicOutlined, group: "field", allowedRoles: ROLE_ACCESS.projectCatiSettings },
-  { label: "Gifts", description: "Send incentives to respondents and follow each delivery.", path: "gifts", icon: CardGiftcardOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectGifts },
-  { label: "Transactions", description: "Every top-up and e-voucher sent for this project.", path: "transactions", icon: ReceiptLongOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactions },
-  { label: "Statistics", title: "Transaction statistics", description: "Interviews and gifts by interviewer, day and hour, and the wait for each gift.", path: "transaction-statistics", icon: InsightsOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactionStatistics },
-  { label: "Settings", description: "Project details, sample size and province prices.", path: "settings", icon: SettingsOutlined, group: "bottom", allowedRoles: ROLE_ACCESS.projectSettings },
+  { label: "nav.project.overview.label", description: "nav.project.overview.description", path: "overview", icon: DashboardOutlined, group: "overview", allowedRoles: ROLE_ACCESS.projectOverview },
+  { label: "nav.project.quotation.label", description: "nav.project.quotation.description", path: "quotation", icon: RequestQuoteOutlined, group: "plan", allowedRoles: ROLE_ACCESS.projectQuotation },
+  { label: "nav.project.assignment.label", description: "nav.project.assignment.description", path: "assignment", icon: AssignmentIndOutlined, group: "plan", allowedRoles: ROLE_ACCESS.projectAssignment },
+  { label: "nav.project.interviewers.label", description: "nav.project.interviewers.description", path: "parttime-employees", icon: GroupsOutlined, group: "field", allowedRoles: ROLE_ACCESS.projectInterviewers },
+  { label: "nav.project.catiSettings.label", description: "nav.project.catiSettings.description", path: "cati-settings", icon: HeadsetMicOutlined, group: "field", allowedRoles: ROLE_ACCESS.projectCatiSettings },
+  { label: "nav.project.gifts.label", description: "nav.project.gifts.description", path: "gifts", icon: CardGiftcardOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectGifts },
+  { label: "nav.project.transactions.label", description: "nav.project.transactions.description", path: "transactions", icon: ReceiptLongOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactions },
+  { label: "nav.project.statistics.label", title: "nav.project.statistics.title", description: "nav.project.statistics.description", path: "transaction-statistics", icon: InsightsOutlined, group: "payments", allowedRoles: ROLE_ACCESS.projectTransactionStatistics },
+  { label: "nav.project.settings.label", description: "nav.project.settings.description", path: "settings", icon: SettingsOutlined, group: "bottom", allowedRoles: ROLE_ACCESS.projectSettings },
 ];
 
 export const projectNavPath = (projectId: number, path: string) =>

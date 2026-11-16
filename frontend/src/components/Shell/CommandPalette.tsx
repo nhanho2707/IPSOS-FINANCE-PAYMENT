@@ -22,6 +22,8 @@ import { useProjectSearch } from "../../hook/useProjectSearch";
 import { formatStatus } from "../../utils/format";
 import { StatusDot } from "../StatusChip";
 import Kbd from "./Kbd";
+import { useTranslation } from "react-i18next";
+import { tKey } from "../../i18n/i18n";
 
 export type CommandPaletteMode = "search" | "switch-project";
 
@@ -46,6 +48,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [ query, setQuery ] = useState("");
     const [ activeIndex, setActiveIndex ] = useState(0);
     const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -59,8 +62,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
         if (mode !== "search") return [];
         return getAppNavGroupsForRole(user?.role)
             .flatMap((group) => group.items)
-            .filter((item) => matches(query, item.label, ...(item.keywords ?? [])));
-    }, [mode, query, user?.role]);
+            .filter((item) => matches(query, t(item.label) as string, ...(item.keywords ?? [])));
+    }, [mode, query, user?.role, t]);
 
     const entries: PaletteEntry[] = useMemo(() => [
         ...pages.map((item): PaletteEntry => ({ kind: "page", key: `page-${item.to}`, item })),
@@ -142,10 +145,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={mode === "switch-project" ? "Switch to project…" : "Search projects or jump to a page…"}
+                    placeholder={mode === "switch-project" ? t("nav.palette.switchPlaceholder") : t("nav.palette.searchPlaceholder")}
                     inputProps={{
                         role: "combobox",
-                        "aria-label": mode === "switch-project" ? "Switch project" : "Search",
+                        "aria-label": mode === "switch-project" ? t("nav.palette.switchLabel") : t("nav.shell.search"),
                         "aria-expanded": true,
                         "aria-controls": "command-palette-list",
                         "aria-activedescendant": entries.length ? `command-palette-option-${activeIndex}` : undefined,
@@ -160,12 +163,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
             <List
                 id="command-palette-list"
                 role="listbox"
-                aria-label="Results"
+                aria-label={t("nav.palette.results")}
                 dense
                 sx={{ maxHeight: "min(420px, 60vh)", overflowY: "auto", pt: 0, pb: 1 }}
             >
                 {pages.length > 0 && (
-                    <ListSubheader disableSticky sx={{ typography: "overline", lineHeight: 2.5 }}>Go to</ListSubheader>
+                    <ListSubheader disableSticky sx={{ typography: "overline", lineHeight: 2.5 }}>{t("nav.palette.goTo")}</ListSubheader>
                 )}
                 {pages.map((item, index) => {
                     const Icon = item.icon;
@@ -174,12 +177,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                             <ListItemIcon sx={{ minWidth: 0, color: "text.secondary" }}>
                                 <Icon sx={{ fontSize: 18 }} />
                             </ListItemIcon>
-                            <ListItemText primary={item.label} slotProps={{ primary: { variant: "body2", sx: { fontWeight: 500 } } }} />
+                            <ListItemText primary={tKey(item.label)} slotProps={{ primary: { variant: "body2", sx: { fontWeight: 500 } } }} />
                         </ListItemButton>
                     );
                 })}
 
-                <ListSubheader disableSticky sx={{ typography: "overline", lineHeight: 2.5 }}>Projects</ListSubheader>
+                <ListSubheader disableSticky sx={{ typography: "overline", lineHeight: 2.5 }}>{t("nav.palette.projects")}</ListSubheader>
                 {projects.map((project, projectIndex) => {
                     const index = pages.length + projectIndex;
                     const isCurrent = project.id === currentProjectId;
@@ -198,19 +201,19 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                                 }}
                             />
                             <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
-                                {isCurrent ? "Current" : formatStatus(project.status)}
+                                {isCurrent ? t("nav.palette.current") : formatStatus(project.status)}
                             </Typography>
                         </ListItemButton>
                     );
                 })}
                 {actionState.error && (
                     <Typography variant="body2" color="error" sx={{ px: 2, py: 1.5 }}>
-                        Could not load projects. Check your connection and try again.
+                        {t("nav.palette.loadError")}
                     </Typography>
                 )}
                 {showEmpty && (
                     <Typography variant="body2" sx={{ color: "text.secondary", px: 2, py: 1.5 }}>
-                        {hasQuery ? `No projects match “${query.trim()}”.` : "No projects yet."}
+                        {hasQuery ? t("nav.palette.noMatch", { query: query.trim() }) : t("nav.palette.noProjects")}
                     </Typography>
                 )}
             </List>
@@ -229,8 +232,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, mode, onClose }) 
                     color: "text.secondary",
                 }}
             >
-                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}><Kbd>↑</Kbd><Kbd>↓</Kbd>to move</Box>
-                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}><Kbd>Enter</Kbd>to open</Box>
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}><Kbd>↑</Kbd><Kbd>↓</Kbd>{t("nav.palette.toMove")}</Box>
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}><Kbd>Enter</Kbd>{t("nav.palette.toOpen")}</Box>
             </Box>
         </Dialog>
     );

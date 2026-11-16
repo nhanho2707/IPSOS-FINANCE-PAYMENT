@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { MoreHoriz } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 export interface RowActionItem {
     label: string;
@@ -24,7 +25,9 @@ interface RowActionsProps {
 // React bubbles events through the portaled Menu as well, so one handler covers both.
 const stopRowClick = (event: React.SyntheticEvent) => event.stopPropagation();
 
-const RowActions: React.FC<RowActionsProps> = ({ primary, items = [], menuLabel = "More actions" }) => {
+const RowActions: React.FC<RowActionsProps> = ({ primary, items = [], menuLabel: menuLabelProp }) => {
+    const { t } = useTranslation();
+    const menuLabel = menuLabelProp ?? t("common.actions.moreActions");
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
 

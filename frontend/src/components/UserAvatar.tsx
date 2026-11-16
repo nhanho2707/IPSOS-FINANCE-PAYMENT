@@ -1,6 +1,7 @@
 import React from "react";
 import { Avatar, Tooltip } from "@mui/material";
 import { STATUS_TONES, StatusTone } from "../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
 
 const AVATAR_TONES: StatusTone[] = ["brand", "info", "success", "warning", "neutral"];
 
@@ -27,7 +28,8 @@ interface UserAvatarProps {
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 24, showTooltip = true }) => {
-    const label = name?.trim() || "Unknown";
+    const { t } = useTranslation();
+    const label = name?.trim() || t("common.unknown");
     const tone = STATUS_TONES[toneFor(label)];
 
     const avatar = (

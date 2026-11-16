@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Button, LinearProgress, Typography } from "@mui/material";
 import { BRAND } from "../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
 
 interface BulkActionBarProps {
     // e.g. "3 respondents selected"
@@ -15,10 +16,13 @@ interface BulkActionBarProps {
     progress?: { value: number; label: React.ReactNode };
 }
 
-const BulkActionBar: React.FC<BulkActionBarProps> = ({ label, summary, actions, extra, onClear, progress }) => (
+const BulkActionBar: React.FC<BulkActionBarProps> = ({ label, summary, actions, extra, onClear, progress }) => {
+    const { t } = useTranslation();
+
+    return (
     <Box
         role="region"
-        aria-label="Bulk actions"
+        aria-label={t("common.table.bulkActions")}
         sx={{ bgcolor: BRAND.soft, borderBottom: 1, borderColor: "divider" }}
     >
         <Box
@@ -58,11 +62,12 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({ label, summary, actions, 
             <LinearProgress
                 variant="determinate"
                 value={progress.value}
-                aria-label="Bulk progress"
+                aria-label={t("common.table.bulkProgress")}
                 sx={{ height: 3 }}
             />
         )}
     </Box>
-);
+    );
+};
 
 export default BulkActionBar;

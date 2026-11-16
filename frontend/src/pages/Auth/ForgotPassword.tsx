@@ -13,6 +13,8 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import { useNavigate } from "react-router-dom";
 import { ApiConfig } from "../../config/ApiConfig";
+import LanguageSwitch from "../../components/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -21,6 +23,7 @@ const ForgotPassword = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSendLink = async () => {
     setLoading(true);
@@ -38,7 +41,7 @@ const ForgotPassword = () => {
           const first = Object.values(errors)[0] as string[];
           setErrorMessage(first[0]);
         } else {
-          setErrorMessage(error.response?.data?.message ?? "An error occurred.");
+          setErrorMessage(error.response?.data?.message ?? t("auth.genericError"));
         }
       }
     } finally {
@@ -56,6 +59,9 @@ const ForgotPassword = () => {
         backgroundColor: "background.default",
       }}
     >
+      <Box sx={{ position: "fixed", top: 16, right: 16 }}>
+        <LanguageSwitch />
+      </Box>
       <Box
         component="form"
         noValidate
@@ -74,10 +80,10 @@ const ForgotPassword = () => {
         }}
       >
         <Typography variant="h5" sx={{ textAlign: "center" }}>
-          Reset Password
+          {t("auth.reset.title")}
         </Typography>
         <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
-          Enter your email and we will send you a link to reset your password.
+          {t("auth.reset.description")}
         </Typography>
 
         {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
@@ -87,7 +93,7 @@ const ForgotPassword = () => {
 
         <FormControl fullWidth>
           <TextField
-            label="Email"
+            label={t("auth.email")}
             type="email"
             autoComplete="email"
             autoFocus
@@ -104,7 +110,7 @@ const ForgotPassword = () => {
           variant="contained"
           disabled={!email || !!successMessage}
         >
-          Send reset link
+          {t("auth.reset.send")}
         </Button>
 
         <Link
@@ -114,7 +120,7 @@ const ForgotPassword = () => {
           underline="hover"
           onClick={() => navigate("/login")}
           sx={{ color: "text.secondary", alignSelf: "center" }}>
-          Back to login
+          {t("auth.backToLogin")}
         </Link>
       </Box>
     </Box>

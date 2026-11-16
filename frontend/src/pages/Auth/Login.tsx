@@ -16,14 +16,17 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ApiConfig } from "../../config/ApiConfig";
 import { BRAND } from "../../config/ThemeConfig";
 import { BrandMark } from "../../components/Shell/AppShell";
+import LanguageSwitch from "../../components/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const location = useLocation();
   const { login, token, user } = useAuth();
+  const { t } = useTranslation();
 
-  const [errorMessage, setErrorMessage] = useState<string>(
-    location.state?.sessionExpired ? "Your session has expired. Please sign in again." : ""
-  );
+  // Kept as a flag, not text, so the message follows a language change.
+  const [sessionExpired, setSessionExpired] = useState<boolean>(Boolean(location.state?.sessionExpired));
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [credentials, setCredentials] = useState({ email: "", password: "" });
@@ -42,12 +45,13 @@ const Login = () => {
 
     setSubmitting(true);
     setErrorMessage("");
+    setSessionExpired(false);
 
     try {
       const response = await axios.post(ApiConfig.account.login, credentials);
 
       if (response.data.status_code !== 200) {
-        setErrorMessage(response.data.message ?? "Sign in failed. Please try again.");
+        setErrorMessage(response.data.message ?? t("auth.signInFailed"));
         return;
       }
 
@@ -62,7 +66,7 @@ const Login = () => {
       if (axios.isAxiosError(error)) {
         setErrorMessage(error.response?.data?.message ?? error.message);
       } else {
-        setErrorMessage("Sign in failed. Please try again.");
+        setErrorMessage(t("auth.signInFailed"));
       }
     } finally {
       setSubmitting(false);
@@ -70,6 +74,7 @@ const Login = () => {
   };
 
   const canSubmit = credentials.email.trim() !== "" && credentials.password !== "";
+  const alertMessage = errorMessage || (sessionExpired ? t("auth.sessionExpired") : "");
 
   return (
     <Box
@@ -94,36 +99,39 @@ const Login = () => {
         <BrandMark inverse />
         <Box sx={{ maxWidth: 420 }}>
           <Typography component="p" variant="h1" sx={{ color: "common.white" }}>
-            Field projects, quotations and respondent gifts in one place.
+            {t("auth.tagline")}
           </Typography>
           <Typography variant="body2" sx={{ mt: 1.5, color: "common.white", opacity: 0.8 }}>
-            Plan the quotation, follow fieldwork and send incentives through Vinnet and GotIt.
+            {t("auth.taglineDetail")}
           </Typography>
         </Box>
         <Typography variant="caption" sx={{ color: "common.white", opacity: 0.7 }}>
-          Ipsos Vietnam · internal tool
+          {t("auth.internalTool")}
         </Typography>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: 2, py: 6 }}>
+      <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", px: 2, py: 6 }}>
+        <Box sx={{ position: "absolute", top: 16, right: 16 }}>
+          <LanguageSwitch />
+        </Box>
         <Box sx={{ width: "100%", maxWidth: 400 }}>
           <Box sx={{ display: { xs: "block", md: "none" }, mb: 4 }}>
             <BrandMark />
           </Box>
-          <Typography component="h1" variant="h1">Sign in</Typography>
+          <Typography component="h1" variant="h1">{t("auth.signIn")}</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-            Use your Ipsos account.
+            {t("auth.useIpsosAccount")}
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 3 }}>
-            {errorMessage && (
+            {alertMessage && (
               <Alert severity="error" sx={{ mb: 2.5 }} role="alert">
-                {errorMessage}
+                {alertMessage}
               </Alert>
             )}
 
             <TextField
-              label="Email"
+              label={t("auth.email")}
               type="email"
               name="email"
               autoComplete="username"
@@ -134,7 +142,7 @@ const Login = () => {
             />
 
             <TextField
-              label="Password"
+              label={t("auth.password")}
               type={showPassword ? "text" : "password"}
               name="password"
               autoComplete="current-password"
@@ -147,7 +155,7 @@ const Login = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                         onClick={() => setShowPassword((prev) => !prev)}
                         edge="end"
                       >
@@ -161,7 +169,7 @@ const Login = () => {
 
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5 }}>
               <Link component={RouterLink} to="/forgot-password" underline="hover" sx={{ typography: "body2", fontWeight: 500 }}>
-                Forgot password?
+                {t("auth.forgotPassword")}
               </Link>
             </Box>
 
@@ -174,7 +182,7 @@ const Login = () => {
               disabled={!canSubmit}
               sx={{ mt: 3 }}
             >
-              Sign in
+              {t("auth.signIn")}
             </Button>
           </Box>
         </Box>

@@ -15,7 +15,7 @@ Internal tool for IPSOS Vietnam to manage field research projects and incentive 
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript, Vite, MUI v9 + MUI X date pickers v9, React Router v6, Axios, i18next |
+| Frontend | React 18 + TypeScript, Vite, MUI v9 + MUI X date pickers v9, React Router v6, Axios, i18next (English / Vietnamese) |
 | Backend | Laravel 11 (PHP 8.2+), Sanctum auth, Maatwebsite Excel |
 | Database | MySQL (production), SQLite (local dev) |
 | Infrastructure | Docker Compose (frontend + backend + db) |
@@ -110,8 +110,12 @@ const [actionState, setActionState] = useState<ActionState>({
 - Backend roles: `Admin`, `Finance`, `Scripter`, `Researcher`, `Field Manager`.
 
 ### UI Language
-- Internal UI copy is English. Respondent-facing pages (`CustomVoucher*`) and the interviewer screen (`MiniCATI`) stay Vietnamese.
-- Do not rename Excel import/export column headers; they are the file format users already rely on.
+- The internal UI is available in English (default) and Vietnamese. Users switch in the account menu, or on the sign-in and password pages; the choice is kept in `localStorage` as `language`.
+- Text lives in `frontend/src/i18n/locales/{en,vi}/*.json` (`common`, `nav`, `auth`, `dashboard`) and is read with `useTranslation()`: `t("common.actions.save")`. Add every new string to both languages; the Vietnamese files are typed against the English ones, so a missing key fails the build.
+- Labels kept in config files (`AppNavConfig`, `ProjectNavConfig`) are `TranslationKey`s, shown with `tKey(key)` inside a component that calls `useTranslation()`. Values that come from the data are looked up with `translateDataValue()`.
+- Dates, statuses and field timing go through `utils/format.ts`, which follows the language (Vietnamese dates are `DD/MM/YYYY`; numbers keep `1,234,567` in both). MUI and the date pickers get their Vietnamese text from `i18n/AppLocaleProvider.tsx`.
+- Not translated: respondent-facing pages (`CustomVoucher*`) and the interviewer screen (`MiniCATI`) stay Vietnamese; Excel import/export column headers stay as they are, since they are the file format users rely on; data from the database and messages from the backend are shown as sent.
+- Pages still being moved to translation keys show English text in both languages.
 
 ### Component Rules
 - Use **MUI v9** components (`@mui/material`). Do not introduce a second UI library.

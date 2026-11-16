@@ -16,6 +16,8 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { ApiConfig } from "../../config/ApiConfig";
+import LanguageSwitch from "../../components/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 const SetPassword = () => {
   const [password, setPassword] = useState("");
@@ -26,14 +28,15 @@ const SetPassword = () => {
 
   const { clearMustChangePassword, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async () => {
     if (password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters.");
+      setErrorMessage(t("auth.set.tooShort"));
       return;
     }
     if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
+      setErrorMessage(t("auth.set.mismatch"));
       return;
     }
 
@@ -53,7 +56,7 @@ const SetPassword = () => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(
-          error.response?.data?.message ?? "An error occurred. Please try again."
+          error.response?.data?.message ?? t("auth.genericError")
         );
       }
     } finally {
@@ -71,6 +74,9 @@ const SetPassword = () => {
         backgroundColor: "background.default",
       }}
     >
+      <Box sx={{ position: "fixed", top: 16, right: 16 }}>
+        <LanguageSwitch />
+      </Box>
       <Box
         component="form"
         noValidate
@@ -89,10 +95,10 @@ const SetPassword = () => {
         }}
       >
         <Typography variant="h5" sx={{ textAlign: "center" }}>
-          Set Your Password
+          {t("auth.set.title")}
         </Typography>
         <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
-          Your account is new. Please set a password before continuing.
+          {t("auth.set.description")}
         </Typography>
 
         {errorMessage && (
@@ -103,7 +109,7 @@ const SetPassword = () => {
 
         <FormControl fullWidth>
           <TextField
-            label="New password"
+            label={t("auth.set.newPassword")}
             type={showPassword ? "text" : "password"}
             autoComplete="new-password"
             autoFocus
@@ -114,7 +120,7 @@ const SetPassword = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                       onClick={() => setShowPassword((v) => !v)}
                       edge="end"
                     >
@@ -129,7 +135,7 @@ const SetPassword = () => {
 
         <FormControl fullWidth>
           <TextField
-            label="Confirm password"
+            label={t("auth.set.confirmPassword")}
             type={showPassword ? "text" : "password"}
             autoComplete="new-password"
             value={confirmPassword}
@@ -144,7 +150,7 @@ const SetPassword = () => {
           loading={loading}
           variant="contained"
         >
-          Set password
+          {t("auth.set.submit")}
         </Button>
 
         <Link
@@ -154,7 +160,7 @@ const SetPassword = () => {
           underline="hover"
           onClick={logout}
           sx={{ color: "text.secondary", alignSelf: "center" }}>
-          Back to login
+          {t("auth.backToLogin")}
         </Link>
       </Box>
     </Box>

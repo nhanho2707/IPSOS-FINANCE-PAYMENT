@@ -6,6 +6,8 @@ import { findProjectNavItem, getProjectHomePath } from "../config/ProjectNavConf
 import { PROJECTS_PATH } from "../config/AppNavConfig";
 import { useAuth } from "../contexts/AuthContext";
 import PageHeader from "./PageHeader";
+import { useTranslation } from "react-i18next";
+import { tKey } from "../i18n/i18n";
 
 interface ProjectHeaderProps {
     projectId: number;
@@ -21,18 +23,19 @@ interface ProjectHeaderProps {
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loading, error, onRetry, actionsRef }) => {
     const location = useLocation();
     const { user } = useAuth();
+    const { t } = useTranslation();
     const currentPage = findProjectNavItem(location.pathname);
-    const projectName = project?.project_name || (loading ? "…" : `Project #${projectId}`);
+    const projectName = project?.project_name || (loading ? "…" : t("nav.shell.projectNumber", { id: projectId }));
 
     return (
         <>
             <PageHeader
                 breadcrumbs={[
-                    { label: "Projects", to: PROJECTS_PATH },
+                    { label: t("nav.pages.projects"), to: PROJECTS_PATH },
                     { label: projectName, to: currentPage ? getProjectHomePath(projectId, user?.role) : undefined },
                 ]}
-                title={currentPage ? currentPage.title ?? currentPage.label : projectName}
-                description={currentPage?.description}
+                title={currentPage ? tKey(currentPage.title ?? currentPage.label) : projectName}
+                description={currentPage ? tKey(currentPage.description) : undefined}
                 actionsRef={actionsRef}
             />
 
@@ -40,15 +43,15 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loadi
                 <Alert
                     severity="error"
                     sx={{ mb: 2.5 }}
-                    action={<Button color="inherit" size="small" onClick={onRetry}>Retry</Button>}
+                    action={<Button color="inherit" size="small" onClick={onRetry}>{t("common.actions.retry")}</Button>}
                 >
-                    Could not load project details.
+                    {t("nav.shell.loadProjectFailed")}
                 </Alert>
             )}
 
             {project?.disabled && (
                 <Alert severity="info" sx={{ mb: 2.5 }}>
-                    This project is disabled. It is hidden from the project list until an admin enables it again.
+                    {t("nav.shell.projectDisabled")}
                 </Alert>
             )}
         </>

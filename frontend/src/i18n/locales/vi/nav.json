@@ -1,0 +1,90 @@
+{
+    "groups": {
+        "work": "Công việc",
+        "admin": "Quản trị",
+        "plan": "Kế hoạch",
+        "field": "Thực địa",
+        "payments": "Thanh toán"
+    },
+    "pages": {
+        "projects": "Dự án",
+        "finance": "Tài chính",
+        "accounts": "Tài khoản"
+    },
+    "project": {
+        "overview": {
+            "label": "Tổng quan",
+            "description": "Tình hình dự án: mẫu, quà, chi phí và báo giá."
+        },
+        "quotation": {
+            "label": "Báo giá",
+            "description": "Báo giá chi phí theo từng phiên bản và quy trình duyệt."
+        },
+        "assignment": {
+            "label": "Phân công",
+            "description": "Những người được mở và làm việc với dự án này."
+        },
+        "interviewers": {
+            "label": "Phỏng vấn viên",
+            "description": "Phỏng vấn viên của dự án và số quà đã gửi qua từng người."
+        },
+        "catiSettings": {
+            "label": "Cài đặt CATI",
+            "description": "Các lô đáp viên cho phỏng vấn qua điện thoại."
+        },
+        "gifts": {
+            "label": "Quà tặng",
+            "description": "Gửi quà cho đáp viên và theo dõi từng lần gửi."
+        },
+        "transactions": {
+            "label": "Giao dịch",
+            "description": "Mọi lần nạp tiền điện thoại và e-voucher đã gửi cho dự án."
+        },
+        "statistics": {
+            "label": "Thống kê",
+            "title": "Thống kê giao dịch",
+            "description": "Bài phỏng vấn và quà theo PVV, ngày và giờ, cùng thời gian chờ nhận quà."
+        },
+        "settings": {
+            "label": "Cài đặt",
+            "description": "Thông tin dự án, cỡ mẫu và đơn giá theo tỉnh."
+        }
+    },
+    "shell": {
+        "main": "Chính",
+        "projectNav": "Dự án",
+        "projectSettingsNav": "Cài đặt dự án",
+        "allProjects": "Tất cả dự án",
+        "projectFallback": "Dự án",
+        "projectNumber": "Dự án #{{id}}",
+        "disabled": "Đã vô hiệu",
+        "search": "Tìm kiếm",
+        "searchWithShortcut": "Tìm kiếm ({{shortcut}})",
+        "searchProjects": "Tìm dự án…",
+        "expandSidebar": "Mở rộng thanh bên",
+        "collapseSidebar": "Thu gọn thanh bên",
+        "openNavigation": "Mở menu",
+        "closeNavigation": "Đóng menu",
+        "currentProject": "Dự án hiện tại: {{name}}. Chuyển dự án",
+        "accountMenu": "Menu tài khoản của {{name}}",
+        "signedIn": "Đã đăng nhập",
+        "logout": "Đăng xuất",
+        "switchProjectTooltip": "{{name}} · Chuyển dự án",
+        "loadProjectFailed": "Không tải được thông tin dự án.",
+        "projectDisabled": "Dự án này đã bị vô hiệu. Dự án bị ẩn khỏi danh sách cho đến khi admin bật lại."
+    },
+    "palette": {
+        "switchPlaceholder": "Chuyển sang dự án…",
+        "searchPlaceholder": "Tìm dự án hoặc đi đến trang…",
+        "switchLabel": "Chuyển dự án",
+        "results": "Kết quả",
+        "projects": "Dự án",
+        "current": "Đang mở",
+        "noMatch": "Không có dự án nào khớp “{{query}}”.",
+        "noProjects": "Chưa có dự án nào.",
+        "goTo": "Đi đến",
+        "loadError": "Không tải được danh sách dự án. Kiểm tra kết nối rồi thử lại.",
+        "toMove": "để di chuyển",
+        "toOpen": "để mở"
+    }
+}

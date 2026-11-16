@@ -5,6 +5,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { NEUTRAL } from "../../config/ThemeConfig";
 import { formatDateRange } from "../../utils/format";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n/i18n";
 
 interface FilterChipProps {
     label: string;
@@ -20,6 +22,7 @@ interface FilterChipProps {
 
 // Stripe-style filter: an unset filter is a dashed "+ Label" chip, a set one shows its value.
 const FilterChip: React.FC<FilterChipProps> = ({ label, value, onClear, children, active, onClick }) => {
+    const { t } = useTranslation();
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const isToggle = active !== undefined;
     const isSet = isToggle ? active : value !== undefined && value !== null && value !== "";
@@ -43,7 +46,7 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, value, onClear, children
                 }
                 onClick={children ? (event) => setAnchorEl(event.currentTarget) : onClick}
                 onDelete={!isToggle && isSet && onClear ? onClear : undefined}
-                deleteIcon={<Close aria-label={`Clear ${label} filter`} />}
+                deleteIcon={<Close aria-label={t("common.filters.clear", { label })} />}
                 aria-haspopup={children ? "dialog" : undefined}
                 aria-pressed={isToggle ? active : undefined}
                 sx={{
@@ -83,18 +86,18 @@ export interface DateRangePreset {
 export const recentPresets = (): DateRangePreset[] => {
     const now = dayjs();
     return [
-        { label: "This month", from: now.startOf("month"), to: now.endOf("month") },
-        { label: "Last month", from: now.subtract(1, "month").startOf("month"), to: now.subtract(1, "month").endOf("month") },
-        { label: "Last 30 days", from: now.subtract(29, "day").startOf("day"), to: now.endOf("day") },
+        { label: i18n.t("common.filters.presets.thisMonth"), from: now.startOf("month"), to: now.endOf("month") },
+        { label: i18n.t("common.filters.presets.lastMonth"), from: now.subtract(1, "month").startOf("month"), to: now.subtract(1, "month").endOf("month") },
+        { label: i18n.t("common.filters.presets.lastDays", { count: 30 }), from: now.subtract(29, "day").startOf("day"), to: now.endOf("day") },
     ];
 };
 
 export const yearPresets = (): DateRangePreset[] => {
     const now = dayjs();
     return [
-        { label: "This year", from: now.startOf("year"), to: now.endOf("year") },
-        { label: "Last year", from: now.subtract(1, "year").startOf("year"), to: now.subtract(1, "year").endOf("year") },
-        { label: "Next year", from: now.add(1, "year").startOf("year"), to: now.add(1, "year").endOf("year") },
+        { label: i18n.t("common.filters.presets.thisYear"), from: now.startOf("year"), to: now.endOf("year") },
+        { label: i18n.t("common.filters.presets.lastYear"), from: now.subtract(1, "year").startOf("year"), to: now.subtract(1, "year").endOf("year") },
+        { label: i18n.t("common.filters.presets.nextYear"), from: now.add(1, "year").startOf("year"), to: now.add(1, "year").endOf("year") },
     ];
 };
 
@@ -104,6 +107,7 @@ export const DateRangeForm: React.FC<{
     presets: DateRangePreset[];
     onApply: (from: Dayjs, to: Dayjs) => void;
 }> = ({ from, to, presets, onApply }) => {
+    const { t } = useTranslation();
     const [ draftFrom, setDraftFrom ] = useState<Dayjs | null>(from);
     const [ draftTo, setDraftTo ] = useState<Dayjs | null>(to);
     const outOfOrder = Boolean(draftFrom && draftTo && draftFrom.isAfter(draftTo));
@@ -125,13 +129,13 @@ export const DateRangeForm: React.FC<{
             )}
             <Stack spacing={1.5}>
                 <DatePicker
-                    label="From"
+                    label={t("common.filters.from")}
                     value={draftFrom}
                     onChange={setDraftFrom}
                     slotProps={{ textField: { size: "small", fullWidth: true } }}
                 />
                 <DatePicker
-                    label="To"
+                    label={t("common.filters.to")}
                     value={draftTo}
                     onChange={setDraftTo}
                     slotProps={{ textField: { size: "small", fullWidth: true } }}
@@ -139,7 +143,7 @@ export const DateRangeForm: React.FC<{
             </Stack>
             {outOfOrder && (
                 <Typography variant="caption" color="error" component="p" sx={{ mt: 1 }}>
-                    The start date must be on or before the end date.
+                    {t("common.filters.startAfterEnd")}
                 </Typography>
             )}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
@@ -149,7 +153,7 @@ export const DateRangeForm: React.FC<{
                     disabled={!canApply}
                     onClick={() => draftFrom && draftTo && onApply(draftFrom, draftTo)}
                 >
-                    Apply
+                    {t("common.actions.apply")}
                 </Button>
             </Box>
         </Box>
@@ -200,6 +204,7 @@ interface SelectFilterProps<T extends string | number> {
 }
 
 export const SelectFilter = <T extends string | number>({ label, value, options, onChange }: SelectFilterProps<T>) => {
+    const { t } = useTranslation();
     const selected = options.find((option) => option.value === value);
 
     return (
@@ -207,7 +212,7 @@ export const SelectFilter = <T extends string | number>({ label, value, options,
             {(close) => (
                 <MenuList dense autoFocusItem sx={{ minWidth: 200, maxHeight: 320, overflowY: "auto" }}>
                     {options.length === 0 && (
-                        <MenuItem disabled sx={{ typography: "body2" }}>No options</MenuItem>
+                        <MenuItem disabled sx={{ typography: "body2" }}>{t("common.filters.noOptions")}</MenuItem>
                     )}
                     {options.map((option) => (
                         <MenuItem

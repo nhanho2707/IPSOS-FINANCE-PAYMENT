@@ -99,7 +99,7 @@ const Projects = () => {
             secondary={[row.internal_code, row.symphony].filter(Boolean).join(' · ')}
             title={row.project_name}
           />
-          {row.disabled && <StatusChip label={t("projects.list.disabled")} tone="neutral" />}
+          {row.disabled ? <StatusChip label={t("projects.list.disabled")} tone="neutral" /> : null}
         </Box>
       )
     },

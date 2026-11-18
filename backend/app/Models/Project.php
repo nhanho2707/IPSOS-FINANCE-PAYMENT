@@ -22,6 +22,11 @@ class Project extends Model
         'disabled'
     ];
 
+    // MySQL returns the tinyint as 0/1; the frontend renders `disabled && <Chip/>`, which prints a bare 0.
+    protected $casts = [
+        'disabled' => 'boolean',
+    ];
+
     const STATUS_PLANNED = 'planned'; 
     const STATUS_IN_COMING = 'in coming'; 
     const STATUS_ON_GOING = 'on going';

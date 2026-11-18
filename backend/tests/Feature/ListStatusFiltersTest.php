@@ -128,6 +128,14 @@ class ListStatusFiltersTest extends TestCase
         $this->assertSame([1], (clone $vinamilk)->withStatus(Project::STATUS_ON_GOING)->pluck('id')->all());
     }
 
+    public function test_disabled_is_read_as_a_boolean(): void
+    {
+        $this->project(1, 'Vinamilk Brand Health', Project::STATUS_ON_GOING);
+
+        // A raw 0 reaches the list as a number and React prints it next to the project name.
+        $this->assertFalse(Project::findOrFail(1)->disabled);
+    }
+
     private function respondent(int $projectId, string $respondentId, ?string $status, ?string $phone = null, ?string $respondentPhone = null): void
     {
         DB::table('project_respondents')->insert([

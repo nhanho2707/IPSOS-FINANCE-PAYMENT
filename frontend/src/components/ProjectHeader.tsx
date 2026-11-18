@@ -49,11 +49,11 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ projectId, project, loadi
                 </Alert>
             )}
 
-            {project?.disabled && (
+            {project?.disabled ? (
                 <Alert severity="info" sx={{ mb: 2.5 }}>
                     {t("nav.shell.projectDisabled")}
                 </Alert>
-            )}
+            ) : null}
         </>
     );
 };

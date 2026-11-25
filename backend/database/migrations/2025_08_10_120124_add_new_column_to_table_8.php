@@ -7,49 +7,37 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * The administrative divisions create migration declares these columns now, so a fresh database
+     * already has them; only databases built before that change need them added.
      */
     public function up(): void
     {
-        //Thêm column
-        Schema::table('provinces', function(Blueprint $table){
+        if (!Schema::hasColumn('provinces', 'codename')) {
+            Schema::table('provinces', function(Blueprint $table){
+                $table->string('codename')->after('area_code');
+                $table->string('short_codename')->after('codename');
+            });
+        }
 
-            $table->string('codename')->after('area_code');
-            $table->string('short_codename')->after('codename');
-        });
+        if (!Schema::hasColumn('districts', 'codename')) {
+            Schema::table('districts', function(Blueprint $table){
+                $table->string('codename')->after('population');
+                $table->string('short_codename')->after('population');
+            });
+        }
 
-        Schema::table('districts', function(Blueprint $table){
-
-            $table->string('codename')->after('population');
-            $table->string('short_codename')->after('population');
-        });
-
-        Schema::table('wards', function(Blueprint $table){
-
-            $table->string('codename')->after('population');
-            $table->string('short_codename')->after('population');
-        });
+        if (!Schema::hasColumn('wards', 'codename')) {
+            Schema::table('wards', function(Blueprint $table){
+                $table->string('codename')->after('population');
+                $table->string('short_codename')->after('population');
+            });
+        }
     }
 
     /**
-     * Reverse the migrations.
+     * The columns belong to the create migration on fresh databases, so they are left in place.
      */
     public function down(): void
     {
-        //Xoá column 
-        Schema::table('provinces', function (Blueprint $table) {
-            $table->dropColumn('codename');
-            $table->dropColumn('short_codename');
-        });
-
-        Schema::table('districts', function (Blueprint $table) {
-            $table->dropColumn('codename');
-            $table->dropColumn('short_codename');
-        });
-
-        Schema::table('wards', function (Blueprint $table) {
-            $table->dropColumn('codename');
-            $table->dropColumn('short_codename');
-        });
     }
 };

@@ -44,12 +44,12 @@ return new class extends Migration
             //$table->unique(['external_id', 'email'], 'unique_external_id_email');
         });
 
-        // Schema::create('techcombank_channels', function(Blueprint $table) {
-        //     $table->id();
-        //     $table->string('name');
-        //     $table->string('chart_label')->nullable();
-        //     $table->timestamps();
-        // });
+        Schema::create('techcombank_channels', function(Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('chart_label')->nullable();
+            $table->timestamps();
+        });
 
         Schema::create('techcombank_channels_summarizes', function(Blueprint $table) {
             $table->id();
@@ -62,12 +62,12 @@ return new class extends Migration
             $table->unique(['panel_id', 'bank_id', 'channel_id'], 'unique_channels_panel_bank');
         });
 
-        // Schema::create('techcombank_products', function(Blueprint $table) {
-        //     $table->id();
-        //     $table->string('name');
-        //     $table->string('chart_label')->nullable();
-        //     $table->timestamps();
-        // });
+        Schema::create('techcombank_products', function(Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('chart_label')->nullable();
+            $table->timestamps();
+        });
 
         Schema::create('techcombank_products_summarizes', function(Blueprint $table) {
             $table->id();
@@ -80,21 +80,21 @@ return new class extends Migration
             $table->unique(['panel_id', 'bank_id', 'product_id'], 'unique_products_panel_bank');
         });
 
-        // Schema::create('techcombank_surveys', function(Blueprint $table) {
-        //     $table->id();
-        //     $table->string('name');
-        //     $table->string('engagment');
-        //     $table->string('project_type');
-        //     $table->integer('sent_out');
-        //     $table->integer('respond');
-        //     $table->double('respond_rate');
-        //     $table->integer('completed_qualified');
-        //     $table->integer('cancellation');
-        //     $table->integer('number_of_question');
-        //     $table->date('open_date');
-        //     $table->date('close_date');
-        //     $table->string('resource');
-        // });
+        Schema::create('techcombank_surveys', function(Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('engagment');
+            $table->string('project_type');
+            $table->integer('sent_out');
+            $table->integer('respond');
+            $table->double('respond_rate');
+            $table->integer('completed_qualified');
+            $table->integer('cancellation');
+            $table->integer('number_of_question');
+            $table->date('open_date');
+            $table->date('close_date');
+            $table->string('resource');
+        });
 
 
     }
@@ -104,12 +104,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('techcombank_panel');
-        //Schema::dropIfExists('techcombank_channels');
         Schema::dropIfExists('techcombank_channels_summarizes');
-        //Schema::dropIfExists('techcombank_products');
         Schema::dropIfExists('techcombank_products_summarizes');
-        //Schema::dropIfExists('techcombank_surveys');
-        
+        Schema::dropIfExists('techcombank_channels');
+        Schema::dropIfExists('techcombank_products');
+        Schema::dropIfExists('techcombank_surveys');
+        Schema::dropIfExists('techcombank_panel');
     }
 };

@@ -43,7 +43,8 @@ backend/storage/keys/
 # ============================================================
 # DATABASE BACKUPS
 # ============================================================
-database/
+# Root folder only: backend/database holds the Laravel migrations.
+/database/
 *.sql
 *.sqlite
 *.db

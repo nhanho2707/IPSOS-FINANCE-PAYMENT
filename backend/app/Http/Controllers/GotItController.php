@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Requests\StoreProjectGotItRequest;
@@ -155,8 +154,8 @@ class GotItController extends Controller
 
             Log::info('Live Environment:');
 
-            // Stops a double click from buying the same vouchers twice.
-            $lock = Cache::lock('gotit-transaction-' . $projectRespondent->id, 300);
+            // Stops a double click, or a Vinnet request for the same respondent, from buying twice.
+            $lock = $projectRespondent->giftLock();
 
             if(!$lock->get()){
                 return response()->json([
@@ -197,6 +196,24 @@ class GotItController extends Controller
     
     private function dispatch_gotit_voucher(ProjectRespondent $projectRespondent, Project $project, $price, string $phoneNumber, ?string $serviceCode, ?string $serviceType, ?string $provider, ?string $deliveryMethod)
     {
+        // Re-opening an interview after the gift went out through the other provider must neither buy a
+        // second gift nor overwrite the channel the gift was recorded under.
+        $deliveredChannel = $projectRespondent->deliveredGiftChannel();
+
+        if($deliveredChannel !== null && $deliveredChannel !== 'gotit'){
+            Log::warning('Gift already delivered through another provider', [
+                'project_respondent_id' => $projectRespondent->id,
+                'delivered_by' => $deliveredChannel,
+                'requested' => 'gotit'
+            ]);
+
+            return response()->json([
+                'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                'message' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel),
+                'error' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel)
+            ], 409);
+        }
+
         if($deliveryMethod === 'sms'){
             try
             {

@@ -5,7 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Constants\TransactionStatus;
 
 class ProjectRespondent extends Model
 {
@@ -38,6 +41,11 @@ class ProjectRespondent extends Model
     const ERROR_RESPONDENT_GIFT_TEMPORARY =               'Hệ thống gặp sự cố tạm thời, vui lòng kiểm tra lại thiết bị (kết nối mạng,...) và thử thực hiện lại.';
     const ERROR_RESPONDENT_GIFT_INSUFFICIENT_BALANCE =    'Tài khoản dịch vụ quà tặng tạm thời không đủ số dư. Vui lòng liên hệ Admin để được hỗ trợ.';
     const ERROR_MOBILE_NETWORK_NOT_SUPPORTED =            'Dịch vụ hiện không hỗ trợ đối với số điện thoại thuộc nhà mạng này.';
+    const ERROR_GIFT_ALREADY_DELIVERED =                  'Đáp viên đã nhận quà qua %s trước đó, hệ thống không gửi thêm quà.';
+
+    // The survey scripts read 501–503 as "gift already recorded" and let the interviewer finish,
+    // so a second request after a gift went out through the other provider answers in that range.
+    const CODE_GIFT_ALREADY_DELIVERED = 502;
 
     protected $table = "project_respondents";
 
@@ -356,6 +364,35 @@ class ProjectRespondent extends Model
         } 
     }
     
+    /**
+     * The provider that already delivered this respondent's gift ('vinnet' or 'gotit'), or null.
+     */
+    public function deliveredGiftChannel(): ?string
+    {
+        if ($this->vinnetTransactions()->where('vinnet_token_status', TransactionStatus::STATUS_VERIFIED)->exists()) {
+            return 'vinnet';
+        }
+
+        if ($this->gotitVoucherTransactions()->where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)->exists()) {
+            return 'gotit';
+        }
+
+        return null;
+    }
+
+    public static function giftAlreadyDeliveredMessage(string $channel): string
+    {
+        return sprintf(self::ERROR_GIFT_ALREADY_DELIVERED, $channel === 'gotit' ? 'GotIt' : 'Vinnet');
+    }
+
+    /**
+     * One lock for both providers: a Vinnet and a GotIt request for the same respondent must not both buy.
+     */
+    public function giftLock(): Lock
+    {
+        return Cache::lock('gift-transaction-' . $this->id, 300);
+    }
+
     public function updateStatus($status): bool
     {
         $oldStatus = $this->status;

@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Constants\TransactionStatus;
 use App\Models\Project;
+use App\Models\ProjectGotItVoucherTransaction;
 use App\Models\ProjectRespondent;
+use App\Services\VinnetService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -126,20 +128,74 @@ class GiftFlowSafetyTest extends TestCase
             ->assertJson(['message' => TransactionStatus::STATUS_INVALID]);
     }
 
-    public function test_a_second_gotit_request_while_the_first_is_sending_buys_nothing(): void
+    public function test_a_respondent_who_got_a_gotit_voucher_gets_no_vinnet_cards_on_a_second_request(): void
     {
-        $lock = Cache::lock('gotit-transaction-1', 300);
+        $this->giftAlreadySentThrough('gotit');
+
+        $this->mock(VinnetService::class, function ($mock) {
+            $mock->shouldReceive('get_service_code')->andReturn('S0004');
+            $mock->shouldNotReceive('authenticate_token');
+            $mock->shouldNotReceive('pay_service');
+        });
+
+        $this->postJson('/api/project-management/vinnet/transaction', $this->giftRequest('vinnet', 'card', 'S0004', 'qr'))
+            ->assertStatus(409)
+            ->assertJson([
+                'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                'message' => 'Đáp viên đã nhận quà qua GotIt trước đó, hệ thống không gửi thêm quà.',
+            ]);
+
+        $respondent = DB::table('project_respondents')->first();
+        $this->assertSame('gotit', $respondent->channel);
+        $this->assertSame('qr', $respondent->delivery_method);
+        $this->assertSame('0903412887', $respondent->phone_number);
+        $this->assertSame(ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED, $respondent->status);
+        $this->assertSame(0, DB::table('project_vinnet_transactions')->count());
+    }
+
+    public function test_a_respondent_who_got_vinnet_cards_gets_no_gotit_voucher_on_a_second_request(): void
+    {
+        $this->giftAlreadySentThrough('vinnet');
+
+        $this->postJson('/api/project-management/gotit/transaction', $this->giftRequest('gotit', 'voucher', 'S0004', 'sms', '0912556201'))
+            ->assertStatus(409)
+            ->assertJson([
+                'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                'message' => 'Đáp viên đã nhận quà qua Vinnet trước đó, hệ thống không gửi thêm quà.',
+            ]);
+
+        $respondent = DB::table('project_respondents')->first();
+        $this->assertSame('vinnet', $respondent->channel);
+        $this->assertSame('0903412887', $respondent->phone_number);
+        $this->assertSame(0, DB::table('project_gotit_voucher_transactions')->count());
+    }
+
+    public function test_a_vinnet_request_waits_for_a_gotit_request_for_the_same_respondent(): void
+    {
+        $this->mock(VinnetService::class, function ($mock) {
+            $mock->shouldReceive('get_service_code')->andReturn('S0004');
+            $mock->shouldNotReceive('authenticate_token');
+        });
+
+        $lock = Cache::lock('gift-transaction-1', 300);
         $this->assertTrue($lock->get());
 
         try {
-            $this->postJson('/api/project-management/gotit/transaction', [
-                'token' => self::TOKEN,
-                'phone_number' => '0903412887',
-                'service_type' => 'voucher',
-                'service_code' => 'GOTIT',
-                'provider' => 'gotit',
-                'delivery_method' => 'sms',
-            ])
+            $this->postJson('/api/project-management/vinnet/transaction', $this->giftRequest('vinnet', 'card', 'S0004', 'qr'))
+                ->assertStatus(409)
+                ->assertJson(['status_code' => 998]);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    public function test_a_second_gotit_request_while_the_first_is_sending_buys_nothing(): void
+    {
+        $lock = Cache::lock('gift-transaction-1', 300);
+        $this->assertTrue($lock->get());
+
+        try {
+            $this->postJson('/api/project-management/gotit/transaction', $this->giftRequest('gotit', 'voucher', 'GOTIT', 'sms'))
                 ->assertStatus(409)
                 ->assertJson(['status_code' => 998, 'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_TEMPORARY]);
         } finally {
@@ -148,5 +204,44 @@ class GiftFlowSafetyTest extends TestCase
 
         $this->assertSame(0, DB::table('project_gotit_voucher_transactions')->count());
         $this->assertSame(ProjectRespondent::STATUS_RESPONDENT_PENDING, DB::table('project_respondents')->value('status'));
+    }
+
+    /**
+     * The respondent got the gift long ago: the token is blocked and past its 24 hours.
+     */
+    private function giftAlreadySentThrough(string $channel): void
+    {
+        DB::table('project_respondents')->update([
+            'channel' => $channel,
+            'delivery_method' => 'qr',
+            'phone_number' => '0903412887',
+            'status' => ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED,
+        ]);
+        DB::table('project_respondent_tokens')->update(['status' => 'blocked', 'expires_at' => now()->subDays(20)]);
+
+        if ($channel === 'gotit') {
+            DB::table('project_gotit_voucher_transactions')->insert([
+                'project_respondent_id' => 1,
+                'transaction_ref_id' => 'IPSOS_ref-1',
+                'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS,
+            ]);
+        } else {
+            DB::table('project_vinnet_transactions')->insert([
+                'project_respondent_id' => 1,
+                'vinnet_token_status' => TransactionStatus::STATUS_VERIFIED,
+            ]);
+        }
+    }
+
+    private function giftRequest(string $provider, string $serviceType, string $serviceCode, string $deliveryMethod, string $phone = '0903412887'): array
+    {
+        return [
+            'token' => self::TOKEN,
+            'phone_number' => $phone,
+            'service_type' => $serviceType,
+            'service_code' => $serviceCode,
+            'provider' => $provider,
+            'delivery_method' => $deliveryMethod,
+        ];
     }
 }

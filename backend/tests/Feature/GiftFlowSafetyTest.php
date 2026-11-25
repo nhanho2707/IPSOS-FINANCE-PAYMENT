@@ -170,6 +170,42 @@ class GiftFlowSafetyTest extends TestCase
         $this->assertSame(0, DB::table('project_gotit_voucher_transactions')->count());
     }
 
+    public function test_a_refusal_after_the_gift_was_delivered_is_not_recorded(): void
+    {
+        $this->giftAlreadySentThrough('gotit');
+
+        $this->postJson('/api/project-management/project/refusal-transaction', [
+            'token' => self::TOKEN,
+            'refusal_message' => 'Không có nhu cầu',
+        ])
+            ->assertStatus(409)
+            ->assertJson([
+                'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                'message' => 'Đáp viên đã nhận quà qua GotIt trước đó, hệ thống không gửi thêm quà. Không ghi nhận lý do từ chối.',
+            ]);
+
+        $respondent = DB::table('project_respondents')->first();
+        $this->assertSame('gotit', $respondent->channel);
+        $this->assertSame(ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED, $respondent->status);
+        $this->assertNull($respondent->reject_message);
+    }
+
+    public function test_a_refusal_before_any_gift_is_recorded(): void
+    {
+        $this->postJson('/api/project-management/project/refusal-transaction', [
+            'token' => self::TOKEN,
+            'refusal_message' => 'Không có nhu cầu',
+        ])
+            ->assertOk()
+            ->assertJson(['status_code' => 994]);
+
+        $respondent = DB::table('project_respondents')->first();
+        $this->assertSame('other', $respondent->channel);
+        $this->assertSame(ProjectRespondent::STATUS_RESPONDENT_REJECTED, $respondent->status);
+        $this->assertSame('Không có nhu cầu', $respondent->reject_message);
+        $this->assertSame('blocked', DB::table('project_respondent_tokens')->value('status'));
+    }
+
     public function test_a_vinnet_request_waits_for_a_gotit_request_for_the_same_respondent(): void
     {
         $this->mock(VinnetService::class, function ($mock) {

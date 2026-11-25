@@ -79,15 +79,45 @@ class TransactionController extends Controller
 
             Log::info('Live Environment:');
 
-            $projectRespondent->update([
-                'channel' => 'other',
-                'reject_message' => $refusalMessage,
-                'status' => ProjectRespondent::STATUS_RESPONDENT_REJECTED
-            ]);
-            
-            $projectRespondent->token()->update([
-                'status' => 'blocked'
-            ]);
+            $lock = $projectRespondent->giftLock();
+
+            if(!$lock->get()){
+                return response()->json([
+                    'status_code' => 998,
+                    'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_TEMPORARY
+                ], 409);
+            }
+
+            try
+            {
+                // Re-opening an interview after the gift went out can lead the interviewer to the refusal
+                // question; recording it would mark a paid respondent as refused and drop the channel.
+                $deliveredChannel = $projectRespondent->deliveredGiftChannel();
+
+                if($deliveredChannel !== null){
+                    Log::warning('Refusal ignored: gift already delivered', [
+                        'project_respondent_id' => $projectRespondent->id,
+                        'delivered_by' => $deliveredChannel
+                    ]);
+
+                    return response()->json([
+                        'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                        'message' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel) . ' Không ghi nhận lý do từ chối.'
+                    ], 409);
+                }
+
+                $projectRespondent->update([
+                    'channel' => 'other',
+                    'reject_message' => $refusalMessage,
+                    'status' => ProjectRespondent::STATUS_RESPONDENT_REJECTED
+                ]);
+
+                $projectRespondent->token()->update([
+                    'status' => 'blocked'
+                ]);
+            } finally {
+                $lock->release();
+            }
 
             return response()->json([
                 'status_code' => 994,
@@ -285,7 +315,12 @@ class TransactionController extends Controller
             $search = $request->query('searchTerm');
             
             $query = DB::table('project_respondents as pr')
-                    ->leftJoin('project_vinnet_transactions as pvt', 'pr.id', '=', 'pvt.project_respondent_id')
+                    // Only successful Vinnet rows: a failed attempt would otherwise win the COALESCE below and
+                    // hide the GotIt voucher the respondent actually received.
+                    ->leftJoin('project_vinnet_transactions as pvt', function($join) {
+                        $join->on('pr.id', '=', 'pvt.project_respondent_id')
+                            ->where('pvt.vinnet_token_message', TransactionStatus::VINNET_SUCCESS);
+                    })
                     ->leftJoin('project_gotit_voucher_transactions as pgt', 'pr.id', '=', 'pgt.project_respondent_id')
                     ->join('projects as p', 'p.id', '=', 'pr.project_id')
                     ->join('provinces', 'provinces.id', '=', 'pr.province_id')
@@ -295,7 +330,7 @@ class TransactionController extends Controller
                         DB::raw('COALESCE(pvt.vinnet_payservice_requuid, pgt.transaction_ref_id) AS transaction_id'),
                         'pr.service_code',
                         DB::raw('COALESCE(pvt.created_at, pgt.created_at) AS created_at'),
-                        'pr.channel',
+                        DB::raw("CASE WHEN pvt.id IS NULL THEN 'gotit' ELSE 'vinnet' END AS channel"),
                         'pr.phone_number',
                         DB::raw('COALESCE(pvt.total_amt, pgt.voucher_value) AS amount'),
                         'pvt.discount',

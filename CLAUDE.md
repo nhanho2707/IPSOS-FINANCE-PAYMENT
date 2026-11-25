@@ -180,7 +180,8 @@ const [actionState, setActionState] = useState<ActionState>({
 
 ### Respondent-facing endpoints
 - The gift routes (`/project-management/vinnet/*`, `/gotit/*`, `/project/*`) have no login; the respondent token is the credential. Looking a gift up again (`check-transaction`) needs the token of the respondent who owns that transaction (`ProjectRespondentTokenService::respondentForTransactionLookup`).
-- Sending a gift holds one per-respondent lock for both providers (`ProjectRespondent::giftLock()`), so a double click cannot buy twice. A respondent whose gift already went out through one provider is refused by the other (`deliveredGiftChannel()`, `status_code` 502, which the survey scripts treat as "gift already recorded"), so re-opening an interview neither buys a second gift nor changes the recorded channel.
+- Sending a gift holds one per-respondent lock for both providers (`ProjectRespondent::giftLock()`), so a double click cannot buy twice. A respondent whose gift already went out through one provider is refused by the other (`deliveredGiftChannel()`, `status_code` 502, which the survey scripts treat as "gift already recorded"), so re-opening an interview neither buys a second gift nor changes the recorded channel. A refusal sent after the gift was delivered is not recorded either (same code).
+- The transactions list and the date export take the provider of each row from the transaction itself (`CASE WHEN pvt.id IS NULL ...`), not from `project_respondents.channel`, which says `other` after a refusal. `php artisan gifts:fix-channels` reports (and with `--apply` corrects) respondents whose channel or refused status contradicts the gift they were delivered.
 - Never log card PINs, voucher links or codes, the secret half of a respondent token, the project `remember_token`, or provider keys (Vinnet merchant key, GotIt API key). Log the public half of a token (`Str::before($token, '.')`) and transaction ids instead.
 
 ### Vinnet (telco top-up)

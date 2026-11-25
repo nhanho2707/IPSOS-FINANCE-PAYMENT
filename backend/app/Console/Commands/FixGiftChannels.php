@@ -4,15 +4,17 @@ namespace App\Console\Commands;
 
 use App\Constants\TransactionStatus;
 use App\Models\ProjectGotItVoucherTransaction;
+use App\Models\ProjectRespondent;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Before the cross-provider guard, re-opening an interview after a GotIt gift could send a Vinnet
- * request that overwrote the respondent's channel (and the reverse). This finds respondents whose
- * channel disagrees with the provider that actually delivered their gift.
+ * Before the guards in the gift endpoints, re-opening an interview after the gift went out could
+ * overwrite the respondent: a request to the other provider changed the channel, and a refusal
+ * marked a paid respondent as refused with channel 'other'. This finds those respondents from the
+ * transactions that were actually delivered.
  */
 class FixGiftChannels extends Command
 {
@@ -20,23 +22,33 @@ class FixGiftChannels extends Command
                             {--project= : Only check this project id}
                             {--apply : Write the corrected channels; without it the command only reports}';
 
-    protected $description = 'Find respondents whose recorded channel is not the provider that delivered their gift';
+    protected $description = 'Find respondents whose channel or refused status contradicts the gift they were delivered';
 
     public function handle(): int
     {
         $rows = $this->respondentsWithDeliveredGifts();
 
-        $mislabelled = $rows->filter(fn ($row) => !($row->by_vinnet && $row->by_gotit) && $row->channel !== $this->deliveredBy($row));
         $doublePaid = $rows->filter(fn ($row) => $row->by_vinnet && $row->by_gotit);
+        $toFix = $rows->reject(fn ($row) => $row->by_vinnet && $row->by_gotit)
+            ->filter(fn ($row) => $this->changes($row) !== []);
 
         $this->info("Respondents with a delivered gift: {$rows->count()}");
 
         $this->line('');
-        $this->info("Channel does not match the provider that delivered the gift: {$mislabelled->count()}");
-        if ($mislabelled->isNotEmpty()) {
+        $this->info("Channel or status contradicts the delivered gift: {$toFix->count()}");
+        if ($toFix->isNotEmpty()) {
             $this->table(
-                ['ID', 'Project', 'Respondent', 'Channel now', 'Delivered by', 'Status'],
-                $mislabelled->map(fn ($row) => [$row->id, $row->internal_code, $row->respondent_id, $row->channel ?? '—', $this->deliveredBy($row), $row->status])->all()
+                ['ID', 'Project', 'Respondent', 'Channel now', 'Delivered by', 'Status now', 'Refusal reason', 'Fix'],
+                $toFix->map(fn ($row) => [
+                    $row->id,
+                    $row->internal_code,
+                    $row->respondent_id,
+                    $row->channel ?? '—',
+                    $this->deliveredBy($row),
+                    $row->status,
+                    $row->reject_message ?? '',
+                    collect($this->changes($row))->map(fn ($value, $column) => $column . ' → ' . ($value ?? 'empty'))->implode(', '),
+                ])->all()
             );
         }
 
@@ -50,28 +62,55 @@ class FixGiftChannels extends Command
         }
 
         if (!$this->option('apply')) {
-            if ($mislabelled->isNotEmpty()) {
+            if ($toFix->isNotEmpty()) {
                 $this->line('');
-                $this->comment('Nothing was changed. Run again with --apply to correct the channels above.');
+                $this->comment('Nothing was changed. Run again with --apply to correct the respondents above.');
             }
 
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use ($mislabelled) {
-            foreach ($mislabelled as $row) {
-                DB::table('project_respondents')->where('id', $row->id)->update(['channel' => $this->deliveredBy($row)]);
+        DB::transaction(function () use ($toFix) {
+            foreach ($toFix as $row) {
+                DB::table('project_respondents')->where('id', $row->id)->update($this->changes($row));
             }
         });
 
-        Log::info('gifts:fix-channels corrected channels', [
-            'respondents' => $mislabelled->map(fn ($row) => ['id' => $row->id, 'from' => $row->channel, 'to' => $this->deliveredBy($row)])->values()->all(),
+        // The refusal reasons are cleared from the respondents, so keep them here.
+        Log::info('gifts:fix-channels corrected respondents', [
+            'respondents' => $toFix->map(fn ($row) => [
+                'id' => $row->id,
+                'channel' => $row->channel,
+                'status' => $row->status,
+                'reject_message' => $row->reject_message,
+                'changes' => $this->changes($row),
+            ])->values()->all(),
         ]);
 
         $this->line('');
-        $this->info("Corrected {$mislabelled->count()} channel(s).");
+        $this->info("Corrected {$toFix->count()} respondent(s).");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function changes(object $row): array
+    {
+        $changes = [];
+
+        if ($row->channel !== $this->deliveredBy($row)) {
+            $changes['channel'] = $this->deliveredBy($row);
+        }
+
+        // Nobody can refuse once paid: the refusal came from re-opening the interview afterwards.
+        if ($row->status === ProjectRespondent::STATUS_RESPONDENT_REJECTED) {
+            $changes['status'] = ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED;
+            $changes['reject_message'] = null;
+        }
+
+        return $changes;
     }
 
     private function respondentsWithDeliveredGifts(): Collection
@@ -99,6 +138,7 @@ class FixGiftChannels extends Command
                 'pr.respondent_id',
                 'pr.channel',
                 'pr.status',
+                'pr.reject_message',
                 DB::raw('v.project_respondent_id IS NOT NULL as by_vinnet'),
                 DB::raw('g.project_respondent_id IS NOT NULL as by_gotit'),
             ])

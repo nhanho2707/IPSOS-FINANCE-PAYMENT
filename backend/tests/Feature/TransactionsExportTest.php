@@ -254,12 +254,25 @@ class TransactionsExportTest extends TestCase
         $gotit(4, 'Đang xử lý', '2026-10-08 10:00:00');
         $respondent(5, 'gotit');
         $gotit(5, 'Voucher được cập nhật thành công.', '2026-12-01 10:00:00');
+        // GotIt voucher, then a failed Vinnet attempt and a refusal from the re-opened interview set the channel to 'other'.
+        $respondent(6, 'other');
+        $gotit(6, 'Voucher được cập nhật thành công.', '2026-10-09 10:00:00');
+        DB::table('project_vinnet_transactions')->insert([
+            'project_respondent_id' => 6, 'vinnet_payservice_requuid' => 'V6', 'vinnet_token_message' => 'Lỗi Token',
+            'created_at' => '2026-10-09 11:00:00', 'updated_at' => '2026-10-09 11:00:00',
+        ]);
 
-        $rows = (new TransactionsExport('2026-10-01 00:00:00', '2026-10-31 23:59:59', 'finance', new VinnetService()))->query()->get();
+        $export = new TransactionsExport('2026-10-01 00:00:00', '2026-10-31 23:59:59', 'finance', new VinnetService());
+        $rows = $export->query()->get();
 
-        $this->assertSame(['R1', 'R2', 'R3'], $rows->pluck('respondent_id')->all());
-        $this->assertSame(['Invoice 1', 'GotIt invoice 2', null], $rows->pluck('invoice_comment')->all());
-        $this->assertSame(['V1', 'G2', 'G3'], $rows->pluck('transaction_id')->all());
-        $this->assertEquals([10, 10, 10], $rows->pluck('month')->all());
+        $this->assertSame(['R1', 'R2', 'R3', 'R6'], $rows->pluck('respondent_id')->all());
+        $this->assertSame(['Invoice 1', 'GotIt invoice 2', null, null], $rows->pluck('invoice_comment')->all());
+        $this->assertSame(['V1', 'G2', 'G3', 'G6'], $rows->pluck('transaction_id')->all());
+        $this->assertEquals([10, 10, 10, 10], $rows->pluck('month')->all());
+
+        // The provider comes from the transaction on the row, not from the respondent's channel.
+        $this->assertSame(['vinnet', 'gotit', 'gotit', 'gotit'], $rows->pluck('channel')->all());
+        $this->assertSame('DAYONE', $export->map($rows[3])[8]);
+        $this->assertEquals(100000, $export->map($rows[3])[12]);
     }
 }

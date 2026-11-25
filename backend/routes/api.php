@@ -241,8 +241,6 @@ Route::post('cati/authenticate-token', [CatiController::class, 'authenticateToke
 // ══════════════════════════════════════════════════════════
 
 Route::get('/generate-qr', [QrCodeController::class, 'generate']);
-Route::post('/cmc-telecom/sendsms', [VinnetController::class, 'cmc_telecom_send_sms']);
-Route::get('/test_sms', [VinnetController::class, 'test_sms']);
 
 // ══════════════════════════════════════════════════════════
 //  SILVER BULLET DASHBOARD

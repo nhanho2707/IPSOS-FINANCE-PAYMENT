@@ -178,6 +178,11 @@ const [actionState, setActionState] = useState<ActionState>({
 - It counts every live interview; a gift is a successful Vinnet or GotIt transaction. "To review" is a gift sent more than `REVIEW_TOLERANCE_MINUTES` before the interview ended. Offline imports are left out of the timing figures.
 - Filters live in the URL (`useStatisticsFilters`). Each breakdown ignores the filter on its own dimension, so picking an interviewer, a wait or an hour narrows the other charts.
 
+### Respondent-facing endpoints
+- The gift routes (`/project-management/vinnet/*`, `/gotit/*`, `/project/*`) have no login; the respondent token is the credential. Looking a gift up again (`check-transaction`) needs the token of the respondent who owns that transaction (`ProjectRespondentTokenService::respondentForTransactionLookup`).
+- Sending a gift holds a per-respondent cache lock (`vinnet-transaction-{id}`, `gotit-transaction-{id}`) so a double click cannot buy twice.
+- Never log card PINs, voucher links or codes, the secret half of a respondent token, the project `remember_token`, or provider keys (Vinnet merchant key, GotIt API key). Log the public half of a token (`Str::before($token, '.')`) and transaction ids instead.
+
 ### Vinnet (telco top-up)
 - Transactions use RSA-signed payloads. Crypto logic lives in `frontend/src/utils/CryptoCustom.ts`.
 - Merchant key can be rotated via the Finance panel.

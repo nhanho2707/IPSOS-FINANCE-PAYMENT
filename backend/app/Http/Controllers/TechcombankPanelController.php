@@ -41,23 +41,25 @@ class TechcombankPanelController extends Controller
             return response()->json($totalMembers);
     }
 
+    // The dashboard counts these panel columns; anything else is refused so the route cannot read other tables.
+    private const COUNTABLE_COLUMNS = [
+        'techcombank_panel' => ['gender', 'resource', 'householdincome', 'AUM', 'Q4'],
+    ];
+
     public function getCount($table_name, $column_name){
-        
-        if($table_name == 'techcombank_panel')
-        {
-            $dataCount = DB::table($table_name)
-                ->select($column_name, DB::raw('count(*) as count'))
-                ->where('status', '=', 'Active')
-                ->groupBy($column_name)
-                ->get();
-        } 
-        else 
-        {
-            $dataCount = DB::table($table_name)
-                ->select($column_name, DB::raw('count(*) as count'))
-                ->groupBy($column_name)
-                ->get();
+
+        if(!in_array($column_name, self::COUNTABLE_COLUMNS[$table_name] ?? [], true)){
+            return response()->json([
+                'status_code' => Response::HTTP_NOT_FOUND,
+                'message' => 'Not found.'
+            ], Response::HTTP_NOT_FOUND);
         }
+
+        $dataCount = DB::table($table_name)
+            ->select($column_name, DB::raw('count(*) as count'))
+            ->where('status', '=', 'Active')
+            ->groupBy($column_name)
+            ->get();
 
         return response()->json($dataCount);
     }

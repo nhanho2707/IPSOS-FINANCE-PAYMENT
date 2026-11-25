@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Http\Requests\ProjectRespondentTokenRequest;
 use App\Http\Requests\TransactionRejectedRequest;
@@ -56,7 +58,7 @@ class TransactionController extends Controller
             $refusalMessage = $validatedRequest['refusal_message'] ?? null;
 
             Log::info('Transaction Info: ', [
-                'token' => $token,
+                'token' => Str::before((string) $token, '.'),
                 'refusal_message' => $refusalMessage
             ]);
 

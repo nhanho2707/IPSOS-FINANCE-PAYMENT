@@ -638,6 +638,51 @@ class VinnetService
         }
     }
 
+    /**
+     * Asks Vinnet for a new merchant key and returns it. Vinnet switches to the new key at once,
+     * so the caller has to store it before anything else is sent.
+     */
+    public function change_merchant_key(): string
+    {
+        $envObject = new ENVObject();
+        $merchantInfo = $envObject->merchantInfo;
+        $merchantCode = str_replace('"', '', $merchantInfo['VINNET_MERCHANT_CODE']);
+
+        $uuid = $this->generate_formated_uuid();
+
+        $reqData = $this->encrypt_data(json_encode(['oldMerchantKey' => str_replace('"', '', $merchantInfo['VINNET_MERCHANT_KEY'])]));
+
+        $signature = $this->generate_signature($merchantCode . $uuid . $reqData);
+
+        $response = $this->post_vinnet_request(str_replace('"', '', $envObject->url) . '/changekey', null, [
+            'merchantCode' => $merchantCode,
+            'reqUuid' => $uuid,
+            'reqData' => $reqData,
+            'sign' => $signature
+        ]);
+
+        $decodedResponse = json_decode($response, true);
+
+        if (!is_array($decodedResponse) || ($decodedResponse['resCode'] ?? null) !== '00') {
+            throw new Exception('Vinnet refused the key change: ' . ($decodedResponse['resMesg'] ?? 'no response'));
+        }
+
+        // decrypt_data hands back the decrypted JSON encoded once more as a JSON string.
+        $decodedData = json_decode($this->decrypt_data($decodedResponse['resData']), true);
+
+        if (is_string($decodedData)) {
+            $decodedData = json_decode($decodedData, true);
+        }
+
+        $newMerchantKey = $decodedData['newMerchantKey'] ?? null;
+
+        if (!is_string($newMerchantKey) || trim($newMerchantKey) === '') {
+            throw new Exception('Vinnet did not return a new merchant key');
+        }
+
+        return $newMerchantKey;
+    }
+
     public function merchantinfo()
     {
         try{

@@ -96,8 +96,7 @@ class InterviewURL
             . ', InstanceId: ' . $this->respondent_id
             . ', Resp. Phone Number: ' . $this->respondent_phone_number
             . ', Province ID: ' . $this->province_id
-            . ', Price Level: ' . $this->price_level
-            . ', Token: ' . $this->remember_token);
+            . ', Price Level: ' . $this->price_level);
     }
 
     function convertToDate($dateString) {

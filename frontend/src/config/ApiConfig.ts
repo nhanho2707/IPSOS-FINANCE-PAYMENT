@@ -1,10 +1,9 @@
-<<<<<<< Updated upstream
-// const host = "https://dev.ippay.vn/"
-// const host = "https://dev.ippay.vn/"
-const host = "http://localhost:8000"
-=======
+// <<<<<<< Updated upstream
+// // const host = "https://dev.ippay.vn/"
+// // const host = "https://dev.ippay.vn/"
+// const host = "http://localhost:8000"
+// =======
 const host = "https://dev.ippay.vn"
->>>>>>> Stashed changes
 
 export const ApiConfig = {
   project: {

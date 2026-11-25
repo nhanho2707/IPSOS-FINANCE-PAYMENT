@@ -28,12 +28,16 @@ export const test = base.extend<{ consoleErrors: string[] }>({
 
     page: async ({ page }, use) => {
         await page.clock.setFixedTime(FIXED_NOW);
-        await page.route("http://localhost:8000/**", (route) => route.fulfill({ json: respond(route.request().url()) }));
+        await page.route(apiPath(""), (route) => route.fulfill({ json: respond(route.request().url()) }));
         await use(page);
     },
 });
 
 export { expect };
+
+// Matches the API whatever host ApiConfig points at (localhost, dev.ippay.vn, ...); an empty path matches every API call.
+export const apiPath = (path: string) => (url: URL) =>
+    path === "" ? url.pathname.startsWith("/api/") : url.pathname === `/api${path}`;
 
 export async function signInAs(page: Page, role: Role = "Admin", name = "Nhan Ho") {
     const [firstName, lastName] = name.split(" ");

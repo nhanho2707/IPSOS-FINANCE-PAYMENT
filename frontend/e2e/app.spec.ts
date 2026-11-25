@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { capture, expect, FIXED_NOW, signInAs, test } from "./support/test";
+import { apiPath, capture, expect, FIXED_NOW, signInAs, test } from "./support/test";
 
 const PROJECTS = "/project-management/projects";
 const PROJECT = `${PROJECTS}/1`;
@@ -69,7 +69,7 @@ test.describe("admin", () => {
     });
 
     test("gifts: test respondents are labelled and an import with tests says why", async ({ page }, testInfo) => {
-        await page.route(`http://localhost:8000/api${PROJECT}/offline/respondents/store`, (route) => route.fulfill({
+        await page.route(apiPath(`${PROJECT}/offline/respondents/store`), (route) => route.fulfill({
             json: { status_code: 900, message: "Import successfully", imported_count: 2, live_count: 1, test_count: 1, project_status: "in coming" },
         }));
         await page.goto(`${PROJECT}/gifts`);
@@ -267,7 +267,7 @@ test.describe("session expiry", () => {
     });
 
     test("signing in stores the expiry and coming back to the tab after it ends signs out", async ({ page }) => {
-        await page.route("http://localhost:8000/api/login", (route) => route.fulfill({
+        await page.route(apiPath("/login"), (route) => route.fulfill({
             json: {
                 status_code: 200,
                 message: "Login successfully",

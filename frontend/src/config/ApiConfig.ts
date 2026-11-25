@@ -1,9 +1,5 @@
-// <<<<<<< Updated upstream
-// // const host = "https://dev.ippay.vn/"
-// // const host = "https://dev.ippay.vn/"
-// const host = "http://localhost:8000"
-// =======
-const host = "https://dev.ippay.vn"
+// const host = "https://dev.ippay.vn"
+const host = "http://localhost:8000"
 
 export const ApiConfig = {
   project: {

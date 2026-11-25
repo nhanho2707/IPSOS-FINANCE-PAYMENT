@@ -26,7 +26,8 @@
         "below": "Dưới {{amount}}",
         "caption": "Số dư · đã chi {{spent}} / {{deposited}} đã nạp",
         "share": "Tỷ lệ tiền nạp {{provider}} đã chi",
-        "addDeposit": "Nạp tiền"
+        "addDeposit": "Nạp tiền",
+        "depositHistory": "Lịch sử nạp tiền"
     },
     "topProjects": {
         "title": "Dự án chi nhiều nhất",
@@ -54,6 +55,20 @@
         "submit": "Nạp tiền",
         "amount": "Số tiền (VND)",
         "notSaved": "Chưa lưu được khoản nạp. Kiểm tra số tiền rồi thử lại.",
-        "added": "Đã nạp {{amount}} vào tài khoản GotIt."
+        "added": "Đã nạp {{amount}} vào tài khoản GotIt.",
+        "note": "Ghi chú (không bắt buộc)",
+        "noteHelp": "Ví dụ: mã chuyển khoản hoặc số hoá đơn"
+    },
+    "depositHistory": {
+        "title": "Lịch sử nạp tiền GotIt",
+        "subtitle": "Các lần nạp tiền vào tài khoản GotIt, mới nhất trước",
+        "time": "Thời gian",
+        "amount": "Số tiền",
+        "by": "Người nạp",
+        "note": "Ghi chú",
+        "notRecorded": "Không ghi nhận",
+        "notRecordedHint": "Được nạp trước khi hệ thống ghi nhận người nạp",
+        "empty": "Chưa có lần nạp tiền nào.",
+        "loadFailed": "Không tải được lịch sử nạp tiền."
     }
 }

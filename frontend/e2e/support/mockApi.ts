@@ -130,6 +130,14 @@ const paginated = (data: unknown[], total: number, message: string) => ({
     status_code: 200, message, data, meta: { total, last_page: Math.ceil(total / 10), current_page: 1, per_page: 10 } as Json,
 });
 
+// The oldest deposit predates recording who added it.
+const gotitDeposits = [
+    { id: 4, amount: 100000000, note: "Bank transfer FT26305811", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-10-30T10:15:00+07:00" },
+    { id: 3, amount: 80000000, note: null, created_by: "Quang Le", created_by_email: "quang.le@ipsos.com", created_at: "2026-09-12T14:40:00+07:00" },
+    { id: 2, amount: 70000000, note: "Invoice 0412", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-07-03T09:05:00+07:00" },
+    { id: 1, amount: 50000000, note: null, created_by: null, created_by_email: null, created_at: "2026-04-01T11:00:00+07:00" },
+];
+
 const countBy = <T extends { status: string }>(rows: T[], statuses: string[]) =>
     Object.fromEntries(statuses.map((status) => [status, rows.filter((row) => row.status === status).length]));
 
@@ -191,6 +199,8 @@ export function respond(url: string): unknown {
     if (path.endsWith("/users/show")) return paginated(accounts, 7, "Successfully");
     if (path.endsWith("/vinnet/merchantinfo")) return { status_code: 200, data: JSON.stringify({ deposited: 500000000, spent: 412350000, balance: 87650000 }) };
     if (/gotit\/account\/.+\/view$/.test(path)) return { deposited: 300000000, balance: 64200000, spent: 235800000 };
+    if (path.endsWith("/gotit/account/store")) return { deposited: 350000000, balance: 114200000, spent: 235800000 };
+    if (/gotit\/account\/.+\/deposits$/.test(path)) return paginated(gotitDeposits, gotitDeposits.length, "Successfully");
     if (path.endsWith("/quotation/versions")) return { project: projects[0], versions, message: "Successful." };
     if (path.endsWith("/quotation-template")) return quotationSchema;
     if (path.endsWith("/operations-template")) return operationsSchema;

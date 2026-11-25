@@ -183,7 +183,7 @@ const [actionState, setActionState] = useState<ActionState>({
 - Merchant key can be rotated via the Finance panel.
 
 ### GotIt (e-voucher)
-- Account balance tracked via deposit records in `AccountDeposit`.
+- Account balance tracked via deposit records in `AccountDeposit`. Each deposit keeps who added it (`created_user_id`) and an optional note; the GotIt card on the Finance page lists them under Deposit history.
 - Each transaction debits the balance; check balance before sending.
 
 ## Git & Branching

@@ -5,5 +5,15 @@ export const LOW_BALANCE_THRESHOLDS: Record<"vinnet" | "gotit", number> = {
     gotit: 50_000_000,
 };
 
+export interface GotItDeposit {
+    id: number;
+    amount: number;
+    note: string | null;
+    // Null for deposits added before the author was recorded.
+    created_by: string | null;
+    created_by_email: string | null;
+    created_at: string;
+}
+
 // The runway estimate on the provider cards uses the spending of this many recent days.
 export const RECENT_SPEND_DAYS = 30;

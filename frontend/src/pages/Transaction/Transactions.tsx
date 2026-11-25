@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, Box, Button, ButtonBase, Checkbox, Grid, LinearProgress, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Alert, Autocomplete, Box, Button, ButtonBase, Checkbox, Grid, LinearProgress, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 import { useVinnetAccount } from "../../hook/useVinnetAccount";
 import FormDialog from "../../components/Dialogs/FormDialog";
 import PageHeader from "../../components/PageHeader";
@@ -15,19 +15,24 @@ import { useGotItAccount } from "../../hook/useGotItAccount";
 import { useTransactionStatistics } from "../../hook/useTransactionStatistics";
 import dayjs, { Dayjs } from "dayjs"
 import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { LOW_BALANCE_THRESHOLDS, RECENT_SPEND_DAYS } from "../../config/FinanceConfig";
+import { GotItDeposit, LOW_BALANCE_THRESHOLDS, RECENT_SPEND_DAYS } from "../../config/FinanceConfig";
 import { BRAND, getProviderStyle, NEUTRAL, STATUS_TONES } from "../../config/ThemeConfig";
 import { ProjectStatistics, TransactionChannel, TransactionStatisticsData } from "../../config/StatisticsConfig";
 import { useMetadata } from "../../hook/useMetadata";
 import AddIcon from '@mui/icons-material/Add';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-import { formatDate, formatMoney, formatNumber } from "../../utils/format";
+import { formatDate, formatDateTime, formatMoney, formatNumber } from "../../utils/format";
 import TransactionStatisticsPanel from "../../components/TransactionStatisticsPanel";
 import SectionCard from "../../components/SectionCard";
 import TrendChart from "../../components/Statistics/TrendChart";
 import { ChartEmpty } from "../../components/Statistics/chartKit";
 import { useTranslation } from "react-i18next";
 import i18n from "../../i18n/i18n";
+import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import DetailDrawer from "../../components/DetailDrawer";
+import ReusableTable from "../../components/Table/ReusableTable";
+import { ColumnFormat } from "../../config/ColumnConfig";
+import { useGotItDeposits } from "../../hook/useGotItDeposits";
 
 interface ProviderAccount {
     deposited: number;
@@ -171,7 +176,18 @@ const Transactions = () => {
     const { showToast } = useToast();
     const [ open, setOpen ] = useState(false);
     const [ amount, setAmount ] = useState("");
+    const [ note, setNote ] = useState("");
     const [ depositError, setDepositError ] = useState<string | null>(null);
+    const [ historyOpen, setHistoryOpen ] = useState(false);
+    const {
+        deposits,
+        actionState: depositsState,
+        total: depositsTotal,
+        page: depositsPage,
+        setPage: setDepositsPage,
+        rowsPerPage: depositsRowsPerPage,
+        setRowsPerPage: setDepositsRowsPerPage,
+    } = useGotItDeposits('gotit', historyOpen);
 
     const [ fromDate, setFromDate ] = useState<Dayjs | null>(null);
     const [ toDate, setToDate ] = useState<Dayjs | null>(null);
@@ -205,12 +221,13 @@ const Transactions = () => {
 
     const openDepositDialog = () => {
         setAmount("");
+        setNote("");
         setDepositError(null);
         setOpen(true);
     }
 
     const handleAddDeposit = async () => {
-        const saved = await addDeposit(amount);
+        const saved = await addDeposit(amount, note);
 
         if (!saved) {
             setDepositError(t("finance.deposit.notSaved"));
@@ -220,6 +237,46 @@ const Transactions = () => {
         setOpen(false);
         showToast(t("finance.deposit.added", { amount: formatMoney(amount) }));
     }
+
+    const depositColumns: ColumnFormat[] = [
+        {
+            label: t("finance.depositHistory.time"),
+            name: "created_at",
+            type: "date",
+            width: 160,
+            renderCell: (row: GotItDeposit) => formatDateTime(row.created_at)
+        },
+        {
+            label: t("finance.depositHistory.amount"),
+            name: "amount",
+            type: "number",
+            width: 150,
+            align: "right",
+            renderCell: (row: GotItDeposit) => formatMoney(row.amount)
+        },
+        {
+            label: t("finance.depositHistory.by"),
+            name: "created_by",
+            type: "string",
+            flex: 1,
+            renderCell: (row: GotItDeposit) => row.created_by ? (
+                <Tooltip title={row.created_by_email ?? ""}>
+                    <span>{row.created_by}</span>
+                </Tooltip>
+            ) : (
+                <Tooltip title={t("finance.depositHistory.notRecordedHint")}>
+                    <Box component="span" sx={{ color: "text.secondary" }}>{t("finance.depositHistory.notRecorded")}</Box>
+                </Tooltip>
+            )
+        },
+        {
+            label: t("finance.depositHistory.note"),
+            name: "note",
+            type: "string",
+            flex: 1.5,
+            renderCell: (row: GotItDeposit) => row.note ?? "—"
+        }
+    ];
 
     const depositAmount = Number(amount);
     const isDepositInvalid = !amount || !Number.isFinite(depositAmount) || depositAmount <= 0;
@@ -349,9 +406,14 @@ const Transactions = () => {
                             loading={gotitLoading}
                             recentSpend={recentSpend("gotit")}
                             footer={
-                                <Button variant="outlined" color="inherit" size="small" startIcon={<AddIcon />} onClick={openDepositDialog}>
-                                    {t("finance.balance.addDeposit")}
-                                </Button>
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                                    <Button variant="outlined" color="inherit" size="small" startIcon={<AddIcon />} onClick={openDepositDialog}>
+                                        {t("finance.balance.addDeposit")}
+                                    </Button>
+                                    <Button color="inherit" size="small" startIcon={<HistoryOutlined />} onClick={() => setHistoryOpen(true)}>
+                                        {t("finance.balance.depositHistory")}
+                                    </Button>
+                                </Box>
                             }
                         />
                     </Grid>
@@ -519,7 +581,42 @@ const Transactions = () => {
                     helperText={!isDepositInvalid ? formatMoney(depositAmount) : " "}
                     slotProps={{ htmlInput: { min: 1, step: 1000 } }}
                 />
+                <TextField
+                    size="small"
+                    label={t("finance.deposit.note")}
+                    fullWidth
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    helperText={t("finance.deposit.noteHelp")}
+                    slotProps={{ htmlInput: { maxLength: 255 } }}
+                    sx={{ mt: 2 }}
+                />
             </FormDialog>
+
+            <DetailDrawer
+                open={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                title={t("finance.depositHistory.title")}
+                subtitle={t("finance.depositHistory.subtitle")}
+                width={760}
+            >
+                <ReusableTable
+                    columns={depositColumns}
+                    data={deposits}
+                    actionStatus={depositsState}
+                    page={depositsPage}
+                    rowsPerPage={depositsRowsPerPage}
+                    total={depositsTotal}
+                    onPageChange={(_event, newPage) => setDepositsPage(newPage)}
+                    onRowsPerPageChange={(event) => {
+                        setDepositsRowsPerPage(parseInt(event.target.value, 10));
+                        setDepositsPage(0);
+                    }}
+                    emptyText={t("finance.depositHistory.empty")}
+                    inset={false}
+                    dense
+                />
+            </DetailDrawer>
         </>
     );
 }

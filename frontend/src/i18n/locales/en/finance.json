@@ -26,7 +26,8 @@
         "below": "Below {{amount}}",
         "caption": "Balance · spent {{spent}} of {{deposited}} deposited",
         "share": "{{provider}} share of deposits spent",
-        "addDeposit": "Add deposit"
+        "addDeposit": "Add deposit",
+        "depositHistory": "Deposit history"
     },
     "topProjects": {
         "title": "Top projects",
@@ -54,6 +55,20 @@
         "submit": "Add deposit",
         "amount": "Amount (VND)",
         "notSaved": "The deposit was not saved. Check the amount and try again.",
-        "added": "Deposit of {{amount}} added to the GotIt account."
+        "added": "Deposit of {{amount}} added to the GotIt account.",
+        "note": "Note (optional)",
+        "noteHelp": "E.g. bank transfer reference or invoice number"
+    },
+    "depositHistory": {
+        "title": "GotIt deposit history",
+        "subtitle": "Every deposit recorded on the GotIt account, newest first",
+        "time": "Time",
+        "amount": "Amount",
+        "by": "Added by",
+        "note": "Note",
+        "notRecorded": "Not recorded",
+        "notRecordedHint": "Added before the author of a deposit was recorded",
+        "empty": "No deposits recorded yet.",
+        "loadFailed": "Could not load the deposit history."
     }
 }

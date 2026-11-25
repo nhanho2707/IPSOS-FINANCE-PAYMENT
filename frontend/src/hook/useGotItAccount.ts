@@ -45,7 +45,7 @@ export function useGotItAccount(accountType: string){
     }
     
     // Resolves to false when the deposit was not saved, so the form can stay open and say so.
-    const addDeposit = async (amount: string): Promise<boolean> => {
+    const addDeposit = async (amount: string, note: string): Promise<boolean> => {
         try{
             setError(false);
             setLoading(true);
@@ -54,7 +54,8 @@ export function useGotItAccount(accountType: string){
 
             const res = await axios.post(ApiConfig.gotit.depositedAccount, {
                 'account_type': 'gotit',
-                'amount': amount
+                'amount': amount,
+                'note': note.trim() || null
             },{
                 headers: {
                     Authorization: `Bearer ${token}`,

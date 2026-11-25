@@ -114,6 +114,28 @@ test.describe("admin", () => {
         await expect(page).toHaveURL(/tab=exports$/);
     });
 
+    test("finance: GotIt deposits are added with a note and listed in the history", async ({ page }, testInfo) => {
+        await page.goto("/transaction-manager/transactions");
+
+        await page.getByRole("button", { name: "Add deposit" }).click();
+        const dialog = page.getByRole("dialog", { name: "Add GotIt deposit" });
+        await dialog.getByLabel("Amount (VND)").fill("50000000");
+        await dialog.getByLabel("Note (optional)").fill("Bank transfer FT26306002");
+        const saved = page.waitForRequest((request) => request.url().endsWith("/gotit/account/store"));
+        await dialog.getByRole("button", { name: "Add deposit" }).click();
+        expect((await saved).postDataJSON()).toEqual({ account_type: "gotit", amount: "50000000", note: "Bank transfer FT26306002" });
+        await expect(page.getByText("Deposit of 50,000,000 ₫ added to the GotIt account.")).toBeVisible();
+
+        await page.getByRole("button", { name: "Deposit history" }).click();
+        const history = page.getByRole("dialog", { name: "GotIt deposit history" });
+        await expect(history.getByRole("row")).toHaveCount(5);
+        await expect(history.getByRole("row").nth(1)).toContainText("100,000,000 ₫");
+        await expect(history.getByRole("row").nth(1)).toContainText("Thu Vo");
+        await expect(history.getByRole("row").nth(1)).toContainText("Bank transfer FT26305811");
+        await expect(history.getByRole("row").nth(4)).toContainText("Not recorded");
+        await capture(page, testInfo, "finance-deposit-history");
+    });
+
     test("finance analysis: charts filter each other and the interviews export", async ({ page }, testInfo) => {
         await page.goto("/transaction-manager/transactions?tab=analysis");
         await expect(page.getByRole("heading", { name: "By interviewer" })).toBeVisible();

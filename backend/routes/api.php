@@ -171,6 +171,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/vinnet/merchantinfo', [VinnetController::class, 'merchantinfo'])->middleware('extendExecutionTime');
             Route::post('/gotit/account/store', [AccountDepositController::class, 'store']);
             Route::get('/gotit/account/{accountType}/view', [AccountDepositController::class, 'getGotItAccount']);
+            Route::get('/gotit/account/{accountType}/deposits', [AccountDepositController::class, 'deposits']);
             Route::get('/export', [ExportController::class, 'exportTransaction']);
             Route::get('/projects/export', [ExportController::class, 'exportTransactionByProjects']);
         });

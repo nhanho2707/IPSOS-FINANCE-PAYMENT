@@ -1,5 +1,3 @@
-import { ColumnFormat } from "./ColumnConfig"
-
 export interface UserData {
     id: number,
     name: string,
@@ -49,42 +47,7 @@ export interface AccountAuditLog {
     created_at: string | null,
 }
 
-export const AccountAuditActionLabels: Record<AccountAuditAction, string> = {
-    created: "Account created",
-    updated: "Role / department changed",
-    password_reset: "Password reset by admin",
-    activated: "Account activated",
-    deactivated: "Account deactivated",
-};
-
 export interface ResetPasswordPayload {
     password: string,
     password_confirmation: string,
 }
-
-export const AccountCellConfig: ColumnFormat[] = [
-    {
-        label: "Name",
-        name: "name",
-        type: "string",
-        flex: 1
-    },
-    {
-        label: "Email",
-        name: "email",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Role",
-        name: "role",
-        type: "string",
-        flex: 1,
-    },
-    {
-        label: "Department",
-        name: "department",
-        type: "string",
-        flex: 1,
-    }
-];

@@ -1,10 +1,8 @@
 import dayjs, { Dayjs } from 'dayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
 import { useState } from 'react';
 import { DateView } from '@mui/x-date-pickers/models';
-import { Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 
 interface SearchDatePickerProps {
     title?: string,
@@ -22,33 +20,18 @@ const SearchDatePicker: React.FC<SearchDatePickerProps> = ({title="", name,  vie
         onSearchChange(name, value);
     }
 
-    return(
-        <div style={{display: "flex", gap: "0.5rem", alignItems: "center", width: "16rem"}}>
-            <Typography variant='body2' color="text.secondary">{title}</Typography>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DesktopDatePicker
-                    views={views}
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                    sx={{
-                        width: '18rem',
-                        '& .MuiInputBase-root': {
-                            height: '2.5rem',   // 👈 chiều cao tổng thể
-                            fontSize: '1.0rem',
-                        },
-                        '& .MuiInputBase-input::placeholder': {
-                            fontSize: '0.8rem', // 👈 chỉnh cỡ chữ placeholder
-                            opacity: 1,         // nếu placeholder quá mờ, tăng độ rõ
-                        },
-                        '& .MuiSvgIcon-root': {
-                            fontSize: '1.0rem',   // 👈 chỉnh kích thước icon
-                        },
-                    }}
-                />
-            </LocalizationProvider>
-        </div>
-    )
+    return (
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Typography variant='body2' sx={{ color: "text.secondary" }}>{title}</Typography>
+            <DesktopDatePicker
+                views={views}
+                value={selectedDate}
+                onChange={handleDateChange}
+                slotProps={{ textField: { size: "small" } }}
+                sx={{ width: 176 }}
+            />
+        </Stack>
+    );
 }
 
 export default SearchDatePicker;
-

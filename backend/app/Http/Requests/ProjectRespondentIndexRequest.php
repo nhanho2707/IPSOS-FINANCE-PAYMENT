@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ProjectRespondent;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProjectRespondentIndexRequest extends FormRequest
@@ -17,7 +18,7 @@ class ProjectRespondentIndexRequest extends FormRequest
             'page'       => 'nullable|integer|min:1',
             'perPage'    => 'nullable|integer|min:1|max:500',
             'searchTerm' => 'nullable|string|max:255',
-            'status'     => 'nullable|in:pending',
+            'status'     => 'nullable|in:' . implode(',', ProjectRespondent::GIFT_STATUSES),
         ];
     }
 }

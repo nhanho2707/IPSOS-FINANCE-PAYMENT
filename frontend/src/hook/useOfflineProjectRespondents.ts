@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload } from "../config/OfflineProjectRespondentFieldsConfig";
+import { GiftStatus, GiftStatusCounts, OfflineGiftBulkSendResult, OfflineGiftSendResult, OfflineProjectRespondentData, OfflineProjectRespondentImportPayload, OfflineImportResult } from "../config/OfflineProjectRespondentFieldsConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
 import { getServiceCode } from "../utils/VinnetFunctions";
+import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 interface ImportErrorDetail {
     row: number,
@@ -29,7 +31,7 @@ const formatImportErrors = (data: ImportErrorResponse | undefined): string => {
     const errors = data?.errors;
 
     if (!errors) {
-        return data?.message ?? "Import failed.";
+        return data?.message ?? i18n.t("gifts.errors.importFailed");
     }
 
     const grouped: Record<string, number[]> = {};
@@ -79,8 +81,10 @@ export function useOfflineProjectRespondents(projectId: number) {
     const [ message, setMessage ] = useState("");
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
+    const [ statusFilter, setStatusFilter ] = useState<GiftStatus | "all">("all");
+    const [ statusCounts, setStatusCounts ] = useState<GiftStatusCounts | null>(null);
 
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0);
@@ -105,23 +109,25 @@ export function useOfflineProjectRespondents(projectId: number) {
                 params: {
                     page: page + 1,
                     perPage: rowsPerPage,
-                    searchTerm: searchTerm
+                    searchTerm: searchTerm,
+                    ...(statusFilter !== "all" && { status: statusFilter })
                 }
             });
 
             setOfflineProjectRespondents(response.data.data);
             setMeta(response.data.meta);
             setTotal(response.data.meta.total);
+            setStatusCounts(response.data.meta.status_counts ?? null);
 
         }catch(error: any){
             setError(true);
-            setMessage(error.message || 'Failed to fetch Transactions');
+            setMessage(error.message || i18n.t('gifts.errors.load'));
         }finally{
             setLoading(false);
         }
-    }, [projectId, page, rowsPerPage, searchTerm]);
+    }, [projectId, page, rowsPerPage, searchTerm, statusFilter]);
 
-    const importOfflineProjectRespondents = useCallback(async(payload: OfflineProjectRespondentImportPayload[]) => {
+    const importOfflineProjectRespondents = useCallback(async(payload: OfflineProjectRespondentImportPayload[]): Promise<OfflineImportResult> => {
         try
         {
             setLoading(true);
@@ -144,7 +150,19 @@ export function useOfflineProjectRespondents(projectId: number) {
 
             await fetchProjectRespondents(page, rowsPerPage, searchTerm);
 
-            setMessage(`Imported ${response.data.imported_count} respondents.`);
+            const result: OfflineImportResult = {
+                imported: response.data.imported_count ?? payload.length,
+                live: response.data.live_count ?? response.data.imported_count ?? payload.length,
+                test: response.data.test_count ?? 0,
+                projectStatus: response.data.project_status ?? null,
+            };
+
+            // With test respondents the page shows a warning that explains them instead of this message.
+            if (result.test === 0) {
+                setMessage(`Imported ${result.imported} respondents.`);
+            }
+
+            return result;
 
         } catch(error: any){
             setError(true);
@@ -301,17 +319,13 @@ export function useOfflineProjectRespondents(projectId: number) {
 
         await fetchProjectRespondents(page, rowsPerPage, searchTerm);
 
-        const successCount = results.filter(r => r.success).length;
-
-        setError(successCount < results.length);
-        setMessage(`Gifts sent successfully to ${successCount}/${results.length} respondents.`);
-
+        // The caller reports the outcome (Gifts shows a result banner with every failure).
         return { results, stoppedOnFailures };
     }, [sendOfflineTransaction, fetchProjectRespondents, page, rowsPerPage, searchTerm]);
 
     useEffect(() => {
         fetchProjectRespondents(page, rowsPerPage, searchTerm);
-    }, [projectId, page, rowsPerPage, searchTerm])
+    }, [projectId, page, rowsPerPage, searchTerm, statusFilter])
 
     return {
         offineProjectRespondents,
@@ -329,6 +343,9 @@ export function useOfflineProjectRespondents(projectId: number) {
         total,
         setSearchTerm,
         setPage,
-        setRowsPerPage
+        setRowsPerPage,
+        statusFilter,
+        setStatusFilter,
+        statusCounts
     };
 }

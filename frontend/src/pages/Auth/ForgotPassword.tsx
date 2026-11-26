@@ -8,11 +8,13 @@ import {
   Typography,
   Alert,
   Link,
+  Button,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from "@mui/icons-material/Send";
 import { useNavigate } from "react-router-dom";
 import { ApiConfig } from "../../config/ApiConfig";
+import LanguageSwitch from "../../components/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -21,6 +23,7 @@ const ForgotPassword = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSendLink = async () => {
     setLoading(true);
@@ -38,7 +41,7 @@ const ForgotPassword = () => {
           const first = Object.values(errors)[0] as string[];
           setErrorMessage(first[0]);
         } else {
-          setErrorMessage(error.response?.data?.message ?? "An error occurred.");
+          setErrorMessage(error.response?.data?.message ?? t("auth.genericError"));
         }
       }
     } finally {
@@ -53,9 +56,12 @@ const ForgotPassword = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "var(--body-color)",
+        backgroundColor: "background.default",
       }}
     >
+      <Box sx={{ position: "fixed", top: 16, right: 16 }}>
+        <LanguageSwitch />
+      </Box>
       <Box
         component="form"
         noValidate
@@ -66,18 +72,18 @@ const ForgotPassword = () => {
           mx: 2,
           p: 4,
           borderRadius: 2,
-          backgroundColor: "#fff",
+          backgroundColor: "background.paper",
           boxShadow: 3,
           display: "flex",
           flexDirection: "column",
           gap: 3,
         }}
       >
-        <Typography variant="h5" textAlign="center">
-          Reset Password
+        <Typography variant="h5" sx={{ textAlign: "center" }}>
+          {t("auth.reset.title")}
         </Typography>
-        <Typography variant="body2" textAlign="center" color="text.secondary">
-          Enter your email and we will send you a link to reset your password.
+        <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
+          {t("auth.reset.description")}
         </Typography>
 
         {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
@@ -87,7 +93,7 @@ const ForgotPassword = () => {
 
         <FormControl fullWidth>
           <TextField
-            label="Email"
+            label={t("auth.email")}
             type="email"
             autoComplete="email"
             autoFocus
@@ -96,7 +102,7 @@ const ForgotPassword = () => {
           />
         </FormControl>
 
-        <LoadingButton
+        <Button
           fullWidth
           type="submit"
           endIcon={<SendIcon />}
@@ -104,19 +110,17 @@ const ForgotPassword = () => {
           variant="contained"
           disabled={!email || !!successMessage}
         >
-          Send reset link
-        </LoadingButton>
+          {t("auth.reset.send")}
+        </Button>
 
         <Link
           component="button"
           type="button"
           variant="body2"
           underline="hover"
-          color="text.secondary"
           onClick={() => navigate("/login")}
-          sx={{ alignSelf: "center" }}
-        >
-          Back to login
+          sx={{ color: "text.secondary", alignSelf: "center" }}>
+          {t("auth.backToLogin")}
         </Link>
       </Box>
     </Box>

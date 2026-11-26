@@ -1,0 +1,62 @@
+{
+    "info": "Project information",
+    "edit": "Edit",
+    "name": "Project name",
+    "internalCode": "Internal code",
+    "symphony": "Symphony",
+    "token": "Token",
+    "pricesTitle": "Sample size and gift prices",
+    "pricesDescription": "Each gift is paid at the price set here for the respondent’s province and price level.",
+    "editTitle": "Edit project information",
+    "saved": "Project information saved.",
+    "notSaved": "The changes were not saved. Please try again.",
+    "assignment": {
+        "select": "Select users to assign to this project:",
+        "placeholder": "Select…",
+        "assign": "Assign",
+        "failed": "Assignment failed.",
+        "saved": "Assignment saved."
+    },
+    "prices": {
+        "columns": {
+            "province": "Province",
+            "sampleSize": "Sample size",
+            "priceType": "Price type",
+            "price": "Price (VND)",
+            "priceN": "Price {{n}} (VND)"
+        },
+        "actionsFor": "Actions for {{province}} {{type}}",
+        "delete": "Delete price",
+        "genericError": "Something went wrong. Please try again.",
+        "import": {
+            "missingColumns": "The file is missing required columns: {{columns}}",
+            "provinceNotFound": "province “{{name}}” not found",
+            "provinceMissing": "province is missing",
+            "priceType": "price type must be one of {{types}}",
+            "sampleSize": "sample size must be a whole number greater than 0",
+            "invalid": "{{column}} is invalid",
+            "mustBePositive": "{{column}} must be greater than 0",
+            "fillBefore": "{{previous}} must be filled in before {{column}}",
+            "duplicate": "same province and price type as row {{row}}",
+            "row": "Row {{row}}: {{errors}}",
+            "noData": "The file has no data.",
+            "failedTitle": "Price import failed: no prices were saved",
+            "failedHint": "Fix these rows in the file and import it again."
+        },
+        "empty": {
+            "title": "No province prices yet",
+            "canEdit": "Add the sample size and gift prices per province, or import them from Excel.",
+            "readOnly": "Prices per province appear here once they are set."
+        },
+        "add": "Add price",
+        "importButton": "Import",
+        "importing": "Importing…",
+        "export": "Export",
+        "addTitle": "Add province price",
+        "addDescription": "Each gift price unlocks once the one before it is filled in.",
+        "giftPriceN": "Gift price {{n}}",
+        "deleteTitle": "Delete price",
+        "deleteConfirm": "Delete",
+        "deleteMessage": "Are you sure you want to delete the “{{type}}” price for {{province}}?"
+    }
+}

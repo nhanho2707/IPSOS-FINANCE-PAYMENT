@@ -5,6 +5,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import { formatNumber } from "../../../utils/format";
+import { alpha } from "@mui/material/styles";
+import { BRAND } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n/i18n";
 
 export interface EstimateCostItemData {
     type: 'item';
@@ -59,14 +64,10 @@ const newItem = (): EstimateCostItemData => ({
 });
 
 const newGroup = (): EstimateCostGroupData => ({
-    type: 'group', id: uid(), label: 'New Group', children: []
+    type: 'group', id: uid(), label: i18n.t("quotation.cost.newGroup"), children: []
 });
 
-const fmt = (val: number | ''): string => {
-    if (val === '' || val === null || val === undefined) return '-';
-    const n = Number(val);
-    return isNaN(n) ? '-' : n.toLocaleString('vi-VN');
-};
+const fmt = (val: number | ''): string => formatNumber(val === '' ? null : val);
 
 const calcTotal = (nodes: EstimateCostNode[]): { amount: number; actual: number } =>
     nodes.reduce((acc, node) => {
@@ -115,13 +116,13 @@ const addToGroup = (nodes: EstimateCostNode[], groupId: string, child: EstimateC
     });
 
 const ITEM_COLS = [
-    { key: 'chi_phi' as const,        label: 'Cost',        type: 'text' as const,   width: 200 },
-    { key: 'unit' as const,           label: 'Unit',           type: 'text' as const,   width: 80  },
-    { key: 'quantity' as const,       label: 'Quantity',       type: 'number' as const, width: 90  },
-    { key: 'price' as const,          label: 'Price',          type: 'number' as const, width: 120 },
-    { key: 'amount' as const,         label: 'Amount',         type: 'number' as const, width: 140, readOnly: true },
-    { key: 'actual_expense' as const, label: 'Actual Expense', type: 'number' as const, width: 140 },
-    { key: 'note' as const,           label: 'Note',           type: 'text' as const,   width: 180 },
+    { key: 'chi_phi' as const,        type: 'text' as const,   width: 200 },
+    { key: 'unit' as const,           type: 'text' as const,   width: 80  },
+    { key: 'quantity' as const,       type: 'number' as const, width: 90  },
+    { key: 'price' as const,          type: 'number' as const, width: 120 },
+    { key: 'amount' as const,         type: 'number' as const, width: 140, readOnly: true },
+    { key: 'actual_expense' as const, type: 'number' as const, width: 140 },
+    { key: 'note' as const,           type: 'text' as const,   width: 180 },
 ];
 
 interface Props {
@@ -131,18 +132,15 @@ interface Props {
 }
 
 const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
+    const { t } = useTranslation();
     const nodes = value || [];
-    const cellSx = { fontSize: "0.8125rem", padding: "4px 10px", color: "var(--text-color)" };
+    const cellSx = { padding: "4px 10px" };
 
     const renderNodes = (nodeList: EstimateCostNode[], depth: number): React.ReactNode[] =>
         nodeList.flatMap(node => {
             if (node.type === 'group') {
                 const { amount: subAmt, actual: subActual } = calcTotal(node.children);
-                const bg = depth === 0
-                    ? 'rgba(0,157,156,0.1)'
-                    : depth === 1
-                    ? 'rgba(0,157,156,0.06)'
-                    : 'rgba(0,157,156,0.03)';
+                const bg = alpha(BRAND.accent, depth === 0 ? 0.1 : depth === 1 ? 0.06 : 0.03);
                 return [
                     <TableRow key={node.id} sx={{ backgroundColor: bg }}>
                         <TableCell
@@ -151,17 +149,16 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                 ...cellSx,
                                 paddingLeft: `${10 + depth * 20}px`,
                                 fontWeight: 700,
-                                borderBottom: "1px solid rgba(0,157,156,0.2)"
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <FolderOpenIcon sx={{ fontSize: "1rem", color: "var(--main-color)", flexShrink: 0 }} />
+                                <FolderOpenIcon color="primary" sx={{ fontSize: 16, flexShrink: 0 }} />
                                 {isEditing ? (
                                     <TextField
                                         size="small"
                                         value={node.label}
                                         onChange={e => onChange(updateGroupLabel(nodes, node.id, e.target.value))}
-                                        sx={{ "& .MuiInputBase-input": { fontSize: "0.8125rem", padding: "2px 6px", fontWeight: 700 } }}
+                                        sx={{ "& .MuiInputBase-input": { typography: "body2", padding: "2px 6px", fontWeight: 700 } }}
                                     />
                                 ) : (
                                     <span>{node.label}</span>
@@ -175,17 +172,17 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                         <TableCell sx={cellSx} />
                         {isEditing && (
                             <TableCell sx={{ padding: "2px 4px", whiteSpace: "nowrap" }}>
-                                <Tooltip title="Add sub-group">
+                                <Tooltip title={t("quotation.cost.addSubGroup")}>
                                     <IconButton size="small" onClick={() => onChange(addToGroup(nodes, node.id, newGroup()))}>
-                                        <CreateNewFolderIcon fontSize="small" sx={{ color: "var(--main-color)" }} />
+                                        <CreateNewFolderIcon fontSize="small" color="primary" />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Add item">
+                                <Tooltip title={t("quotation.cost.addItem")}>
                                     <IconButton size="small" onClick={() => onChange(addToGroup(nodes, node.id, newItem()))}>
-                                        <PostAddIcon fontSize="small" sx={{ color: "var(--main-color)" }} />
+                                        <PostAddIcon fontSize="small" color="primary" />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Delete group">
+                                <Tooltip title={t("quotation.cost.deleteGroup")}>
                                     <IconButton size="small" color="error" onClick={() => onChange(deleteNode(nodes, node.id))}>
                                         <DeleteIcon fontSize="small" />
                                     </IconButton>
@@ -198,7 +195,7 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
             }
 
             return [
-                <TableRow key={node.id} sx={{ "&:hover": { backgroundColor: "rgba(0,157,156,0.04)" } }}>
+                <TableRow key={node.id} sx={{ "&:hover": { backgroundColor: "action.hover" } }}>
                     {ITEM_COLS.map(col => (
                         <TableCell
                             key={col.key}
@@ -213,15 +210,15 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                     type={col.type}
                                     value={node[col.key] ?? ''}
                                     onChange={e => onChange(updateItemField(nodes, node.id, col.key, e.target.value))}
-                                    sx={{ "& .MuiInputBase-input": { fontSize: "0.8125rem", padding: "4px 8px" } }}
+                                    sx={{ "& .MuiInputBase-input": { typography: "body2", padding: "4px 8px" } }}
                                     fullWidth
                                 />
                             ) : (
-                                <span style={{ color: (col.readOnly && isEditing) ? "var(--text-secondary-color)" : undefined }}>
+                                <Box component="span" sx={{ color: (col.readOnly && isEditing) ? "secondary.main" : undefined }}>
                                     {col.type === 'number'
                                         ? fmt(node[col.key] as number | '')
                                         : ((node[col.key] as string) || '-')}
-                                </span>
+                                </Box>
                             )}
                         </TableCell>
                     ))}
@@ -240,29 +237,29 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
 
     return (
         <Box>
-            <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, mb: 1, color: "var(--text-color)" }}>
-                Estimate Cost
+            <Typography variant="h3" sx={{ mb: 1 }}>
+                {t("quotation.cost.title")}
             </Typography>
             <Paper
                 elevation={0}
                 sx={{
                     border: "1px solid",
-                    borderColor: "var(--body-color)",
+                    borderColor: "divider",
                     borderRadius: "8px",
                     overflow: "hidden",
-                    backgroundColor: "var(--background-color)"
+                    backgroundColor: "background.paper"
                 }}
             >
                 <TableContainer>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ backgroundColor: "var(--body-color)" }}>
+                            <TableRow>
                                 {ITEM_COLS.map(col => (
                                     <TableCell
                                         key={col.key}
-                                        sx={{ fontWeight: 600, fontSize: "0.75rem", width: col.width, whiteSpace: "nowrap", color: "var(--text-color)" }}
+                                        sx={{ width: col.width, whiteSpace: "nowrap" }}
                                     >
-                                        {col.label}
+                                        {t(`quotation.cost.columns.${col.key}`)}
                                     </TableCell>
                                 ))}
                                 {isEditing && <TableCell sx={{ width: 120 }} />}
@@ -273,9 +270,9 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                                 <TableRow>
                                     <TableCell
                                         colSpan={ITEM_COLS.length}
-                                        sx={{ textAlign: "center", color: "var(--text-secondary-color)", fontSize: "0.8125rem", py: 3 }}
+                                        sx={{ textAlign: "center", color: "text.secondary", py: 3 }}
                                     >
-                                        No data
+                                        {t("quotation.cost.noData")}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -284,17 +281,18 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
 
                             {nodes.length > 0 && (
                                 <TableRow sx={{
-                                    backgroundColor: "rgba(0,157,156,0.07)",
-                                    borderTop: "2px solid rgba(0,157,156,0.25)"
+                                    backgroundColor: alpha(BRAND.accent, 0.07),
+                                    borderTop: "2px solid",
+                                    borderTopColor: alpha(BRAND.accent, 0.25)
                                 }}>
-                                    <TableCell colSpan={4} sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-color)" }}>
-                                        Total
+                                    <TableCell colSpan={4} sx={{ fontWeight: 700 }}>
+                                        {t("quotation.cost.total")}
                                     </TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-color)" }}>
-                                        {grandTotal.amount.toLocaleString('vi-VN')}
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                        {formatNumber(grandTotal.amount)}
                                     </TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "var(--text-color)" }}>
-                                        {grandTotal.actual > 0 ? grandTotal.actual.toLocaleString('vi-VN') : '-'}
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                        {grandTotal.actual > 0 ? formatNumber(grandTotal.actual) : '—'}
                                     </TableCell>
                                     <TableCell />
                                     {isEditing && <TableCell />}
@@ -311,17 +309,15 @@ const EstimateCostTable: React.FC<Props> = ({ value, isEditing, onChange }) => {
                         startIcon={<CreateNewFolderIcon />}
                         size="small"
                         onClick={() => onChange([...nodes, newGroup()])}
-                        sx={{ fontSize: "0.75rem", color: "var(--main-color)", textTransform: "none" }}
                     >
-                        Add Group
+                        {t("quotation.cost.addGroup")}
                     </Button>
                     <Button
                         startIcon={<AddIcon />}
                         size="small"
                         onClick={() => onChange([...nodes, newItem()])}
-                        sx={{ fontSize: "0.75rem", color: "var(--main-color)", textTransform: "none" }}
                     >
-                        Add Item
+                        {t("quotation.cost.addItemButton")}
                     </Button>
                 </Box>
             )}

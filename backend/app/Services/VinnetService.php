@@ -564,16 +564,17 @@ class VinnetService
 
                     if (curl_errno($ch)) {
                         $curlError = curl_error($ch);
-                        Log::error("cURL error (attempt {$attempt}, {$duration}s): {$curlError}");
+                        $requestSent = curl_getinfo($ch, CURLINFO_PRETRANSFER_TIME) > 0;
+                        Log::error("cURL error (attempt {$attempt}, {$duration}s, request sent: " . ($requestSent ? 'yes' : 'no') . "): {$curlError}");
                         curl_close($ch);
 
-                        // Retry nếu là lỗi timeout hoặc lỗi kết nối
-                        if (str_contains($curlError, 'timed out') || str_contains($curlError, 'Failed to connect')) {
-                            if ($attempt < $maxRetries) {
-                                Log::warning("Retrying in {$retryDelay}s...");
-                                sleep($retryDelay);
-                                continue;
-                            }
+                        // Retry only when the request never reached Vinnet. Once it was sent, a timeout says nothing
+                        // about whether a card was paid; sending it again could pay twice and, at 20s per try, runs
+                        // past PHP's time limit. The next attempt reconciles it with checktransaction instead.
+                        if (!$requestSent && $attempt < $maxRetries) {
+                            Log::warning("Retrying in {$retryDelay}s...");
+                            sleep($retryDelay);
+                            continue;
                         }
                         throw new \Exception("Kết nối tới máy chủ Vinnet thất bại: {$curlError}");
                     }
@@ -624,13 +625,9 @@ class VinnetService
                 } catch (Exception $innerEx) {
                     Log::error("POST attempt {$attempt} failed: " . $innerEx->getMessage());
 
-                    // Nếu còn lượt retry → chờ rồi thử lại
-                    if ($attempt < $maxRetries) {
-                        Log::warning("Retrying in {$retryDelay}s...");
-                        sleep($retryDelay);
-                    } else {
-                        throw $innerEx;
-                    }
+                    // Only a request that never left this server is retried (the `continue` above). Anything
+                    // else reached Vinnet, which may already have paid; checktransaction settles it later.
+                    throw $innerEx;
                 }
 
             } while ($attempt < $maxRetries);
@@ -639,6 +636,51 @@ class VinnetService
             Log::error('POST request to Vinnet failed: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Asks Vinnet for a new merchant key and returns it. Vinnet switches to the new key at once,
+     * so the caller has to store it before anything else is sent.
+     */
+    public function change_merchant_key(): string
+    {
+        $envObject = new ENVObject();
+        $merchantInfo = $envObject->merchantInfo;
+        $merchantCode = str_replace('"', '', $merchantInfo['VINNET_MERCHANT_CODE']);
+
+        $uuid = $this->generate_formated_uuid();
+
+        $reqData = $this->encrypt_data(json_encode(['oldMerchantKey' => str_replace('"', '', $merchantInfo['VINNET_MERCHANT_KEY'])]));
+
+        $signature = $this->generate_signature($merchantCode . $uuid . $reqData);
+
+        $response = $this->post_vinnet_request(str_replace('"', '', $envObject->url) . '/changekey', null, [
+            'merchantCode' => $merchantCode,
+            'reqUuid' => $uuid,
+            'reqData' => $reqData,
+            'sign' => $signature
+        ]);
+
+        $decodedResponse = json_decode($response, true);
+
+        if (!is_array($decodedResponse) || ($decodedResponse['resCode'] ?? null) !== '00') {
+            throw new Exception('Vinnet refused the key change: ' . ($decodedResponse['resMesg'] ?? 'no response'));
+        }
+
+        // decrypt_data hands back the decrypted JSON encoded once more as a JSON string.
+        $decodedData = json_decode($this->decrypt_data($decodedResponse['resData']), true);
+
+        if (is_string($decodedData)) {
+            $decodedData = json_decode($decodedData, true);
+        }
+
+        $newMerchantKey = $decodedData['newMerchantKey'] ?? null;
+
+        if (!is_string($newMerchantKey) || trim($newMerchantKey) === '') {
+            throw new Exception('Vinnet did not return a new merchant key');
+        }
+
+        return $newMerchantKey;
     }
 
     public function merchantinfo()

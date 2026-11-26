@@ -1,9 +1,19 @@
-import { Box, Button, FormControlLabel, IconButton, LinearProgress, Link, Switch, Tooltip, Typography } from "@mui/material";
-import ReusableTable from "../../components/Table/ReusableTable";
+import { Box, Button, Link } from "@mui/material";
+import { Add, Block, CheckCircleOutlineOutlined, ContentCopy } from "@mui/icons-material";
+import ResourceTable from "../../components/Table/ResourceTable";
+import CellStack from "../../components/Table/CellStack";
+import SampleProgress from "../../components/SampleProgress";
+import UserAvatar from "../../components/UserAvatar";
+import RowActions from "../../components/Table/RowActions";
+import { DateRangeFilter } from "../../components/Table/FilterChip";
+import FilterChip from "../../components/Table/FilterChip";
+import PageHeader from "../../components/PageHeader";
+import EmptyState from "../../components/EmptyState";
+import StatusChip from "../../components/StatusChip";
 import { useProjects } from "../../hook/useProjects";
 import { useMetadata } from "../../hook/useMetadata";
 import { ColumnFormat } from "../../config/ColumnConfig";
-import { ProjectCellConfig, ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
+import { ProjectData, ProvinceData } from "../../config/ProjectFieldsConfig";
 import { hasRole, ROLE_ACCESS } from "../../config/RoleConfig";
 import { getProjectHomePath } from "../../config/ProjectNavConfig";
 import { StatusDropdown } from "../../components/Table/StatusDropdown";
@@ -12,48 +22,40 @@ import ConfirmDialog, { ConfirmDialogTone } from "../../components/Dialogs/Confi
 import axios from "axios";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import SearchDatePickerFromTo from "../../components/SearchDatePickerFromTo";
-import SearchTextBox from "../../components/SearchTextBox";
 import ModalAddProject from "../../components/Modals/Project/ModalAddProject";
 import ModalCloneProject from "../../components/Modals/Project/ModalCloneProject";
 import { Dayjs } from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
-import { toProperCase } from "../../utils/format";
+import { useToast } from "../../contexts/ToastContext";
+import { formatDateRange, formatFieldTiming, formatStatus } from "../../utils/format";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n/i18n";
+
+const PROJECT_TAB_STATUSES = ["on going", "in coming", "planned", "on hold", "completed", "cancelled"];
 
 const Projects = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const canToggleDisabled = hasRole(user?.role, ROLE_ACCESS.projectToggleDisabled);
   const canClone = hasRole(user?.role, ROLE_ACCESS.projectClone);
 
-  const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled } = useProjects();
+  const { projects, actionState, page, rowsPerPage, total, setPage, setRowsPerPage, searchTerm, setSearchTerm, searchFromDate, setSearchFromDate, searchToDate, setSearchToDate, updateProjectStatus, updateDisabled, showDisabled, setShowDisabled, statusFilter, setStatusFilter, statusCounts } = useProjects();
   const { data } = useMetadata();
   const { openDialog, dialogProps } = useDialog();
-  
+
   const [ updatingId, setUpdatingId ] = useState<number | null>(null);
   const [ cloneTarget, setCloneTarget ] = useState<ProjectData | null>(null);
 
   // Define allowed transitions for each status
   const statusTransitions: { [key: string] : string[] } = {
-    'planned' : ['in coming', 'cancelled'], 
-    'in coming' : ['on going', 'on hold', 'cancelled'], 
-    'on going' : ['completed', 'on hold', 'cancelled'], 
-    'completed' : ['on going', 'on hold', 'cancelled'], 
-    'on hold' : ['on going', 'completed', 'cancelled'], 
+    'planned' : ['in coming', 'cancelled'],
+    'in coming' : ['on going', 'on hold', 'cancelled'],
+    'on going' : ['completed', 'on hold', 'cancelled'],
+    'completed' : ['on going', 'on hold', 'cancelled'],
+    'on hold' : ['on going', 'completed', 'cancelled'],
     'cancelled' : ['on going', 'on hold', 'cancelled']
-  };
-
-  const actionIconSx = {
-    backgroundColor: 'var(--body-color)',
-    borderRadius: '8px',
-    border: '1px solid',
-    borderColor: 'divider',
-    '&:hover': {
-      backgroundColor: 'rgba(0, 157, 156, 0.08)',
-    },
-    padding: '5px',
   };
 
   const STATUS = {
@@ -65,71 +67,76 @@ const Projects = () => {
     CANCELLED: 'cancelled'
   }
 
+  const projectTabs = [
+    { value: "all", label: t("projects.list.all") },
+    ...PROJECT_TAB_STATUSES.map((status) => ({ value: status, label: formatStatus(status) })),
+  ];
+
+  const openProject = (project: ProjectData) => navigate(getProjectHomePath(project.id ?? 0, user?.role));
+
+  const sampleTarget = (project: ProjectData) =>
+    project.provinces?.reduce((sum: number, p: ProvinceData) => sum + (p.sample_size_main || 0) + (p.sample_size_booters || 0), 0) ?? 0;
+
   const columns: ColumnFormat[] = [
     {
-      label: "ID",
-      name: "id",
-      type: "number",
-      align: "left",
-      width: 56,
+      label: t("projects.list.columns.project"),
+      name: "project_name",
+      type: "string",
+      flex: 2.4,
       renderCell: (row: ProjectData) => (
-        <Typography component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
-          #{row.id}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+          <CellStack
+            primary={
+              <Link
+                component={RouterLink}
+                to={getProjectHomePath(row.id ?? 0, user?.role)}
+                underline="hover"
+                color={row.disabled ? 'text.secondary' : 'inherit'}
+              >
+                {row.project_name}
+              </Link>
+            }
+            secondary={[row.internal_code, row.symphony].filter(Boolean).join(' · ')}
+            title={row.project_name}
+          />
+          {row.disabled ? <StatusChip label={t("projects.list.disabled")} tone="neutral" /> : null}
+        </Box>
       )
     },
-    ...ProjectCellConfig.map((col): ColumnFormat => col.name !== "project_name" ? col : {
-      ...col,
-      flex: 2,
-      renderCell: (row: ProjectData) => (
-        <Tooltip title={row.project_name} placement="top-start" enterDelay={600}>
-          <Link
-            component={RouterLink}
-            to={getProjectHomePath(row.id ?? 0, user?.role)}
-            underline="hover"
-            sx={{ fontWeight: 500, color: 'text.primary', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
-          >
-            {row.project_name}
-          </Link>
-        </Tooltip>
-      )
-    }),
     {
-      label: "Sample Size",
+      label: t("projects.list.columns.fieldPeriod"),
+      name: "planned_field_start",
+      type: "date",
+      width: 208,
+      renderCell: (row: ProjectData) => (
+        <CellStack
+          primary={formatDateRange(row.planned_field_start, row.planned_field_end) ?? "—"}
+          secondary={formatFieldTiming(row.planned_field_start, row.planned_field_end, row.status) ?? undefined}
+          numeric
+        />
+      )
+    },
+    {
+      label: t("projects.list.columns.sample"),
       name: "sample_size",
       type: "string",
-      align: "left",
-      width: 132,
-      renderCell: (row: ProjectData) => {
-        const completed = row.count_respondents ?? 0;
-        const target = row.provinces?.reduce((sum: number, p: ProvinceData) => {
-          return sum + (p.sample_size_main || 0) + (p.sample_size_booters || 0);
-        }, 0) ?? 0;
-        const percent = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
-
-        return (
-          <Tooltip title={target > 0 ? `${percent}% of target` : "No sample size set"}>
-            <Box>
-              <Typography component="span" sx={{ fontSize: '0.8125rem', fontVariantNumeric: 'tabular-nums' }}>
-                {completed} / {target}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={percent}
-                aria-label="Sample progress"
-                sx={{ mt: 0.5, height: 4, borderRadius: 2, backgroundColor: 'var(--body-color)' }}
-              />
-            </Box>
-          </Tooltip>
-        )
-      }
+      width: 176,
+      renderCell: (row: ProjectData) => (
+        <SampleProgress
+          completed={row.count_respondents ?? 0}
+          target={sampleTarget(row)}
+          fieldStart={row.planned_field_start}
+          fieldEnd={row.planned_field_end}
+          status={row.status}
+        />
+      )
     },
     {
-      label: "Status",
+      label: t("projects.list.columns.status"),
       name: "status",
       type: "string",
       align: "left",
-      width: 140,
+      width: 136,
       renderCell: (row: ProjectData) => {
         return (
           <StatusDropdown
@@ -141,80 +148,48 @@ const Projects = () => {
         )
       }
     },
-    ...(canToggleDisabled ? [{
-      label: "Active",
-      name: "disabled",
-      type: "boolean" as const,
-      align: "left" as const,
-      width: 80,
-      renderCell: (row: ProjectData) => (
-        <Tooltip title={row.disabled ? "Disabled — click to enable" : "Active — click to disable"}>
-          <Switch
-            checked={!row.disabled}
-            onChange={() => handleUpdateDisabled(row, !row.disabled)}
-            disabled={updatingId === row.id}
-            size="small"
-            inputProps={{ 'aria-label': row.disabled ? 'Enable project' : 'Disable project' }}
-          />
-        </Tooltip>
-      )
-    }]: []),
     {
+      label: t("projects.list.columns.owner"),
+      name: "created_user_id",
+      type: "string",
+      align: "center",
+      width: 72,
+      renderCell: (row: ProjectData) => row.created_user_id?.name ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <UserAvatar name={row.created_user_id.name} />
+        </Box>
+      ) : "—"
+    },
+    ...(canClone || canToggleDisabled ? [{
       label: "",
       name: "action",
-      type: "menu",
-      align: "center",
-      width: 120,
-      renderCell: (row: ProjectData) => {
-        return (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 1
-            }}
-          >
-            {canClone && (
-              <Tooltip title="Clone project">
-                <IconButton
-                  aria-label="Clone project"
-                  onClick={() => setCloneTarget(row)}
-                  sx={actionIconSx}
-                >
-                  <ContentCopyIcon sx={{ fontSize: '0.875rem' }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title="Open project">
-              <IconButton
-                aria-label="Open project"
-                onClick={() =>
-                  navigate(getProjectHomePath(row.id ?? 0, user?.role))
-                }
-                sx={actionIconSx}
-              >
-                <ArrowForwardIosIcon sx={{ fontSize: '0.875rem' }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )
-      }
-    }
+      type: "menu" as const,
+      align: "right" as const,
+      width: 56,
+      renderCell: (row: ProjectData) => (
+        <RowActions
+          menuLabel={t("projects.list.actionsFor", { name: row.project_name })}
+          items={[
+            { label: t("projects.list.clone"), icon: ContentCopy, onClick: () => setCloneTarget(row), hidden: !canClone },
+            {
+              label: row.disabled ? t("projects.list.enable") : t("projects.list.disable"),
+              icon: row.disabled ? CheckCircleOutlineOutlined : Block,
+              tone: row.disabled ? "default" : "danger",
+              onClick: () => handleUpdateDisabled(row, !row.disabled),
+              disabled: updatingId === row.id,
+              hidden: !canToggleDisabled,
+            },
+          ]}
+        />
+      )
+    }] : [])
   ];
 
   const [openModalAdd, setOpenModalAdd] = useState<boolean>(false);
-  
+
   const handleCloseModal = () => {
     setOpenModalAdd(false);
   };
-
-  const showError = (message: string) => {
-    openDialog({
-      title: 'Update Status',
-      message: message,
-      showConfirmButton: false
-    });
-  }
 
   const showConfirm = (
     message: string,
@@ -222,7 +197,7 @@ const Projects = () => {
   ): Promise<boolean> => {
     return new Promise((resolve) => {
       openDialog({
-        title: options.title ?? "Update Status",
+        title: options.title ?? t("projects.list.confirm.statusTitle"),
         message: message,
         showConfirmButton: true,
         tone: options.tone,
@@ -234,13 +209,12 @@ const Projects = () => {
   }
 
   const handleUpdateDisabled = async (project: ProjectData, disabled: boolean) => {
-    const action = disabled ? 'disable' : 'enable';
     const confirmed = await showConfirm(
-      `Are you sure you want to ${action} this project?`,
+      disabled ? t("projects.list.confirm.disableMessage") : t("projects.list.confirm.enableMessage"),
       {
-        title: disabled ? "Disable Project" : "Enable Project",
+        title: disabled ? t("projects.list.confirm.disableTitle") : t("projects.list.confirm.enableTitle"),
         tone: disabled ? "danger" : "default",
-        confirmText: disabled ? "Disable" : "Enable",
+        confirmText: disabled ? t("projects.list.confirm.disable") : t("projects.list.confirm.enable"),
       }
     );
 
@@ -251,11 +225,13 @@ const Projects = () => {
 
     try {
       await updateDisabled(project.id, disabled);
+      showToast(disabled ? t("projects.list.toast.disabled") : t("projects.list.toast.enabled"));
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        showError(error.response?.status === 403
-          ? "You do not have permission to perform this action."
-          : "Something went wrong. Please try again."
+        showToast(error.response?.status === 403
+          ? t("projects.list.toast.noPermission")
+          : t("projects.list.toast.genericError"),
+          "error"
         );
       }
     } finally {
@@ -265,19 +241,21 @@ const Projects = () => {
 
   const handleUpdateStatus = async (project: ProjectData, status: string) => {
     if(status === STATUS.IN_COMING && !project.has_submitted_quotation){
-      return showError(
-        'Please submit the quotation before moving the project to "In Coming".'
+      return showToast(
+        t("projects.list.toast.needQuotation", { status: formatStatus(STATUS.IN_COMING) }),
+        "warning"
       );
     }
 
     if(project.count_employees === 0 && status === STATUS.ON_GOING){
-      return showError(
-        'Please add interviewers before moving the project to "On Going".'
+      return showToast(
+        t("projects.list.toast.needInterviewers", { status: formatStatus(STATUS.ON_GOING) }),
+        "warning"
       );
     }
 
     const confirmed = await showConfirm(
-      `Are you sure you want to change the project status to "${toProperCase(status)}"?`
+      t("projects.list.confirm.statusMessage", { status: formatStatus(status) })
     )
 
     if(!confirmed) return;
@@ -287,23 +265,23 @@ const Projects = () => {
 
     try
     {
-
       await updateProjectStatus(project.id, status);
+      showToast(t("projects.list.toast.statusChanged", { status: formatStatus(status) }));
     } catch(error){
       if(axios.isAxiosError(error)){
         const statusCode = error.response?.status;
 
         if(statusCode === 403){
-          showError("You do not have permission to change the status.");
+          showToast(t("projects.list.toast.noStatusPermission"), "error");
         } else {
-          showError("Something went wrong. Please try again.");
+          showToast(t("projects.list.toast.genericError"), "error");
         }
       }
     } finally{
       setUpdatingId(null);
     }
   }
-  
+
   const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage)
   }
@@ -315,20 +293,58 @@ const Projects = () => {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value.toLocaleLowerCase());
+    setPage(0);
   }
 
   const handleDateChange = (from: Dayjs | null, to: Dayjs | null) => {
-    if (!from || !to) return;
-
-    if (from && to) {
-        setSearchFromDate(from);
-        setSearchToDate(to);
-    }
+    setSearchFromDate(from);
+    setSearchToDate(to);
+    setPage(0);
   };
-  
+
+  const fieldStartRange = formatDateRange(searchFromDate, searchToDate);
+  const isFiltered = Boolean(searchTerm || fieldStartRange);
+  // Vietnamese keeps the capital; status names there are not ordinary words in the sentence.
+  const statusLabel = statusFilter !== "all" ? formatStatus(statusFilter) : "";
+
+  const emptyState = !isFiltered && statusFilter !== "all" ? (
+    <EmptyState title={t("projects.list.empty.statusTitle", { status: i18n.language === "vi" ? statusLabel : statusLabel.toLowerCase() })} description={t("projects.list.empty.statusDescription")} />
+  ) : isFiltered ? (
+    <EmptyState
+      title={t("projects.list.empty.notFound")}
+      description={[
+        searchTerm && t("projects.list.empty.nothingMatches", { term: searchTerm }),
+        fieldStartRange && (searchTerm
+          ? t("projects.list.empty.withStart", { range: fieldStartRange })
+          : t("projects.list.empty.noneStart", { range: fieldStartRange })),
+      ].filter(Boolean).join(" ") + "."}
+      action={fieldStartRange ? (
+        <Button variant="outlined" color="inherit" onClick={() => handleDateChange(null, null)}>
+          {t("projects.list.empty.allStartDates")}
+        </Button>
+      ) : undefined}
+    />
+  ) : (
+    <EmptyState
+      title={t("projects.list.empty.noneTitle")}
+      description={t("projects.list.empty.noneDescription")}
+      action={<Button variant="contained" startIcon={<Add />} onClick={() => setOpenModalAdd(true)}>{t("projects.list.newProject")}</Button>}
+    />
+  );
+
   return (
     <>
-      <ReusableTable
+      <PageHeader
+        title={t("projects.list.title")}
+        description={t("projects.list.description")}
+        actions={
+          <Button variant="contained" startIcon={<Add />} onClick={() => setOpenModalAdd(true)}>
+            {t("projects.list.newProject")}
+          </Button>
+        }
+      />
+
+      <ResourceTable
           columns={columns}
           data={projects}
           actionStatus={{
@@ -342,50 +358,60 @@ const Projects = () => {
           total={total}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          topToolbar={(
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography sx={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-color)' }}>
-                  Projects
-                </Typography>
-                <Button variant="contained" onClick={() => setOpenModalAdd(true)}>
-                  Add New Project
-                </Button>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                  <SearchDatePickerFromTo fromValue={searchFromDate} toValue={searchToDate} onSearchChange={handleDateChange} />
-                  {canToggleDisabled && (
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          size="small"
-                          checked={showDisabled}
-                          onChange={(e) => setShowDisabled(e.target.checked)}
-                        />
-                      }
-                      label="Show disabled projects"
-                      sx={{ m: 0, gap: 0.5, '& .MuiFormControlLabel-label': { fontSize: '0.8125rem', color: 'text.secondary' } }}
-                    />
-                  )}
-                </Box>
-                <SearchTextBox
-                  placeholder="Search project name, internal code,..."
-                  onSearchChange={handleSearchChange}
+          onRowClick={openProject}
+          tabs={projectTabs.map((tab) => ({
+            value: tab.value,
+            label: tab.label,
+            count: !statusCounts
+              ? undefined
+              : tab.value === "all"
+                ? Object.values(statusCounts).reduce((sum, count) => sum + count, 0)
+                : statusCounts[tab.value] ?? 0,
+          }))}
+          tab={statusFilter}
+          onTabChange={(value) => {
+            setStatusFilter(value);
+            setPage(0);
+          }}
+          stickyColumns={{ last: canClone || canToggleDisabled }}
+          search={{
+            placeholder: t("projects.list.searchPlaceholder"),
+            defaultValue: searchTerm,
+            onChange: handleSearchChange,
+          }}
+          filters={
+            <>
+              <DateRangeFilter
+                label={t("projects.list.fieldStart")}
+                from={searchFromDate}
+                to={searchToDate}
+                onChange={handleDateChange}
+              />
+              {canToggleDisabled && (
+                <FilterChip
+                  label={t("projects.list.includeDisabled")}
+                  active={showDisabled}
+                  onClick={() => {
+                    setShowDisabled(!showDisabled);
+                    setPage(0);
+                  }}
                 />
-              </Box>
-            </Box>
-          )}
+              )}
+            </>
+          }
+          emptyState={emptyState}
       />
-
 
       <ConfirmDialog {...dialogProps} />
 
-      <ModalAddProject
-        openModal={openModalAdd}
-        onClose={handleCloseModal}
-        metadata={data}
-      />
+      {/* Mounted only while open: the modal's own useProjects() would otherwise fetch the list a second time. */}
+      {openModalAdd && (
+        <ModalAddProject
+          openModal={openModalAdd}
+          onClose={handleCloseModal}
+          metadata={data}
+        />
+      )}
 
       {cloneTarget && (
         <ModalCloneProject

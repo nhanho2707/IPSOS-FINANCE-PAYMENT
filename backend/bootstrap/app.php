@@ -18,7 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'ensureUserHasRole' => \App\Http\Middleware\EnsureUserHasRole::class,
-            'catiAuthMiddleware' => \App\Http\Middleware\CatiAuthMiddleware::class
+            'catiAuthMiddleware' => \App\Http\Middleware\CatiAuthMiddleware::class,
+            'extendExecutionTime' => \App\Http\Middleware\ExtendExecutionTime::class,
         ]);
         //
     })

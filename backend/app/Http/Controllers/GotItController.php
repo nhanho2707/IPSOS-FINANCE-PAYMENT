@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -74,6 +75,8 @@ class GotItController extends Controller
     
     public function perform_transaction(TransactionRequest $request, ProjectRespondentTokenService $tokenService)
     {
+        $projectRespondent = null;
+
         try
         {
             $validatedRequest = $request->validated();
@@ -87,7 +90,7 @@ class GotItController extends Controller
             $mode = $validatedRequest['mode'] ?? 'online';
 
             Log::info('Transaction Info: ', [
-                'token' => $token,
+                'token' => Str::before((string) $token, '.'),
                 'service_type' => $serviceType,
                 'service_code' => $serviceCode,
                 'phone_number' => $phoneNumber,
@@ -133,7 +136,7 @@ class GotItController extends Controller
 
             Log::info('Price item by province: ' . intval($price));
             
-            if($projectRespondent->environment === 'test'){
+            if($projectRespondent->syncEnvironment() === ProjectRespondent::ENVIRONMENT_TEST){
 
                 Log::info('Staging Environment: ');
 
@@ -151,385 +154,23 @@ class GotItController extends Controller
 
             Log::info('Live Environment:');
 
-            if($deliveryMethod === 'sms'){
-                try
-                {
-                    //Kiểm tra số điện thoại đáp viên nhập đã được nhận quà trước đó hay chưa?
-                    ProjectRespondent::checkGiftPhoneNumber($project, $phoneNumber);
+            // Stops a double click, or a Vinnet request for the same respondent, from buying twice.
+            $lock = $projectRespondent->giftLock();
 
-                } catch(\Exception $e){
-                    return response()->json([
-                        'status_code' => 905,
-                        'message' => $e->getMessage() . ' Vui lòng liên hệ Admin để biết thêm thông tin.',
-                        'error' => $e->getMessage()
-                    ], 409);
-                }
+            if(!$lock->get()){
+                return response()->json([
+                    'status_code' => 998,
+                    'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_TEMPORARY,
+                    'error' => ProjectRespondent::ERROR_RESPONDENT_GIFT_TEMPORARY
+                ], 409);
             }
 
-            $projectRespondent->update([
-                'phone_number' => $phoneNumber,
-                'service_code' => $serviceCode,
-                'service_type' => $serviceType,
-                'channel' => $provider,
-                'delivery_method' => $deliveryMethod
-            ]); 
-
-            //Tìm loại voucher tương ứng với mức giá quà tặng
-            // 17940 => 40000,
-            // 6832 => 60000,
-            // 9369 => 70000,
-            // 9343 => 80000,
-            // 6546 => 90000,
-
-            $priceMap = [
-                3088 => 10000,
-                3090 => 20000,
-                3555 => 30000,
-                2991 => 50000,
-                2992 => 100000,
-                2993 => 200000,
-                6440 => 300000,
-                6960 => 400000,
-                2994 => 500000
-            ];
-
-            $prices = array();
-
-            foreach($priceMap as $price_id => $p){
-                array_push($prices, $p);
-            }
-
-            $prices = array();
-            $selectedPrices = array();
-
-            foreach($priceMap as $price_id => $p){
-                array_push($prices, $p);
-            }
-
-            if(in_array($price, $prices)){
-                array_push($selectedPrices, $price);
-            } else {
-                $selectedPrices = $this->findSubsets($prices, $price);
-            }
-            
-            Log::info("Mệnh giá tiền cần chuyển cho đáp viên: " . print_r($selectedPrices, true));
-
-            if(count($selectedPrices) == 1){
-                $voucher_link_type = 'v'; 
-            } else {
-                if(count($selectedPrices) >= 2 && count($selectedPrices) <= 5){
-                    $voucher_link_type = 'g'; 
-                } else {
-                    $voucher_link_type = 'e';
-
-                    $selectedPrices = array();
-                    array_push($selectedPrices, $price);
-                }  
-            }
-
-            Log::info('Call API GotIt');
-            $apiObject = new APIObject();
-
-            $continueTransacton = false;
-
-            if($projectRespondent->gotitVoucherTransactions()->count() == 0){
-                
-                $voucherRequest = $this->generate_voucher_request($apiObject, $voucher_link_type, $phoneNumber, $selectedPrices);
-
-                $voucherTransaction = $projectRespondent->createGotitVoucherTransactions([
-                    'project_respondent_id' => $projectRespondent->id,
-                    'transaction_ref_id' => $voucherRequest['transactionRefId'],
-                    'transaction_ref_id_order' => 1,
-                    'expiry_date' => $voucherRequest['expiryDate'],
-                    'order_name' => $voucherRequest['orderName'],
-                    'amount' => $price,
-                    'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_PENDING
-                ]);
-
-                $transactionRefId = $voucherRequest['transactionRefId'];
-
-                $continueTransacton = true;
-            } else {
-                $hasSuccess = $projectRespondent->gotitVoucherTransactions()
-                                                ->where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
-                                                ->exists();
-
-                if($hasSuccess){
-                    // Log::warning(
-                    //     ProjectRespondent::ERROR_DUPLICATE_RESPONDENT . ' [Trường hợp Đáp viên đã tồn tại và đã có thực hiện giao dịch]',
-                    //     [
-                    //         'respondent_id' => $projectRespondent->id
-                    //     ]
-                    // );
-
-                    // //Nếu đã thực hiện giao dịch => không cho thực hiện
-                    // return response()->json([
-                    //     'status_code' => 905,
-                    //     'message' => ProjectRespondent::ERROR_DUPLICATE_RESPONDENT,
-                    //     'error' => ProjectRespondent::ERROR_DUPLICATE_RESPONDENT . ' [Trường hợp Đáp viên đã tồn tại và đã có thực hiện giao dịch]'
-                    // ], 500);
-
-                    $voucherTransaction = $projectRespondent->gotitVoucherTransactions()
-                                                            ->where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
-                                                            ->first();
-                    
-                    $transactionRefId = $voucherTransaction->transaction_ref_id;   
-                    
-                    // Kiểm tra Transaction Ref Id có được thực hiện tiếp lệnh bên GotIt không?
-                    $responsedVoucher = $apiObject->check_transaction($transactionRefId);
-
-                    Log::info('Checked Transaction Ref Id with GotIt: ' . json_encode($responsedVoucher));
-
-                    if($responsedVoucher['statusCode'] == 200 && intval($responsedVoucher['error']) == 2007)
-                    {
-                        $voucherRequest = $this->generate_voucher_request($apiObject, $voucher_link_type, $phoneNumber, $selectedPrices);
-
-                        $voucherTransaction->update([
-                            'transaction_ref_id' => $voucherRequest['transactionRefId'],
-                            'expiry_date' => $voucherRequest['expiryDate'],
-                            'order_name' => $voucherRequest['orderName'],
-                            'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_PENDING
-                        ]);
-
-                        $transactionRefId = $voucherRequest['transactionRefId'];
-
-                        $continueTransacton = true;
-                    } else {
-                        Log::info('Responsed Voucher (old): ' . json_encode($responsedVoucher));
-
-                        $voucherData = $responsedVoucher['data'][0]['vouchers'][0];
-
-                        Log::info('Voucher Link (old): ' .  json_encode($voucherData));
-                    }
-                } else {
-                    $voucherTransaction = $projectRespondent->gotitVoucherTransactions()
-                                                            ->where('voucher_status', '!=', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
-                                                            ->first();
-                    
-                    $transactionRefId = $voucherTransaction->transaction_ref_id;   
-                    
-                    // Kiểm tra Transaction Ref Id có được thực hiện tiếp lệnh bên GotIt không?
-                    $responsedVoucher = $apiObject->check_transaction($transactionRefId);
-
-                    Log::info('Checked Transaction Ref Id with GotIt: ' . json_encode($responsedVoucher));
-
-                    if($responsedVoucher['statusCode'] == 200 && intval($responsedVoucher['error']) == 2007)
-                    {
-                        $voucherRequest = $this->generate_voucher_request($apiObject, $voucher_link_type, $phoneNumber, $selectedPrices);
-
-                        $voucherTransaction->update([
-                            'transaction_ref_id' => $voucherRequest['transactionRefId'],
-                            'expiry_date' => $voucherRequest['expiryDate'],
-                            'order_name' => $voucherRequest['orderName'],
-                            'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_PENDING
-                        ]);
-
-                        $transactionRefId = $voucherRequest['transactionRefId'];
-
-                        $continueTransacton = true;
-                    } else {
-                        Log::info('Responsed Voucher (old): ' . json_encode($responsedVoucher));
-
-                        $voucherData = $responsedVoucher['data'][0]['vouchers'][0];
-
-                        Log::info('Voucher Link (old): ' .  json_encode($voucherData));
-                    }
-                }
-            }
-            
-            if($continueTransacton)
+            try
             {
-                try
-                {
-                    $responsedVoucher = $apiObject->get_vouchers($voucher_link_type, $voucherRequest);
-
-                    Log::info('Responsed Voucher (new): ' . json_encode($responsedVoucher));
-
-                    if($voucher_link_type === 'e'){
-                        $voucherData = $responsedVoucher['vouchers'][0];
-                    } else if ($voucher_link_type === 'v') {
-                        $voucherData = $responsedVoucher['vouchers'][0];
-                    } else {
-                        $voucherData = $responsedVoucher;
-                    }
-
-                    Log::info('Voucher Link (new): ' .  json_encode($voucherData));
-                }
-                catch(\Exception $e){
-
-                    Log::error("GotIt API Error: " . $e->getMessage());
-                    
-                    $voucherTransaction->update([
-                        'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_ERROR
-                    ]);
-
-                    if(isset($projectRespondent)){
-                        $projectRespondent->updateStatus(ProjectRespondent::ERROR_RESPONDENT_GIFT_TEMPORARY);
-                    }
-
-                    return response()->json([
-                        'status_code' => 999,
-                        'transaction_id' => $transactionRefId,
-                        'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM,
-                        'error' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM
-                    ], 400);
-                }
-            } 
-            
-            $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_WAITING_FOR_GIFT);
-            
-            Log::info('Store the information of voucher.');
-
-            $messagesToSend = "";
-            $expiredDate = "";
-
-            if($voucher_link_type === 'e'){
-
-                $voucherTransaction->update([
-                    'voucher_link' => $voucherData['voucher_link'],
-                    'voucher_link_code' => substr($voucherData['voucher_link'], -8),
-                    'voucher_serial' => $voucherData['voucher_serial'],
-                    'voucher_value' => $voucherData['value'],
-                    'voucher_expired_date' => $voucherData['expired_date'],
-                    'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
-                ]);
-                
-                $messagesToSend = sprintf(
-                    "IPSOS cam on ban tham gia chia se, IPSOS tang ban phan qua tri gia %svnd. Mo qua tai: %s HSD %s",
-                    $price ?? 'N/A',
-                    $voucherData['voucher_link'] ?? 'N/A',
-                    $voucherData['expired_date'] ?? 'N/A'
-                );
-
-            } else if ($voucher_link_type === 'v') {
-                
-                $voucherTransaction->update([
-                    'voucher_code' => $voucherData['voucherCode'],
-                    'voucher_link' => $voucherData['voucherLink'],
-                    'voucher_serial' => $voucherData['voucherSerial'],
-                    'voucher_value' => $voucherData['product']['price']['priceValue'],
-                    'voucher_expired_date' => $voucherData['expiryDate'],
-                    'voucher_product_id' => $voucherData['product']['productId'],
-                    'voucher_price_id' => $voucherData['product']['price']['priceId'],
-                    'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
-                ]);
-
-                $messagesToSend = sprintf(
-                    "IPSOS cam on ban tham gia chia se, IPSOS tang ban phan qua tri gia %svnd. Mo qua tai: %s HSD %s",
-                    $price ?? 'N/A',
-                    $voucherData['voucherLink'] ?? 'N/A',
-                    $voucherData['expiryDate'] ?? 'N/A'
-                );
-            } else {
-                if(array_key_exists("groupVouchers", $voucherData)){
-                    $voucherTransaction->update([
-                        'voucher_link_group' => $voucherData['groupVouchers']['voucherLink'],
-                        'voucher_link_code_group' => $voucherData['groupVouchers']['voucherLinkCode'],
-                        'voucher_serial_group' => $voucherData['groupVouchers']['voucherSerial'],
-                        'voucher_expired_date' => $voucherData['vouchers'][0]['expired_date'],
-                        'voucher_value' => $price,
-                        'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
-                    ]);
-                } else {
-                    $voucherTransaction->update([
-                        'voucher_link_group' => $voucherData['groupLink'],
-                        'voucher_link_code_group' => substr($voucherData['groupLink'], -8),
-                        'voucher_serial_group' => $voucherData['groupVoucherSerial'],
-                        'voucher_expired_date' => $voucherData['expiryDate'],
-                        'voucher_value' => $price,
-                        'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
-                    ]);
-                }
-                
-
-                $messagesToSend = sprintf(
-                    "IPSOS cam on ban tham gia chia se, IPSOS tang ban phan qua tri gia %svnd. Mo qua tai: %s HSD %s",
-                    $price ?? 'N/A',
-                    $responsedVoucher['groupVouchers']['voucherLink'] ?? 'N/A',
-                    $expiredDate ?? 'N/A'
-                );
+                return $this->dispatch_gotit_voucher($projectRespondent, $project, $price, $phoneNumber, $serviceCode, $serviceType, $provider, $deliveryMethod);
+            } finally {
+                $lock->release();
             }
-
-            $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_DISPATCHED);
-
-            Log::info('Generate a SMS request');
-
-            $projectRespondent->token()->update([
-                'status' => 'blocked'
-            ]);
-
-            $messageCard = sprintf(
-                "%s",
-                $messagesToSend ?? 'N/A'
-            );
-            
-            if($continueTransacton && $deliveryMethod === 'sms')
-            {   
-                $smsTransaction = $voucherTransaction->createGotitSMSTransaction([
-                    'voucher_transaction_id' => $voucherTransaction->id,
-                    'transaction_ref_id' => $transactionRefId,
-                    'sms_status' => SMSStatus::PENDING
-                ]);
-                
-                $apiCMCObject = new APICMCObject();
-
-                try{
-                    $responseSMSData = $apiCMCObject->send_sms($validatedRequest['phone_number'], $messageCard);
-                } catch(\Exception $e){
-
-                    Log::error("CMC Telecom API Error: " . $e->getMessage());
-                    
-                    if(isset($smsTransaction)){
-                        $smsTransaction->update([
-                            'sms_status' => $e->getMessage()
-                        ]);
-                    }
-
-                    if(isset($projectRespondent)){
-                        $projectRespondent->updateStatus(ProjectRespondent::STATUS_API_FAILED);
-                    }
-
-                    return response()->json([
-                        'status_code' => 999,
-                        'transaction_id' => $transactionRefId,
-                        'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM,
-                        'error' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM
-                    ], 404);
-                }
-
-                if(intval($responseSMSData['status']) == 1){
-                    $smsTransactionStatus = $smsTransaction->updateStatus(SMSStatus::SUCCESS, intval($responseSMSData['countSms']));
-
-                    $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED);
-
-                    return response()->json([
-                        'status_code' => 900,
-                        'transaction_id' => $transactionRefId,
-                        'message' => TransactionStatus::SUCCESS
-                    ], 200);
-                } else {
-                    $smsTransactionStatus = $smsTransaction->updateStatus($responseSMSData['statusDescription'], 0);
-
-                    $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_NOT_RECEIVED);
-
-                    Log::error(SMSStatus::ERROR . ' [' . $responseSMSData['statusDescription'] . ']');
-
-                    return response()->json([
-                        'status_code' => 997,
-                        'transaction_id' => $transactionRefId,
-                        'message' => SMSStatus::ERROR . ' [' . $responseSMSData['statusDescription'] . ']',
-                        'error' => SMSStatus::ERROR . ' [' . $responseSMSData['statusDescription'] . ']',
-                    ], 400);
-                }
-            }
-
-            $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED);
-            
-            return response()->json([
-                'status_code' => 900,
-                'transaction_id' => $transactionRefId,
-                'message' => TransactionStatus::SUCCESS
-            ], 200);
         }
         catch (GotItVoucherException $e){
             Log::error($e->getLogContext());
@@ -553,6 +194,409 @@ class GotItController extends Controller
         }
     }
     
+    private function dispatch_gotit_voucher(ProjectRespondent $projectRespondent, Project $project, $price, string $phoneNumber, ?string $serviceCode, ?string $serviceType, ?string $provider, ?string $deliveryMethod)
+    {
+        // Re-opening an interview after the gift went out through the other provider must neither buy a
+        // second gift nor overwrite the channel the gift was recorded under.
+        $deliveredChannel = $projectRespondent->deliveredGiftChannel();
+
+        if($deliveredChannel !== null && $deliveredChannel !== 'gotit'){
+            Log::warning('Gift already delivered through another provider', [
+                'project_respondent_id' => $projectRespondent->id,
+                'delivered_by' => $deliveredChannel,
+                'requested' => 'gotit'
+            ]);
+
+            return response()->json([
+                'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                'message' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel),
+                'error' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel)
+            ], 409);
+        }
+
+        if($deliveryMethod === 'sms'){
+            try
+            {
+                //Kiểm tra số điện thoại đáp viên nhập đã được nhận quà trước đó hay chưa?
+                ProjectRespondent::checkGiftPhoneNumber($project, $phoneNumber);
+
+            } catch(\Exception $e){
+                return response()->json([
+                    'status_code' => 905,
+                    'message' => $e->getMessage() . ' Vui lòng liên hệ Admin để biết thêm thông tin.',
+                    'error' => $e->getMessage()
+                ], 409);
+            }
+        }
+
+        $projectRespondent->update([
+            'phone_number' => $phoneNumber,
+            'service_code' => $serviceCode,
+            'service_type' => $serviceType,
+            'channel' => $provider,
+            'delivery_method' => $deliveryMethod
+        ]); 
+
+        //Tìm loại voucher tương ứng với mức giá quà tặng
+        // 17940 => 40000,
+        // 6832 => 60000,
+        // 9369 => 70000,
+        // 9343 => 80000,
+        // 6546 => 90000,
+
+        $priceMap = [
+            3088 => 10000,
+            3090 => 20000,
+            3555 => 30000,
+            2991 => 50000,
+            2992 => 100000,
+            2993 => 200000,
+            6440 => 300000,
+            6960 => 400000,
+            2994 => 500000
+        ];
+
+        $prices = array();
+
+        foreach($priceMap as $price_id => $p){
+            array_push($prices, $p);
+        }
+
+        $prices = array();
+        $selectedPrices = array();
+
+        foreach($priceMap as $price_id => $p){
+            array_push($prices, $p);
+        }
+
+        if(in_array($price, $prices)){
+            array_push($selectedPrices, $price);
+        } else {
+            $selectedPrices = $this->findSubsets($prices, $price);
+        }
+        
+        Log::info("Mệnh giá tiền cần chuyển cho đáp viên: " . print_r($selectedPrices, true));
+
+        if(count($selectedPrices) == 1){
+            $voucher_link_type = 'v'; 
+        } else {
+            if(count($selectedPrices) >= 2 && count($selectedPrices) <= 5){
+                $voucher_link_type = 'g'; 
+            } else {
+                $voucher_link_type = 'e';
+
+                $selectedPrices = array();
+                array_push($selectedPrices, $price);
+            }  
+        }
+
+        Log::info('Call API GotIt');
+        $apiObject = new APIObject();
+
+        $continueTransacton = false;
+
+        if($projectRespondent->gotitVoucherTransactions()->count() == 0){
+            
+            $voucherRequest = $this->generate_voucher_request($apiObject, $voucher_link_type, $phoneNumber, $selectedPrices);
+
+            $voucherTransaction = $projectRespondent->createGotitVoucherTransactions([
+                'project_respondent_id' => $projectRespondent->id,
+                'transaction_ref_id' => $voucherRequest['transactionRefId'],
+                'transaction_ref_id_order' => 1,
+                'expiry_date' => $voucherRequest['expiryDate'],
+                'order_name' => $voucherRequest['orderName'],
+                'amount' => $price,
+                'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_PENDING
+            ]);
+
+            $transactionRefId = $voucherRequest['transactionRefId'];
+
+            $continueTransacton = true;
+        } else {
+            $hasSuccess = $projectRespondent->gotitVoucherTransactions()
+                                            ->where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
+                                            ->exists();
+
+            if($hasSuccess){
+                // Log::warning(
+                //     ProjectRespondent::ERROR_DUPLICATE_RESPONDENT . ' [Trường hợp Đáp viên đã tồn tại và đã có thực hiện giao dịch]',
+                //     [
+                //         'respondent_id' => $projectRespondent->id
+                //     ]
+                // );
+
+                // //Nếu đã thực hiện giao dịch => không cho thực hiện
+                // return response()->json([
+                //     'status_code' => 905,
+                //     'message' => ProjectRespondent::ERROR_DUPLICATE_RESPONDENT,
+                //     'error' => ProjectRespondent::ERROR_DUPLICATE_RESPONDENT . ' [Trường hợp Đáp viên đã tồn tại và đã có thực hiện giao dịch]'
+                // ], 500);
+
+                $voucherTransaction = $projectRespondent->gotitVoucherTransactions()
+                                                        ->where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
+                                                        ->first();
+                
+                $transactionRefId = $voucherTransaction->transaction_ref_id;   
+                
+                // Kiểm tra Transaction Ref Id có được thực hiện tiếp lệnh bên GotIt không?
+                $responsedVoucher = $apiObject->check_transaction($transactionRefId);
+
+                Log::info('Checked Transaction Ref Id with GotIt', [
+                    'transaction_ref_id' => $transactionRefId,
+                    'status_code' => $responsedVoucher['statusCode'] ?? null,
+                    'error' => $responsedVoucher['error'] ?? null
+                ]);
+
+                if($responsedVoucher['statusCode'] == 200 && intval($responsedVoucher['error']) == 2007)
+                {
+                    $voucherRequest = $this->generate_voucher_request($apiObject, $voucher_link_type, $phoneNumber, $selectedPrices);
+
+                    $voucherTransaction->update([
+                        'transaction_ref_id' => $voucherRequest['transactionRefId'],
+                        'expiry_date' => $voucherRequest['expiryDate'],
+                        'order_name' => $voucherRequest['orderName'],
+                        'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_PENDING
+                    ]);
+
+                    $transactionRefId = $voucherRequest['transactionRefId'];
+
+                    $continueTransacton = true;
+                } else {
+                    $voucherData = $responsedVoucher['data'][0]['vouchers'][0];
+                }
+            } else {
+                $voucherTransaction = $projectRespondent->gotitVoucherTransactions()
+                                                        ->where('voucher_status', '!=', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
+                                                        ->first();
+                
+                $transactionRefId = $voucherTransaction->transaction_ref_id;   
+                
+                // Kiểm tra Transaction Ref Id có được thực hiện tiếp lệnh bên GotIt không?
+                $responsedVoucher = $apiObject->check_transaction($transactionRefId);
+
+                Log::info('Checked Transaction Ref Id with GotIt', [
+                    'transaction_ref_id' => $transactionRefId,
+                    'status_code' => $responsedVoucher['statusCode'] ?? null,
+                    'error' => $responsedVoucher['error'] ?? null
+                ]);
+
+                if($responsedVoucher['statusCode'] == 200 && intval($responsedVoucher['error']) == 2007)
+                {
+                    $voucherRequest = $this->generate_voucher_request($apiObject, $voucher_link_type, $phoneNumber, $selectedPrices);
+
+                    $voucherTransaction->update([
+                        'transaction_ref_id' => $voucherRequest['transactionRefId'],
+                        'expiry_date' => $voucherRequest['expiryDate'],
+                        'order_name' => $voucherRequest['orderName'],
+                        'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_PENDING
+                    ]);
+
+                    $transactionRefId = $voucherRequest['transactionRefId'];
+
+                    $continueTransacton = true;
+                } else {
+                    $voucherData = $responsedVoucher['data'][0]['vouchers'][0];
+                }
+            }
+        }
+        
+        if($continueTransacton)
+        {
+            try
+            {
+                $responsedVoucher = $apiObject->get_vouchers($voucher_link_type, $voucherRequest);
+
+                if($voucher_link_type === 'e'){
+                    $voucherData = $responsedVoucher['vouchers'][0];
+                } else if ($voucher_link_type === 'v') {
+                    $voucherData = $responsedVoucher['vouchers'][0];
+                } else {
+                    $voucherData = $responsedVoucher;
+                }
+
+                Log::info('GotIt vouchers issued', ['transaction_ref_id' => $transactionRefId]);
+            }
+            catch(\Exception $e){
+
+                Log::error("GotIt API Error: " . $e->getMessage());
+                
+                $voucherTransaction->update([
+                    'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_ERROR
+                ]);
+
+                $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_TEMPORARY_ERROR);
+
+                return response()->json([
+                    'status_code' => 999,
+                    'transaction_id' => $transactionRefId,
+                    'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM,
+                    'error' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM
+                ], 400);
+            }
+        } 
+        
+        $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_WAITING_FOR_GIFT);
+        
+        Log::info('Store the information of voucher.');
+
+        $messagesToSend = "";
+        $expiredDate = "";
+
+        if($voucher_link_type === 'e'){
+
+            $voucherTransaction->update([
+                'voucher_link' => $voucherData['voucher_link'],
+                'voucher_link_code' => substr($voucherData['voucher_link'], -8),
+                'voucher_serial' => $voucherData['voucher_serial'],
+                'voucher_value' => $voucherData['value'],
+                'voucher_expired_date' => $voucherData['expired_date'],
+                'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
+            ]);
+            
+            $messagesToSend = sprintf(
+                "IPSOS cam on ban tham gia chia se, IPSOS tang ban phan qua tri gia %svnd. Mo qua tai: %s HSD %s",
+                $price ?? 'N/A',
+                $voucherData['voucher_link'] ?? 'N/A',
+                $voucherData['expired_date'] ?? 'N/A'
+            );
+
+        } else if ($voucher_link_type === 'v') {
+            
+            $voucherTransaction->update([
+                'voucher_code' => $voucherData['voucherCode'],
+                'voucher_link' => $voucherData['voucherLink'],
+                'voucher_serial' => $voucherData['voucherSerial'],
+                'voucher_value' => $voucherData['product']['price']['priceValue'],
+                'voucher_expired_date' => $voucherData['expiryDate'],
+                'voucher_product_id' => $voucherData['product']['productId'],
+                'voucher_price_id' => $voucherData['product']['price']['priceId'],
+                'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
+            ]);
+
+            $messagesToSend = sprintf(
+                "IPSOS cam on ban tham gia chia se, IPSOS tang ban phan qua tri gia %svnd. Mo qua tai: %s HSD %s",
+                $price ?? 'N/A',
+                $voucherData['voucherLink'] ?? 'N/A',
+                $voucherData['expiryDate'] ?? 'N/A'
+            );
+        } else {
+            if(array_key_exists("groupVouchers", $voucherData)){
+                $groupLink = $voucherData['groupVouchers']['voucherLink'];
+                $expiredDate = $voucherData['vouchers'][0]['expired_date'];
+
+                $voucherTransaction->update([
+                    'voucher_link_group' => $voucherData['groupVouchers']['voucherLink'],
+                    'voucher_link_code_group' => $voucherData['groupVouchers']['voucherLinkCode'],
+                    'voucher_serial_group' => $voucherData['groupVouchers']['voucherSerial'],
+                    'voucher_expired_date' => $voucherData['vouchers'][0]['expired_date'],
+                    'voucher_value' => $price,
+                    'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
+                ]);
+            } else {
+                $groupLink = $voucherData['groupLink'];
+                $expiredDate = $voucherData['expiryDate'];
+
+                $voucherTransaction->update([
+                    'voucher_link_group' => $voucherData['groupLink'],
+                    'voucher_link_code_group' => substr($voucherData['groupLink'], -8),
+                    'voucher_serial_group' => $voucherData['groupVoucherSerial'],
+                    'voucher_expired_date' => $voucherData['expiryDate'],
+                    'voucher_value' => $price,
+                    'voucher_status' => ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS
+                ]);
+            }
+            
+
+            $messagesToSend = sprintf(
+                "IPSOS cam on ban tham gia chia se, IPSOS tang ban phan qua tri gia %svnd. Mo qua tai: %s HSD %s",
+                $price ?? 'N/A',
+                $groupLink ?? 'N/A',
+                $expiredDate ?: 'N/A'
+            );
+        }
+
+        $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_DISPATCHED);
+
+        Log::info('Generate a SMS request');
+
+        $projectRespondent->token()->update([
+            'status' => 'blocked'
+        ]);
+
+        $messageCard = sprintf(
+            "%s",
+            $messagesToSend ?? 'N/A'
+        );
+        
+        if($continueTransacton && $deliveryMethod === 'sms')
+        {   
+            $smsTransaction = $voucherTransaction->createGotitSMSTransaction([
+                'voucher_transaction_id' => $voucherTransaction->id,
+                'transaction_ref_id' => $transactionRefId,
+                'sms_status' => SMSStatus::PENDING
+            ]);
+            
+            $apiCMCObject = new APICMCObject();
+
+            try{
+                $responseSMSData = $apiCMCObject->send_sms($phoneNumber, $messageCard);
+            } catch(\Exception $e){
+
+                Log::error("CMC Telecom API Error: " . $e->getMessage());
+                
+                if(isset($smsTransaction)){
+                    $smsTransaction->update([
+                        'sms_status' => $e->getMessage()
+                    ]);
+                }
+
+                if(isset($projectRespondent)){
+                    $projectRespondent->updateStatus(ProjectRespondent::STATUS_API_FAILED);
+                }
+
+                return response()->json([
+                    'status_code' => 999,
+                    'transaction_id' => $transactionRefId,
+                    'message' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM,
+                    'error' => ProjectRespondent::ERROR_RESPONDENT_GIFT_SYSTEM
+                ], 404);
+            }
+
+            if(intval($responseSMSData['status']) == 1){
+                $smsTransactionStatus = $smsTransaction->updateStatus(SMSStatus::SUCCESS, intval($responseSMSData['countSms']));
+
+                $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED);
+
+                return response()->json([
+                    'status_code' => 900,
+                    'transaction_id' => $transactionRefId,
+                    'message' => TransactionStatus::SUCCESS
+                ], 200);
+            } else {
+                $smsTransactionStatus = $smsTransaction->updateStatus($responseSMSData['statusDescription'], 0);
+
+                $updateRespondentStatus = $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_NOT_RECEIVED);
+
+                Log::error(SMSStatus::ERROR . ' [' . $responseSMSData['statusDescription'] . ']');
+
+                return response()->json([
+                    'status_code' => 997,
+                    'transaction_id' => $transactionRefId,
+                    'message' => SMSStatus::ERROR . ' [' . $responseSMSData['statusDescription'] . ']',
+                    'error' => SMSStatus::ERROR . ' [' . $responseSMSData['statusDescription'] . ']',
+                ], 400);
+            }
+        }
+
+        $projectRespondent->updateStatus(ProjectRespondent::STATUS_RESPONDENT_GIFT_RECEIVED);
+        
+        return response()->json([
+            'status_code' => 900,
+            'transaction_id' => $transactionRefId,
+            'message' => TransactionStatus::SUCCESS
+        ], 200);
+    }
+
     private function generate_voucher_request($apiObject, $voucher_link_type, $phone_number, $prices)
     {
         $time=strtotime(date('Y-m-d'));
@@ -668,12 +712,10 @@ class GotItController extends Controller
             "signature" => $signature
         ];
 
-        Log::info('SMS Request: ' . json_encode($dataRequest));
-
         return $dataRequest;
     }
 
-    public function check_transaction(CheckTransactionRequest $request){
+    public function check_transaction(CheckTransactionRequest $request, ProjectRespondentTokenService $tokenService){
 
         try{
             $validatedRequest = $request->validated();
@@ -683,13 +725,21 @@ class GotItController extends Controller
 
             Log::info("Check Transaction RefId: " . $transaction_id);
 
+            try
+            {
+                $tokenService->respondentForTransactionLookup((string) $token, (string) $transaction_id);
+            } catch(\Exception $e) {
+                return response()->json([
+                    'status_code' => 995,
+                    'message' => TransactionStatus::STATUS_INVALID_TRANSACTION
+                ], 403);
+            }
+
             $apiObject = new APIObject();
 
             $responsedVoucher = $apiObject->check_transaction($transaction_id);
 
             if($responsedVoucher['statusCode'] == 200 && empty($responsedVoucher['error'])){
-                Log::info("Check Transaction: " . json_encode($responsedVoucher['data']));
-
                 if(empty($responsedVoucher['data'][0]['vouchers'][0]['groupLink'])){
                     $voucherLink = $responsedVoucher['data'][0]['vouchers'][0]['voucherLink'];
                 } else {

@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import IconSolar from "../Icon/IconSolar";
 import { FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material';
 import IconNotify from '../Icon/IconNotify';
-import i18n from '../../i18n/i18n';
+import { changeLanguage } from '../../i18n/i18n';
+import { useTranslation } from 'react-i18next';
 
 interface NavBarProps {
   toggleSidebar: () => void;
@@ -11,15 +12,14 @@ interface NavBarProps {
 }
 
 const Navbar: React.FC<NavBarProps> = ({ toggleSidebar, navbarFullWidth }) => {
-  const [language, setLanguage] = useState<'en' | 'vi'>('en');
+  const { i18n: i18nInstance } = useTranslation();
+  const language = i18nInstance.language === 'vi' ? 'vi' : 'en';
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const styleIconNavbar = {};
 
   const handleLanguageToggle = () => {
-    const newLanguage = language === 'en' ? 'vi' : 'en';
-    setLanguage(newLanguage);
-    i18n.changeLanguage(newLanguage); // Change language dynamically
+    changeLanguage(language === 'en' ? 'vi' : 'en');
   };
 
   const handleYearChange = () => {

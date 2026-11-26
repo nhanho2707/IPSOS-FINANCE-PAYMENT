@@ -4,6 +4,7 @@ import PieChart from "../../../components/Charts/PieChartComponent";
 import ProgressBarChartComponent from "../../../components/Charts/ProgressBarChartComponent";
 import { Card, CardContent, CardHeader } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { translateDataValue } from "../../../i18n/i18n";
 
 interface Data {
     name: string,
@@ -22,7 +23,7 @@ const DemographicWidget: React.FC<DemographicWidgetProps> = ({ ageGroupData, gen
     //Translate genderData
     const translateGenderData = genderData.map(item => ({
         ...item,
-        name: t(`dashboard.gender_categories.${item.name}`)
+        name: translateDataValue('dashboard.gender_categories', String(item.name))
     }));
     
     return (

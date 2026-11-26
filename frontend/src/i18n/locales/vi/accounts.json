@@ -1,0 +1,95 @@
+{
+    "title": "Tài khoản",
+    "description": "Ai được đăng nhập, với vai trò và phòng ban nào.",
+    "status": {
+        "active": "Đang hoạt động",
+        "inactive": "Ngừng hoạt động",
+        "label": "Trạng thái"
+    },
+    "tempPassword": "Mật khẩu tạm",
+    "tempPasswordTooltip": "Phải đổi mật khẩu ở lần đăng nhập tới",
+    "columns": {
+        "user": "Người dùng",
+        "role": "Vai trò",
+        "status": "Trạng thái",
+        "lastLogin": "Đăng nhập gần nhất",
+        "created": "Ngày tạo"
+    },
+    "username": "{{name}} · {{email}} · tên đăng nhập {{username}}",
+    "actionsFor": "Thao tác cho {{email}}",
+    "actions": {
+        "edit": "Sửa vai trò và phòng ban",
+        "reset": "Đặt lại mật khẩu",
+        "history": "Xem lịch sử",
+        "deactivate": "Khoá tài khoản",
+        "activate": "Mở tài khoản"
+    },
+    "audit": {
+        "time": "Thời gian",
+        "action": "Thao tác",
+        "by": "Người thực hiện",
+        "details": "Chi tiết",
+        "title": "Lịch sử tài khoản",
+        "empty": "Chưa có thay đổi nào",
+        "actions": {
+            "created": "Tạo tài khoản",
+            "updated": "Đổi vai trò / phòng ban",
+            "password_reset": "Admin đặt lại mật khẩu",
+            "activated": "Mở tài khoản",
+            "deactivated": "Khoá tài khoản"
+        }
+    },
+    "errors": {
+        "update": "Không cập nhật được tài khoản.",
+        "reset": "Không đặt lại được mật khẩu.",
+        "store": "Không tạo được tài khoản.",
+        "load": "Không tải được danh sách tài khoản.",
+        "status": "Không cập nhật được trạng thái tài khoản.",
+        "history": "Không tải được lịch sử tài khoản."
+    },
+    "search": "Tìm tên hoặc email",
+    "filters": {
+        "department": "Phòng ban",
+        "role": "Vai trò",
+        "status": "Trạng thái"
+    },
+    "empty": {
+        "notFound": "Không tìm thấy tài khoản",
+        "notFoundDescription": "Không có tài khoản nào khớp tìm kiếm và bộ lọc.",
+        "none": "Chưa có tài khoản"
+    },
+    "create": {
+        "button": "Tạo người dùng",
+        "title": "Tạo người dùng"
+    },
+    "form": {
+        "firstName": "Tên",
+        "lastName": "Họ",
+        "username": "Tên đăng nhập",
+        "email": "Email",
+        "password": "Mật khẩu",
+        "confirmPassword": "Nhập lại mật khẩu",
+        "atLeast6": "Ít nhất 6 ký tự",
+        "mismatch": "Hai mật khẩu không khớp",
+        "department": "Phòng ban",
+        "role": "Vai trò",
+        "departmentFirst": "Chọn phòng ban trước",
+        "newPassword": "Mật khẩu mới",
+        "confirmNewPassword": "Nhập lại mật khẩu mới",
+        "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự"
+    },
+    "editTitle": "Sửa vai trò và phòng ban",
+    "reset": {
+        "title": "Đặt lại mật khẩu",
+        "submit": "Đặt lại mật khẩu",
+        "description": "Đặt mật khẩu tạm cho <strong>{{email}}</strong>. Người dùng bị đăng xuất và phải chọn mật khẩu mới ở lần đăng nhập tới."
+    },
+    "statusDialog": {
+        "deactivateTitle": "Khoá tài khoản",
+        "activateTitle": "Mở tài khoản",
+        "deactivate": "Khoá",
+        "activate": "Mở",
+        "deactivateMessage": "{{email}} sẽ bị đăng xuất ngay và không đăng nhập được nữa.",
+        "activateMessage": "{{email}} sẽ đăng nhập lại được."
+    }
+}

@@ -1,5 +1,3 @@
-import { ColumnFormat } from "./ColumnConfig";
-
 export const OFFLINE_RESPONDENT_IMPORT_COLUMNS = [
     "InstanceID", "Shell_ChainID", "SamplePoint", "Province", "InterviewerID", "RespondentPhoneNumber", "PhoneNumber", "Email", "PriceLevel", "Channel"
 ] as const;
@@ -24,79 +22,40 @@ export interface OfflineProjectRespondentImportPayload {
     channel: string
 }
 
+// The four groups the API reports (stored survey and provider statuses collapse into these).
+export type GiftStatus = "pending" | "success" | "refused" | "failed";
+
+export type GiftStatusCounts = Record<GiftStatus, number>;
+
+// "test" respondents are marked as received without paying through Vinnet or GotIt.
+export type RespondentEnvironment = "live" | "test";
+
+export interface OfflineImportResult {
+    imported: number;
+    live: number;
+    test: number;
+    projectStatus: string | null;
+}
+
 export interface OfflineProjectRespondentData {
     id: number,
     respondent_id: string,
     shell_chainid: string,
     province_name: string,
     employee_id: string,
+    employee_name?: string | null,
     respondent_phone_number: string,
     phone_number: string,
     email: string,
     status_label: string,
-    status: "pending" | "success" | "refused" | "failed",
-    environment: "live" | "test",
+    status: GiftStatus,
+    environment: RespondentEnvironment,
     token: string,
-    price_level: string
+    // The gift amount in VND for the respondent's province and price level, despite the name.
+    price_level: number | string
     channel: "vinnet" | "gotit" | "other"
 };
 
-export const OfflineProjectRespondentCellConfig: ColumnFormat[] = [
-    {
-        label: "InstanceID",
-        name: "respondent_id",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "ShellChainID",
-        name: "shell_chainid",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Province",
-        name: "province_name",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Interviewer ID",
-        name: "employee_id",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Resp. Phone",
-        name: "respondent_phone_number",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Phone",
-        name: "phone_number",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Email",
-        name: "email",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Price Level",
-        name: "price_level",
-        type: "string",
-        flex: 1.5
-    },
-    {
-        label: "Channel",
-        name: "channel",
-        type: "string",
-        flex: 1.5
-    }
-];
 
 export interface OfflineGiftSendResult {
     row: OfflineProjectRespondentData,

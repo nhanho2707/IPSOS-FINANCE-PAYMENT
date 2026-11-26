@@ -5,25 +5,17 @@
   "dependencies": {
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
-    "@mui/icons-material": "^5.16.7",
-    "@mui/lab": "^5.0.0-alpha.170",
-    "@mui/material": "^5.16.7",
-    "@mui/x-date-pickers": "^7.13.0",
+    "@mui/icons-material": "^9.5.0",
+    "@mui/material": "^9.5.0",
+    "@mui/system": "^9.5.0",
+    "@mui/x-date-pickers": "^9.17.0",
     "@phosphor-icons/react": "^2.1.5",
     "@tanstack/react-query": "^5.100.1",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.96",
+    "@types/node": "^22.20.5",
     "@types/react": "^18.2.75",
     "@types/react-dom": "^18.2.24",
     "@types/uuid": "^9.0.8",
-    "assert": "^2.1.0",
     "axios": "^1.6.8",
-    "buffer": "^6.0.3",
-    "constants-browserify": "^1.0.0",
-    "crypto-browserify": "^3.12.0",
     "crypto-js": "^4.2.0",
     "d3": "^7.9.0",
     "dayjs": "^1.11.11",
@@ -32,51 +24,89 @@
     "jsencrypt": "^3.3.2",
     "jsrsasign": "^11.1.0",
     "numeral": "^2.0.6",
-    "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^15.0.2",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.22.3",
-    "react-scripts": "5.0.1",
     "recharts": "^2.12.7",
-    "stream-browserify": "^3.0.0",
     "typescript": "^4.9.5",
     "uuid": "^10.0.0",
-    "vm-browserify": "^1.1.2",
-    "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
+    "start": "vite",
+    "dev": "vite",
+    "build": "tsc --noEmit -p . && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p .",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "test:e2e": "playwright test",
+    "test:e2e:baseline": "E2E_VISUAL=1 playwright test --update-snapshots",
+    "test:e2e:visual": "E2E_VISUAL=1 playwright test"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
+      "react-app"
     ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+    "overrides": [
+      {
+        "files": [
+          "src/Layouts/**/*.tsx",
+          "src/components/**/*.tsx",
+          "src/pages/AccountManagement/**/*.tsx",
+          "src/pages/Auth/**/*.tsx",
+          "src/pages/Codeframe/**/*.tsx",
+          "src/pages/ErrorPage/**/*.tsx",
+          "src/pages/Project/**/*.tsx",
+          "src/pages/Transaction/**/*.tsx"
+        ],
+        "excludedFiles": [
+          "src/components/Charts/BarChartComponent.tsx",
+          "src/components/Charts/PieChartComponent.tsx",
+          "src/components/Charts/ProgressBarChartComponent.tsx",
+          "src/components/Charts/StackedBarChartComponent.tsx",
+          "src/components/Charts/StackedBarChartPercentageComponent.tsx",
+          "src/components/Charts/VennChartComponent.tsx",
+          "src/components/Directional/**",
+          "src/components/Navbar/TechcombankNavbar.tsx",
+          "src/components/Sidebar/TechcombankSidebar.tsx",
+          "src/components/Widgets/**"
+        ],
+        "rules": {
+          "no-restricted-syntax": [
+            "warn",
+            {
+              "selector": "Literal[value=/^#[0-9a-fA-F]{3,8}$/]",
+              "message": "Use palette tokens (\"text.secondary\", \"divider\", \"primary.main\") or BRAND/NEUTRAL from config/ThemeConfig.ts instead of hex colors."
+            },
+            {
+              "selector": "Literal[value=/rgba?\\(/]",
+              "message": "Use palette tokens or alpha(BRAND.accent, ...) instead of rgba() literals."
+            },
+            {
+              "selector": "Literal[value=/var\\(--/]",
+              "message": "Use MUI palette tokens in TSX; CSS variables are for the legacy CSS files."
+            },
+            {
+              "selector": "Property[key.name='fontSize'] > Literal[value=/^[0-9.]+(rem|px|em)$/]",
+              "message": "Use a typography variant (variant=\"body2\" or sx={{ typography: \"caption\" }}). A numeric fontSize is only for icons."
+            }
+          ]
+        }
+      }
     ]
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/crypto-js": "^4.2.2",
     "@types/d3": "^7.4.3",
     "@types/jsrsasign": "^10.5.14",
     "@types/numeral": "^2.0.5",
     "@types/xlsx": "^0.0.36",
-    "react-app-rewired": "^2.2.1"
+    "@vitejs/plugin-react": "^6.2.1",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
+    "vite": "^8.3.5"
   }
 }

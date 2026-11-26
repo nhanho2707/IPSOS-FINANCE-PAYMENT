@@ -1,0 +1,25 @@
+{
+    "columns": {
+        "employeeId": "Mã PVV",
+        "fullName": "Họ tên",
+        "province": "Tỉnh",
+        "interviewStart": "Bắt đầu phỏng vấn",
+        "interviewEnd": "Kết thúc phỏng vấn",
+        "shellChainId": "Shell_ChainID",
+        "respondentPhone": "SĐT đáp viên",
+        "phone": "SĐT nhận quà",
+        "serviceCode": "Mã dịch vụ",
+        "channel": "Kênh",
+        "amount": "Giá trị"
+    },
+    "searchPlaceholder": "Tìm số điện thoại",
+    "empty": {
+        "notFound": "Không tìm thấy giao dịch",
+        "nothingMatches": "Không có kết quả cho “{{term}}”.",
+        "noneTitle": "Chưa có giao dịch",
+        "noneDescription": "Quà gửi từ trang Quà tặng và từ link phỏng vấn sẽ hiện ở đây."
+    },
+    "errors": {
+        "load": "Không tải được danh sách giao dịch"
+    }
+}

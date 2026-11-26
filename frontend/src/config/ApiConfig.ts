@@ -1,11 +1,11 @@
-// const host = "https://dev.ippay.vn/"
-// const host = "https://dev.ippay.vn/"
+// const host = "https://dev.ippay.vn"
 const host = "http://localhost:8000"
 
 export const ApiConfig = {
   project: {
     viewProjects: `${host}/api/project-management/projects`,
     viewProject: `${host}/api/project-management/projects?platform=ifield&created_user_id=`,
+    showProject: `${host}/api/project-management/projects/{projectId}/show`,
     updateStatusOfProject: `${host}/api/project-management/projects/{projectId}/status`,
     updateDisabledProject: `${host}/api/project-management/projects/{projectId}/disabled`,
     updateProjectInfo: `${host}/api/project-management/projects/{projectId}/update-info`,
@@ -17,6 +17,8 @@ export const ApiConfig = {
     getTeams: `${host}/api/project-management/{department_id}/teams`,
     viewTransactions: `${host}/api/project-management/projects/{projectId}/transactions/show`,
     viewTransactionStatistics: `${host}/api/project-management/projects/{projectId}/transactions/statistics`,
+    viewStatisticsInterviews: `${host}/api/project-management/projects/{projectId}/transactions/statistics/interviews`,
+    exportStatisticsInterviews: `${host}/api/project-management/projects/{projectId}/transactions/statistics/interviews/export`,
     viewEmployees: `${host}/api/project-management/{projectId}/employees`,
     addEmployees: `${host}/api/project-management/projects/{projectId}/employees/store`,
     removeEmployee: `${host}/api/project-management/projects/{projectId}/employees/{employeeId}/destroy`,
@@ -76,6 +78,8 @@ export const ApiConfig = {
   gotit: {
     viewGotItAccount: `${host}/api/transaction-management/gotit/account/{accountType}/view`,
     depositedAccount: `${host}/api/transaction-management/gotit/account/store`,
+    depositHistory: `${host}/api/transaction-management/gotit/account/{accountType}/deposits`,
+    voidDeposit: `${host}/api/transaction-management/gotit/account/deposits/{depositId}/void`,
 
     performTransaction: `${host}/api/project-management/gotit/transaction`,
     rejectTransaction: `${host}/api/project-management/gotit/reject-transaction`,

@@ -154,4 +154,125 @@ class TransactionsExportTest extends TestCase
         $this->assertCount(2501, $sheet->sheetData->row);
         $this->assertSame('090****567', (string) $sheet->sheetData->row[1]->c[1]->is->t);
     }
+
+    public function test_the_date_export_reads_invoice_comments_and_keeps_cancelled_gotit_vouchers(): void
+    {
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.database' => ':memory:',
+        ]);
+        DB::purge('sqlite');
+        DB::connection()->getPdo()->sqliteCreateFunction('MONTH', fn ($date) => $date ? (int) substr($date, 5, 2) : null, 1);
+
+        Schema::create('projects', function (Blueprint $table) {
+            $table->id();
+            $table->string('internal_code');
+            $table->string('project_name');
+        });
+        Schema::create('project_details', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('project_id');
+            $table->string('symphony')->nullable();
+        });
+        Schema::create('provinces', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+        });
+        Schema::create('employees', function (Blueprint $table) {
+            $table->id();
+            $table->string('employee_id');
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+        });
+        Schema::create('project_respondents', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('project_id');
+            $table->unsignedBigInteger('province_id');
+            $table->unsignedBigInteger('employee_id');
+            $table->string('shell_chainid')->nullable();
+            $table->string('respondent_id')->nullable();
+            $table->string('respondent_phone_number')->nullable();
+            $table->string('phone_number')->nullable();
+            $table->string('service_code')->nullable();
+            $table->string('channel');
+            $table->datetime('interview_start')->nullable();
+            $table->datetime('interview_end')->nullable();
+        });
+        Schema::create('project_vinnet_transactions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('project_respondent_id');
+            $table->string('vinnet_payservice_requuid')->nullable();
+            $table->string('vinnet_token_message')->nullable();
+            $table->string('vinnet_invoice_comment')->nullable();
+            $table->double('total_amt')->default(0);
+            $table->double('discount')->default(0);
+            $table->double('payment_amt')->default(0);
+            $table->timestamps();
+        });
+        // As on the live database before the invoice_comment migration.
+        Schema::create('project_gotit_voucher_transactions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('project_respondent_id');
+            $table->string('transaction_ref_id')->nullable();
+            $table->double('voucher_value')->default(0);
+            $table->string('voucher_status')->nullable();
+            $table->timestamps();
+        });
+
+        $migration = require database_path('migrations/2026_11_15_000000_add_invoice_comment_to_project_gotit_voucher_transactions_table.php');
+        $migration->up();
+        $this->assertTrue(Schema::hasColumn('project_gotit_voucher_transactions', 'invoice_comment'));
+        // Running it again (or on a database that already has the column) changes nothing.
+        $migration->up();
+
+        DB::table('projects')->insert(['id' => 1, 'internal_code' => 'VN2604', 'project_name' => 'Brand tracker']);
+        DB::table('project_details')->insert(['project_id' => 1, 'symphony' => '26-041293-01']);
+        DB::table('provinces')->insert(['id' => 1, 'name' => 'Hà Nội']);
+        DB::table('employees')->insert(['id' => 1, 'employee_id' => 'HN001']);
+
+        $respondent = fn (int $id, string $channel) => DB::table('project_respondents')->insert([
+            'id' => $id, 'project_id' => 1, 'province_id' => 1, 'employee_id' => 1, 'channel' => $channel,
+            'respondent_id' => "R{$id}", 'phone_number' => '0903412887', 'service_code' => 'S0002',
+        ]);
+        $gotit = fn (int $respondentId, string $status, string $at) => DB::table('project_gotit_voucher_transactions')->insert([
+            'project_respondent_id' => $respondentId, 'transaction_ref_id' => "G{$respondentId}", 'voucher_value' => 100000,
+            'voucher_status' => $status, 'created_at' => $at, 'updated_at' => $at,
+        ]);
+
+        $respondent(1, 'vinnet');
+        DB::table('project_vinnet_transactions')->insert([
+            'project_respondent_id' => 1, 'vinnet_payservice_requuid' => 'V1', 'vinnet_token_message' => 'Thành công',
+            'vinnet_invoice_comment' => 'Invoice 1', 'total_amt' => 50000, 'payment_amt' => 49000,
+            'created_at' => '2026-10-05 10:00:00', 'updated_at' => '2026-10-05 10:00:00',
+        ]);
+        $respondent(2, 'gotit');
+        $gotit(2, 'Voucher được cập nhật thành công.', '2026-10-06 10:00:00');
+        DB::table('project_gotit_voucher_transactions')->where('project_respondent_id', 2)->update(['invoice_comment' => 'GotIt invoice 2']);
+        $respondent(3, 'gotit');
+        $gotit(3, 'Voucher được cancelled by GotIt ngày 20/10/2026', '2026-10-07 10:00:00');
+        $respondent(4, 'gotit');
+        $gotit(4, 'Đang xử lý', '2026-10-08 10:00:00');
+        $respondent(5, 'gotit');
+        $gotit(5, 'Voucher được cập nhật thành công.', '2026-12-01 10:00:00');
+        // GotIt voucher, then a failed Vinnet attempt and a refusal from the re-opened interview set the channel to 'other'.
+        $respondent(6, 'other');
+        $gotit(6, 'Voucher được cập nhật thành công.', '2026-10-09 10:00:00');
+        DB::table('project_vinnet_transactions')->insert([
+            'project_respondent_id' => 6, 'vinnet_payservice_requuid' => 'V6', 'vinnet_token_message' => 'Lỗi Token',
+            'created_at' => '2026-10-09 11:00:00', 'updated_at' => '2026-10-09 11:00:00',
+        ]);
+
+        $export = new TransactionsExport('2026-10-01 00:00:00', '2026-10-31 23:59:59', 'finance', new VinnetService());
+        $rows = $export->query()->get();
+
+        $this->assertSame(['R1', 'R2', 'R3', 'R6'], $rows->pluck('respondent_id')->all());
+        $this->assertSame(['Invoice 1', 'GotIt invoice 2', null, null], $rows->pluck('invoice_comment')->all());
+        $this->assertSame(['V1', 'G2', 'G3', 'G6'], $rows->pluck('transaction_id')->all());
+        $this->assertEquals([10, 10, 10, 10], $rows->pluck('month')->all());
+
+        // The provider comes from the transaction on the row, not from the respondent's channel.
+        $this->assertSame(['vinnet', 'gotit', 'gotit', 'gotit'], $rows->pluck('channel')->all());
+        $this->assertSame('DAYONE', $export->map($rows[3])[8]);
+        $this->assertEquals(100000, $export->map($rows[3])[12]);
+    }
 }

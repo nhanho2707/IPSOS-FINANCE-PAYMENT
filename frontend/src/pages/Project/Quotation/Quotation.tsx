@@ -4,27 +4,26 @@ import { ApiConfig } from "../../../config/ApiConfig";
 import QuotationDynamicForm from "./QuotationDynamicForm";
 import { useQuotation } from "../../../hook/useQuotation";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Alert, Box, Button, Chip, Divider, Grid, IconButton, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, IconButton, MenuItem, Tab, Tabs, TextField } from "@mui/material";
 import TabPanel from "../../../components/TabPanel";
 import { QuotationVersionData } from "../../../config/QuotationConfig";
-import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SendIcon from '@mui/icons-material/Send';
-import AddIcon from '@mui/icons-material/Add';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import LinkIcon from '@mui/icons-material/Link';
-import UndoIcon from '@mui/icons-material/Undo';
 import useDialog from "../../../hook/useDialog";
 import ConfirmDialog from "../../../components/Dialogs/ConfirmDialog";
 import GenericDialog from "../../../components/Dialogs/GenericDialog";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useToast } from "../../../contexts/ToastContext";
+import QuotationVersionHeader from "./QuotationVersionHeader";
 import { hasRole, ROLE_ACCESS } from "../../../config/RoleConfig";
 import OperationsDynamicForm from "./OperationsDynamicForm";
 import { useOperations } from "../../../hook/useOperations";
 import EstimateCostTable, { EstimateCostNode, normalizeNodes } from "./EstimateCostTable";
 import { createDefaultEstimateCost } from "./EstimateCostTemplate";
 import CalculateIcon from '@mui/icons-material/Calculate';
+import { formatStatus } from "../../../utils/format";
+import StatusChip from "../../../components/StatusChip";
+import { getStatusTone, QUOTATION_STATUS_TONE } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
 
 const Quotation: React.FC = () => {
     const { id } = useParams<{id: string}>();
@@ -32,13 +31,14 @@ const Quotation: React.FC = () => {
     const [searchParams] = useSearchParams();
 
     const { user } = useAuth();
+    const { showToast } = useToast();
+    const { t } = useTranslation();
     const canMutate = hasRole(user?.role, ROLE_ACCESS.quotationMutate);
     const canApprove = hasRole(user?.role, ROLE_ACCESS.quotationApprove);
 
     const [ formKey, setFormKey ] = useState(0);
     const [ quotationSchema, setQuotationSchema ] = useState([]);
     const [ operationSchema, setOperationSchema ] = useState([]);
-    const [ linkCopied, setLinkCopied ] = useState(false);
 
     const { actionState,
             project,
@@ -174,11 +174,15 @@ const Quotation: React.FC = () => {
     const handleCopyLink = () => {
         if (!selectedVersion) return;
         const url = `${window.location.origin}${window.location.pathname}?version=${selectedVersion.id}`;
-        navigator.clipboard.writeText(url).then(() => {
-            setLinkCopied(true);
-            setTimeout(() => setLinkCopied(false), 2000);
-        });
+        navigator.clipboard.writeText(url)
+            .then(() => showToast(t("quotation.page.linkCopied", { version: selectedVersion.version })))
+            .catch(() => showToast(t("quotation.page.copyFailed"), "error"));
     };
+
+    // FM confirmation waits until the researcher has answered every open feedback thread.
+    const hasPendingFeedback = Object.values(selectedVersion?.feedbacks ?? {}).some(thread =>
+        Array.isArray(thread) && thread.length > 0 && thread[thread.length - 1].type === 'feedback'
+    );
 
     const handleSaveOperations = async (data: any) => {
         try{
@@ -251,10 +255,10 @@ const Quotation: React.FC = () => {
 
     const handleRemove = () => {
         openDialog({
-            title: "Delete Version",
+            title: t("quotation.page.delete.title"),
             tone: "danger",
-            confirmText: "Delete",
-            message: `Are you sure that you want to remove this version "${selectedVersion?.version}"?`,
+            confirmText: t("quotation.page.delete.confirm"),
+            message: t("quotation.page.delete.message", { version: selectedVersion?.version }),
             showConfirmButton: true,
             onConfirm: async () => {
                 await destroyQuotationVersion();
@@ -272,9 +276,9 @@ const Quotation: React.FC = () => {
     const handleSubmit = () => {
 
         openDialog({
-            title: 'Submit Version',
-            confirmText: 'Submit',
-            message: `Are you sure that you want to submit this version?`,
+            title: t("quotation.page.submit.title"),
+            confirmText: t("quotation.page.submit.confirm"),
+            message: t("quotation.page.submit.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await submitQuotationVersion();
@@ -291,9 +295,9 @@ const Quotation: React.FC = () => {
 
     const handleApprove = () => {
         openDialog({
-            title: 'Approve Version',
-            confirmText: 'Approve',
-            message: `Are you sure that you want to approve this version?`,
+            title: t("quotation.page.approve.title"),
+            confirmText: t("quotation.page.approve.confirm"),
+            message: t("quotation.page.approve.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await approveQuotationVersion();
@@ -305,9 +309,9 @@ const Quotation: React.FC = () => {
 
     const handleWithdraw = () => {
         openDialog({
-            title: 'Withdraw Version',
-            confirmText: 'Withdraw',
-            message: `Are you sure that you want to withdraw this version? It will return to draft and can be edited again.`,
+            title: t("quotation.page.withdraw.title"),
+            confirmText: t("quotation.page.withdraw.confirm"),
+            message: t("quotation.page.withdraw.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await withdrawQuotationVersion();
@@ -319,9 +323,9 @@ const Quotation: React.FC = () => {
 
     const handleConfirmFm = () => {
         openDialog({
-            title: 'Confirm FM review',
-            confirmText: 'Confirm',
-            message: `Confirm that you have finished reviewing this quotation?\n\nAfter confirming:\n• FM can no longer add feedback\n• Researcher can approve the quotation`,
+            title: t("quotation.page.confirmFm.title"),
+            confirmText: t("quotation.page.confirmFm.confirm"),
+            message: t("quotation.page.confirmFm.message"),
             showConfirmButton: true,
             onConfirm: async () => {
                 await confirmFmVersion();
@@ -361,14 +365,14 @@ const Quotation: React.FC = () => {
     return (
         <>
             {selectedVersion && (
-                <Grid item xs={12} sm={6} md={4}>
+                <Box sx={{ mb: 2.5 }}>
                     {openAlert && (
                         <Alert
                             severity={(alertSource === 'operations' ? operationsActionState : actionState).error ? "error" : "success"}
-                            sx={{ mb: 1.5, borderRadius: "8px", fontSize: "0.875rem" }}
+                            sx={{ mb: 1.5 }}
                             action={
                                 <IconButton
-                                    aria-label="close"
+                                    aria-label={t("quotation.page.close")}
                                     color="inherit"
                                     size="small"
                                     onClick={() => setOpenAlert(false)}
@@ -377,299 +381,46 @@ const Quotation: React.FC = () => {
                                 </IconButton>
                             }
                         >
-                            <span
-                                dangerouslySetInnerHTML={{ __html: (alertSource === 'operations' ? operationsActionState : actionState).message ?? "" }}
-                              ></span>
+                            {(alertSource === 'operations' ? operationsActionState : actionState).message}
                         </Alert>
                     )}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 1,
-                            p: 2,
-                            border: "1px solid",
-                            borderColor: "var(--body-color)",
-                            borderRadius: "12px",
-                            backgroundColor: "var(--background-color)"
+                    <QuotationVersionHeader
+                        versions={versions ?? []}
+                        selectedVersion={selectedVersion}
+                        onSelectVersion={(version) => {
+                            setSelectedVersion(version);
+                            setOpenAlert(false);
                         }}
-                    >
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 2
-                            }}
-                        >
-                            <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-color)", mt: "4px" }}>
-                                Version:
-                            </Typography>
-                            <TextField
-                                select
-                                size="small"
-                                variant="outlined"
-                                value={selectedVersion?.id ?? ""}
-                                disabled={isEditing}
-                                onChange={(e) => {
-                                    const version = versions?.find(v => v.id === Number(e.target.value));
-                                    setSelectedVersion(version ?? null);
-                                    setOpenAlert(false);
-                                }}
-                                sx={{width: "250px"}}
-                            >
-                                {versions?.map((v: QuotationVersionData) => {
-                                    return (
-                                        <MenuItem
-                                            key={v.id} 
-                                            value={v.id}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                    width: "100%"
-                                                }}
-                                            >
-                                                <span>Version {v.version}</span>
-                                                
-                                                <Chip
-                                                    label={v.status === 'fm_confirmed' ? 'FM Confirmed' : v.status}
-                                                    size="small"
-                                                    color={
-                                                        v.status === "draft" ? "default" : v.status === "submitted" ? "warning" : v.status === "fm_confirmed" ? "info" : "success"
-                                                    }
-                                                />
-                                            </Box>
-                                            
-                                        </MenuItem>
-                                    )
-                                })}
-                            </TextField>
-                            
-                            {canMutate && canEdit && (
-                                <>
-                                    <Tooltip title={!isEditing ? "Edit" : "Cancel Edit"}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => {
-                                                if(isEditing){
-                                                    handleCancel();
-                                                } else {
-                                                    setOpenAlert(false);
-                                                    setIsEditing(true);
-                                                }
-                                            }}
-                                            disabled={!(selectedVersion.status === 'draft')}
-                                        >
-                                            {isEditing ? <CloseIcon/> : <EditIcon/>}
-                                        </IconButton>
-                                    </Tooltip>
-
-                                    <Tooltip title={"Delete Draft"}>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => handleRemove()}
-                                            disabled={isEditing || (!isEditing && !(selectedVersion.status === 'draft'))}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                    
-                                    {(selectedVersion.status === 'draft') && (
-                                        <Tooltip title="Submit Version">
-                                            <IconButton
-                                                color="warning"
-                                                onClick={handleSubmit}
-                                                disabled={isEditing}
-                                            >
-                                                <SendIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    )}
-
-                                    {selectedVersion.status === 'submitted' && (
-                                        <Tooltip title="Withdraw">
-                                            <IconButton
-                                                color="error"
-                                                onClick={handleWithdraw}
-                                                disabled={isEditing}
-                                            >
-                                                <UndoIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    )}
-
-                                    {selectedVersion.status === 'fm_confirmed' && (
-                                        <>
-                                            {canApprove && (
-                                                <Tooltip title="Approve Version">
-                                                    <IconButton
-                                                        color="success"
-                                                        onClick={handleApprove}
-                                                        disabled={isEditing}
-                                                    >
-                                                        <CheckCircleIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-
-                                            <Tooltip title="Withdraw back to submitted">
-                                                <IconButton
-                                                    color="error"
-                                                    onClick={handleWithdraw}
-                                                    disabled={isEditing}
-                                                >
-                                                    <UndoIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </>
-                                    )}
-
-                                    <Tooltip title="Create new version">
-                                        <IconButton
-                                            color="success"
-                                            onClick={handleOpenCloneNewVersionDialog}
-                                            disabled={isEditing}
-                                        >
-                                            <AddIcon />
-                                        </IconButton>
-                                    </Tooltip>
-
-                                </>
-                            )}
-
-                            {!canMutate && selectedVersion.status === 'submitted' && (() => {
-                                const hasPending = Object.values(selectedVersion.feedbacks ?? {}).some(thread => {
-                                    if (!Array.isArray(thread) || thread.length === 0) return false;
-                                    return thread[thread.length - 1].type === 'feedback';
-                                });
-                                return (
-                                    <Tooltip title={hasPending ? 'Some feedback is still open. The researcher must resolve or reject all of it before FM can confirm.' : 'Confirm FM review is complete'}>
-                                        <span>
-                                            <IconButton
-                                                color="info"
-                                                onClick={handleConfirmFm}
-                                                disabled={hasPending}
-                                            >
-                                                <CheckCircleIcon />
-                                            </IconButton>
-                                        </span>
-                                    </Tooltip>
-                                );
-                            })()}
-
-                        </Box>
-                        <Divider style={{ margin: "10px 0" }} />
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 2
-                            }}
-                        >
-                            {selectedVersion && (
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
-                                    {selectedVersion.status === 'draft' ? 'Created by' : 'Submitted by'}: {" "} 
-                                    <strong>
-                                        {selectedVersion.created_user?.name} ({selectedVersion.created_user?.email})
-                                    </strong>
-                                </Typography>
-                            )}
-
-                            {selectedVersion && selectedVersion.created_at && (
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
-                                    {selectedVersion.status === 'draft' ? 'Created at' : 'Submitted at'}: {" "}
-                                    {new Date(
-                                        selectedVersion.created_at
-                                    ).toLocaleDateString()}
-                                </Typography>
-                            )}
-                        </Box>
-                        {selectedVersion && selectedVersion.fm_confirmed_user && selectedVersion.fm_confirmed_at && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
-                                    FM Confirmed by: {" "}
-                                    <strong>
-                                        {selectedVersion.fm_confirmed_user?.name} ({selectedVersion.fm_confirmed_user?.email})
-                                    </strong>
-                                </Typography>
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
-                                    FM Confirmed at: {" "}
-                                    {new Date(selectedVersion.fm_confirmed_at).toLocaleDateString()}
-                                </Typography>
-                            </Box>
-                        )}
-
-                        {selectedVersion && selectedVersion.approved_user && selectedVersion.approved_at && (
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 2
-                                }}
-                            >
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
-                                    Approved by: {" "}
-                                    <strong>
-                                        {selectedVersion.approved_user?.name} ({selectedVersion.approved_user?.email})
-                                    </strong>
-                                </Typography>
-
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)" }}>
-                                    Approved at: {" "}
-                                    {new Date(
-                                        selectedVersion.approved_at
-                                    ).toLocaleDateString()}
-                                </Typography>
-                            </Box>
-                        )}
-
-                        {selectedVersion && ['submitted', 'fm_confirmed', 'approved'].includes(selectedVersion.status) && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Typography sx={{ fontSize: "0.8125rem", color: "var(--text-primary-color)", whiteSpace: "nowrap" }}>
-                                    Quotation Link:
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        fontSize: "0.8125rem",
-                                        color: "var(--main-color)",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                        maxWidth: 420,
-                                    }}
-                                >
-                                    {`${window.location.origin}${window.location.pathname}?version=${selectedVersion.id}`}
-                                </Typography>
-                                <Tooltip title={linkCopied ? "Copied!" : "Copy link"}>
-                                    <IconButton
-                                        size="small"
-                                        onClick={handleCopyLink}
-                                        sx={{ color: linkCopied ? "var(--main-color)" : "var(--text-secondary-color)" }}
-                                    >
-                                        <LinkIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                            </Box>
-                        )}
-                    </Box>
-                </Grid>
+                        isEditing={isEditing}
+                        canMutate={canMutate}
+                        canEdit={canEdit}
+                        canApprove={canApprove}
+                        hasPendingFeedback={hasPendingFeedback}
+                        onEdit={() => {
+                            setOpenAlert(false);
+                            setIsEditing(true);
+                        }}
+                        onCancelEdit={handleCancel}
+                        onDelete={handleRemove}
+                        onSubmit={handleSubmit}
+                        onWithdraw={handleWithdraw}
+                        onApprove={handleApprove}
+                        onConfirmFm={handleConfirmFm}
+                        onNewVersion={handleOpenCloneNewVersionDialog}
+                        onCopyLink={handleCopyLink}
+                    />
+                </Box>
             )}
 
             <Tabs
                 value={value}
                 onChange={handleChange}
-                aria-label="quotation tabs"
-                sx={{
-                    "& .MuiTabs-indicator": { backgroundColor: "var(--main-color)" },
-                    "& .MuiTab-root.Mui-selected": { color: "var(--main-color)" },
-                    "& .MuiTab-root": { fontSize: "0.8125rem", fontWeight: 600 },
-                }}
-                >
-                <Tab value="one" label="GENERAL" />
-                <Tab value="two" label="OPERATIONS" />
-                {showEstimatedCost && <Tab value="three" label="ESTIMATED COST" />}
+                aria-label={t("quotation.page.tabsLabel")}
+                sx={{ borderBottom: 1, borderColor: "divider" }}
+            >
+                <Tab value="one" label={t("quotation.page.tabs.general")} />
+                <Tab value="two" label={t("quotation.page.tabs.operations")} />
+                {showEstimatedCost && <Tab value="three" label={t("quotation.page.tabs.estimatedCost")} />}
             </Tabs>
 
             <TabPanel value={value} index="one">
@@ -704,15 +455,9 @@ const Quotation: React.FC = () => {
                             setShowEstimatedCost(true);
                             setValue('three');
                         }}
-                        sx={{
-                            mt: 1,
-                            borderColor: "var(--main-color)",
-                            color: "var(--main-color)",
-                            textTransform: "none",
-                            '&:hover': { borderColor: "var(--main-color)", backgroundColor: "rgba(0,157,156,0.06)" }
-                        }}
+                        sx={{ mt: 1 }}
                     >
-                        Generate Estimated Cost
+                        {t("quotation.page.generateCost")}
                     </Button>
                 )}
             </TabPanel>
@@ -729,27 +474,20 @@ const Quotation: React.FC = () => {
                             variant="contained"
                             onClick={handleSaveEstimateCost}
                         >
-                            Save
+                            {t("quotation.page.save")}
                         </Button>
                         <Button
                             variant="outlined"
-                            sx={{
-                                borderColor: "var(--main-color)",
-                                color: "var(--main-color)",
-                                textTransform: "none",
-                                fontSize: "0.8125rem",
-                                '&:hover': { borderColor: "var(--main-color)", backgroundColor: "rgba(0,157,156,0.06)" }
-                            }}
                             onClick={() => openDialog({
-                                title: 'Load Template',
-                                message: 'Reset to the default template? Current data will be lost.',
+                                title: t("quotation.page.loadTemplateTitle"),
+                                message: t("quotation.page.loadTemplateMessage"),
                                 showConfirmButton: true,
                                 tone: 'danger',
-                                confirmText: 'Reset',
+                                confirmText: t("quotation.page.reset"),
                                 onConfirm: () => setEstimateCostItems(createDefaultEstimateCost()),
                             })}
                         >
-                            Load Template
+                            {t("quotation.page.loadTemplate")}
                         </Button>
                     </Box>
                 )}
@@ -759,7 +497,7 @@ const Quotation: React.FC = () => {
 
             <GenericDialog
                 open={openCloneNewVersion}
-                title="Create a New Version" 
+                title={t("quotation.page.newVersionTitle")}
                 children={
                     <TextField
                         select
@@ -785,15 +523,9 @@ const Quotation: React.FC = () => {
                                             width: "100%"
                                         }}
                                     >
-                                        <span>Version {v.version}</span>
+                                        <span>{t("quotation.page.versionN", { version: v.version })}</span>
                                         
-                                        <Chip
-                                            label={v.status === 'fm_confirmed' ? 'FM Confirmed' : v.status}
-                                            size="small"
-                                            color={
-                                                v.status === "draft" ? "default" : v.status === "submitted" ? "warning" : v.status === "fm_confirmed" ? "info" : "success"
-                                            }
-                                        />
+                                        <StatusChip label={formatStatus(v.status)} tone={getStatusTone(v.status, QUOTATION_STATUS_TONE)} />
                                     </Box>
                                 </MenuItem>
                             )
@@ -802,8 +534,7 @@ const Quotation: React.FC = () => {
                 } 
                 onClose={() => setOpenCloneNewVersion(false)} 
                 onSubmit={handleCloneNewVersion} 
-                submitText = "Submit"
-                cancelText = "Cancel"
+                submitText={t("quotation.page.submitNew")}
             />
         </>
     )

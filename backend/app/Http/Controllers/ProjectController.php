@@ -24,6 +24,7 @@ use App\Models\Employee;
 use App\Models\ProjectEmployee;
 use App\Models\ProjectRespondent;
 use App\Models\ProjectProvince;
+use App\Http\Requests\ProjectIndexRequest;
 use App\Http\Requests\StoreProjectVinnetTokenRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\CloneProjectRequest;
@@ -88,7 +89,7 @@ class ProjectController extends Controller
         
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(ProjectIndexRequest $request): JsonResponse
     {
         try{
             //Retrieve a value from the headers
@@ -147,10 +148,6 @@ class ProjectController extends Controller
                 return $query->whereHas('projectDetails', function(Builder $query) use ($platform){
                     $query->where('platform', $platform);
                 });
-            })->when($status, function($query, $status){
-                return $query->whereHas('projectDetails', function(Builder $query) use ($status){
-                    $query->where('platform', $status);
-                });
             });
 
             if($search){
@@ -172,6 +169,13 @@ class ProjectController extends Controller
                         ]);
                     });
                 });
+            }
+
+            // Counted before the status filter so every tab shows its own total for the current search and dates.
+            $statusCounts = Project::statusCounts($query);
+
+            if($status){
+                $query->withStatus($status);
             }
 
             $query->orderByRaw("
@@ -206,6 +210,7 @@ class ProjectController extends Controller
                     'per_page' => $projects->perPage(),
                     'total' => $projects->total(),
                     'last_page' => $projects->lastPage(),
+                    'status_counts' => $statusCounts,
                 ] 
             ], Response::HTTP_OK)
             ->header('Content-Type', 'application/json');

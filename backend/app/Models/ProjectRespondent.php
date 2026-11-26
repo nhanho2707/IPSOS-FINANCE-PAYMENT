@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Constants\TransactionStatus;
 
 class ProjectRespondent extends Model
 {
@@ -37,6 +41,11 @@ class ProjectRespondent extends Model
     const ERROR_RESPONDENT_GIFT_TEMPORARY =               'Hệ thống gặp sự cố tạm thời, vui lòng kiểm tra lại thiết bị (kết nối mạng,...) và thử thực hiện lại.';
     const ERROR_RESPONDENT_GIFT_INSUFFICIENT_BALANCE =    'Tài khoản dịch vụ quà tặng tạm thời không đủ số dư. Vui lòng liên hệ Admin để được hỗ trợ.';
     const ERROR_MOBILE_NETWORK_NOT_SUPPORTED =            'Dịch vụ hiện không hỗ trợ đối với số điện thoại thuộc nhà mạng này.';
+    const ERROR_GIFT_ALREADY_DELIVERED =                  'Đáp viên đã nhận quà qua %s trước đó, hệ thống không gửi thêm quà.';
+
+    // The survey scripts read 501–503 as "gift already recorded" and let the interviewer finish,
+    // so a second request after a gift went out through the other provider answers in that range.
+    const CODE_GIFT_ALREADY_DELIVERED = 502;
 
     protected $table = "project_respondents";
 
@@ -73,6 +82,137 @@ class ProjectRespondent extends Model
         self::STATUS_RESPONDENT_CANCELLED,
         self::STATUS_RESPONDENT_REJECTED,
     ];
+
+    // The Gifts page groups the stored statuses into four. Anything that is not received, still waiting
+    // or refused (provider errors, partial gifts, cancelled surveys...) is shown as failed.
+    public const GIFT_STATUS_SUCCESS = 'success';
+    public const GIFT_STATUS_PENDING = 'pending';
+    public const GIFT_STATUS_REFUSED = 'refused';
+    public const GIFT_STATUS_FAILED = 'failed';
+
+    public const GIFT_STATUSES = [
+        self::GIFT_STATUS_PENDING,
+        self::GIFT_STATUS_SUCCESS,
+        self::GIFT_STATUS_FAILED,
+        self::GIFT_STATUS_REFUSED,
+    ];
+
+    private const GIFT_STATUS_SOURCES = [
+        self::GIFT_STATUS_SUCCESS => self::STATUS_RESPONDENT_GIFT_RECEIVED,
+        self::GIFT_STATUS_PENDING => self::STATUS_RESPONDENT_PENDING,
+        self::GIFT_STATUS_REFUSED => self::STATUS_RESPONDENT_REJECTED,
+    ];
+
+    // A test respondent's gift is marked as received without calling Vinnet or GotIt.
+    const ENVIRONMENT_LIVE = 'live';
+    const ENVIRONMENT_TEST = 'test';
+
+    // Interviewer and location codes of the real field teams; anything else is a test or a pilot.
+    const FIELD_CODE_PREFIXES = ['hn', 'sg', 'dn', 'ct', 'ma'];
+
+    /**
+     * The single rule for live versus test, used when respondents are imported or created from an
+     * interview link and again when a gift is sent.
+     */
+    public static function environmentFor(?string $projectStatus, ?string $employeeCode, ?string $locationId): string
+    {
+        $isFieldCode = fn (?string $code) => in_array(substr(strtolower((string) $code), 0, 2), self::FIELD_CODE_PREFIXES, true);
+
+        if (in_array($projectStatus, [Project::STATUS_IN_COMING, Project::STATUS_ON_HOLD], true)) {
+            return self::ENVIRONMENT_TEST;
+        }
+
+        if ($projectStatus === Project::STATUS_ON_GOING && !$isFieldCode($employeeCode)) {
+            return self::ENVIRONMENT_TEST;
+        }
+
+        // Covers an empty location and the "_defaultsp" placeholder too.
+        if (!$isFieldCode($locationId)) {
+            return self::ENVIRONMENT_TEST;
+        }
+
+        return self::ENVIRONMENT_LIVE;
+    }
+
+    /**
+     * Live or test against the project as it is now. The stored value is only what applied when the
+     * respondent was created, e.g. imported while the project was still Upcoming.
+     */
+    public function currentEnvironment(): string
+    {
+        return self::environmentFor($this->project?->projectDetails?->status, $this->employee?->employee_id, $this->location_id);
+    }
+
+    public function syncEnvironment(): string
+    {
+        $environment = $this->currentEnvironment();
+
+        if ($this->environment !== $environment) {
+            Log::info("Respondent {$this->id}: environment {$this->environment} -> {$environment} (project status now {$this->project?->projectDetails?->status})");
+            $this->update(['environment' => $environment]);
+        }
+
+        return $environment;
+    }
+
+    public static function giftStatus(?string $status): string
+    {
+        $giftStatus = array_search($status, self::GIFT_STATUS_SOURCES, true);
+
+        return $giftStatus === false ? self::GIFT_STATUS_FAILED : $giftStatus;
+    }
+
+    public function scopeWithGiftStatus(Builder $query, string $giftStatus): Builder
+    {
+        if ($giftStatus === self::GIFT_STATUS_FAILED) {
+            return $query->where(function (Builder $failed) {
+                $failed->whereNotIn('status', self::GIFT_STATUS_SOURCES)->orWhereNull('status');
+            });
+        }
+
+        return $query->where('status', self::GIFT_STATUS_SOURCES[$giftStatus]);
+    }
+
+    // Phone numbers are stored without spaces while people type them grouped ("0903 412 887").
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return $query;
+        }
+
+        $phone = preg_replace('/\s+/', '', $term);
+
+        return $query->where(function (Builder $search) use ($term, $phone) {
+            $search->where('respondent_id', 'like', "%$term%")
+                ->orWhere('phone_number', 'like', "%$phone%")
+                ->orWhere('respondent_phone_number', 'like', "%$phone%");
+        });
+    }
+
+    /**
+     * Respondents per Gifts status for the given (already filtered) query, for the status tabs.
+     *
+     * @return array<string, int>
+     */
+    public static function giftStatusCounts(Builder $query): array
+    {
+        $counts = array_fill_keys(self::GIFT_STATUSES, 0);
+
+        $rows = (clone $query)->toBase()
+            ->reorder()
+            ->select('status')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('status')
+            ->get();
+
+        foreach ($rows as $row) {
+            $counts[self::giftStatus($row->status)] += (int) $row->total;
+        }
+
+        return $counts;
+    }
 
     public function token()
     {
@@ -224,6 +364,35 @@ class ProjectRespondent extends Model
         } 
     }
     
+    /**
+     * The provider that already delivered this respondent's gift ('vinnet' or 'gotit'), or null.
+     */
+    public function deliveredGiftChannel(): ?string
+    {
+        if ($this->vinnetTransactions()->where('vinnet_token_status', TransactionStatus::STATUS_VERIFIED)->exists()) {
+            return 'vinnet';
+        }
+
+        if ($this->gotitVoucherTransactions()->where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)->exists()) {
+            return 'gotit';
+        }
+
+        return null;
+    }
+
+    public static function giftAlreadyDeliveredMessage(string $channel): string
+    {
+        return sprintf(self::ERROR_GIFT_ALREADY_DELIVERED, $channel === 'gotit' ? 'GotIt' : 'Vinnet');
+    }
+
+    /**
+     * One lock for both providers: a Vinnet and a GotIt request for the same respondent must not both buy.
+     */
+    public function giftLock(): Lock
+    {
+        return Cache::lock('gift-transaction-' . $this->id, 300);
+    }
+
     public function updateStatus($status): bool
     {
         $oldStatus = $this->status;

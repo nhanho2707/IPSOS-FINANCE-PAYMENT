@@ -1,6 +1,7 @@
 import { Box, TableCell, TableRow, TextField } from "@mui/material";
 import { range } from "d3";
 import { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface RangeType {
     from: number,
@@ -18,6 +19,7 @@ type Props = {
 }
 
 const RangeRow = memo(({row, isEditing, onChange}: Props) => {
+    const { t } = useTranslation();
     const [ rangeData, setRangeData ] = useState<RangeType>(row.value || {});
 
     const handleRangeChange = (key: string, value: number) => {
@@ -76,7 +78,7 @@ const RangeRow = memo(({row, isEditing, onChange}: Props) => {
                             autoFocus
                             size="small"
                             type="number"
-                            label="From"
+                            label={t("quotation.form.from")}
                             disabled={!isEditing}
                             value={rangeData.from || ""}
                             onChange={(e) => handleRangeChange("from", Number(e.target.value))}
@@ -86,7 +88,7 @@ const RangeRow = memo(({row, isEditing, onChange}: Props) => {
                             autoFocus
                             size="small"
                             type="number"
-                            label="To"
+                            label={t("quotation.form.to")}
                             disabled={!isEditing}
                             value={rangeData.to || ""}
                             onChange={(e) => handleRangeChange("to", Number(e.target.value))}

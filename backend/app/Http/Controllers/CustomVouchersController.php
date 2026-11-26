@@ -161,31 +161,31 @@ class CustomVouchersController extends Controller
                 ]);
             }
 
-            $existing = CustomVoucher::where('token_id', $token->id)->first();
+            $voucher = DB::transaction(function() use ($token) {
+                // Locking the token makes a second request for it wait and then find the voucher the first one
+                // assigned; locking the voucher row stops two tokens from taking the same voucher.
+                $token = CustomVoucherToken::whereKey($token->id)->lockForUpdate()->first();
 
-            if($existing){
-                return $this->buildVoucherResponse($existing);
-            } 
+                $existing = CustomVoucher::where('token_id', $token->id)->first();
 
-            $voucher = CustomVoucher::whereNull('token_id')
-                                ->where('batch_id', $token->batch_id)
-                                ->where('status', 'unused')
-                                ->where(function($q) {
-                                    $q->whereNull('expired_to')
-                                        ->orWhere('expired_to', '>=', now());
-                                })
-                                ->lockForUpdate()
-                                ->first();
+                if($existing){
+                    return $existing;
+                }
 
-            if(!$voucher){
-                return response()->json([
-                    'status_code' => 400,
-                    'error' => 'Out of vouchers'
-                ]);
-            }
+                $voucher = CustomVoucher::whereNull('token_id')
+                                    ->where('batch_id', $token->batch_id)
+                                    ->where('status', 'unused')
+                                    ->where(function($q) {
+                                        $q->whereNull('expired_to')
+                                            ->orWhere('expired_to', '>=', now());
+                                    })
+                                    ->lockForUpdate()
+                                    ->first();
 
-            DB::transaction(function() use ($voucher, $token) {
-                //Assign 
+                if(!$voucher){
+                    return null;
+                }
+
                 if(!$voucher->uuid){
                     $voucher->uuid = Str::uuid();
                 }
@@ -203,7 +203,16 @@ class CustomVouchersController extends Controller
                         'status' => 'blocked'
                     ]);
                 }
+
+                return $voucher;
             });
+
+            if(!$voucher){
+                return response()->json([
+                    'status_code' => 400,
+                    'error' => 'Out of vouchers'
+                ]);
+            }
 
             return $this->buildVoucherResponse($voucher);
 

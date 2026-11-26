@@ -7,10 +7,10 @@
 | File | Dùng cho | Import ở đâu |
 |---|---|---|
 | `global.css` | CSS variables (`:root`), font import | `index.tsx` |
-| `layout.css` | App shell: `.wrapper`, `.content`, `.content-detail` | `index.tsx` |
+| `layout.css` | Khung cũ `.wrapper`, `.content`, `.content-detail`, chỉ còn `TechcombankLayout` dùng; app nội bộ dùng `AppShell` (MUI `sx`) | `index.tsx` |
 | `components.css` | Shared utilities: `.row`, action menu, typography helpers | `index.tsx` |
 | `features.css` | Widget, welcome section, legend, chart, subtotal | `index.tsx` |
-| `table.css` | Table, filter bar, pagination | `index.tsx` |
+| `table.css` | `.table-container`, `.table-cell` cho bảng Techcombank; bảng nội bộ dùng `ResourceTable` / `ReusableTable` | `index.tsx` |
 | `modal.css` | Modal box, modal footer, modal buttons | Import trực tiếp trong component dùng modal |
 | `techcombank.css` | Techcombank panel layout, màu sắc riêng | Import trong `TechcombankLayout.tsx` |
 
@@ -41,7 +41,7 @@
 
 ## CSS Variables
 
-Tất cả variables khai báo trong `global.css` `:root`. Không hardcode màu trực tiếp trong component — dùng variable.
+Variables khai báo trong `global.css` `:root`; riêng các biến màu brand, chữ, nền khung app và trạng thái được sinh từ `src/config/ThemeConfig.ts` (`themeCssVariables`). Không hardcode màu trực tiếp trong component — dùng variable.
 
 ```css
 /* SAI */
@@ -55,11 +55,12 @@ color: var(--text-color);
 
 | Variable | Giá trị | Dùng cho |
 |---|---|---|
-| `--text-color` | `#212121` | Text chính toàn app |
+| `--text-color` | `#101828` (sinh từ `ThemeConfig.ts`) | Text chính toàn app |
 | `--background-color` | `#fff` | Background card/modal |
-| `--body-color` | `rgb(238,242,246)` | Background page |
-| `--main-color` | `#009d9c` (sinh từ `ThemeConfig.ts`) | Brand color, button primary |
-| `--sidebar-expanded` | `15.625rem` | Width sidebar mở |
+| `--canvas-color` | `#f6f7f9` (sinh từ `ThemeConfig.ts`) | Nền khung app (`.wrapper`) |
+| `--body-color` | `rgb(238,242,246)` | Nền phụ (icon button, khối nhỏ) |
+| `--main-color` | `#007a79` (sinh từ `ThemeConfig.ts`) | Brand color, chữ màu brand, button primary |
+| `--sidebar-expanded` | `15.625rem` | Width sidebar mở (chỉ sidebar Techcombank; AppShell khai báo width trong `AppShell.tsx`) |
 | `--sidebar-collapsed` | `5.5rem` | — | Width sidebar đóng |
 | `--transition-02` | `all 0.2s ease` | — | Transition nhanh |
 
@@ -93,6 +94,7 @@ Dùng đúng breakpoint đã định nghĩa. **Không hardcode pixel** trong med
 
 ## Những điều không được làm
 
+- **Không viết tay màu hex, `rgba()`, `var(--…)` hay cỡ chữ dạng chuỗi trong TSX** ở các trang nội bộ. `no-restricted-syntax` trong `eslintConfig` của `package.json` sẽ cảnh báo; dùng palette của theme (`"text.secondary"`, `"divider"`, `"primary.main"`), `BRAND`/`NEUTRAL` từ `ThemeConfig.ts` và variant typography. Trang đáp viên, MiniCATI và dashboard khách hàng nằm ngoài phạm vi luật này.
 - **Không dùng `!important`** trừ khi override MUI (MUI inject style sau nên đôi khi cần thiết — ghi comment lý do)
 - **Không hardcode màu** ngoài `global.css` — dùng variable
 - **Không tạo thêm CSS file** ngoài các file đã có

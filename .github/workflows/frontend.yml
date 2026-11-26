@@ -1,0 +1,148 @@
+name: Front-end
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, build and e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - name: Typecheck and build
+        run: npm run build
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-screenshots
+          path: frontend/e2e/screenshots
+          if-no-files-found: ignore
+
+      - name: Upload the test report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: |
+            frontend/e2e/report
+            frontend/e2e/test-results
+
+  # Takes the same screenshots on the base branch and compares. Informational: a visual change
+  # is often the point of a PR, so it is reported as a warning with before/after images, not a failure.
+  visual:
+    name: Screenshots against the base branch
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            base/frontend/package-lock.json
+
+      - name: Install the pull request
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Reference screenshots from the base branch
+        id: baseline
+        working-directory: base/frontend
+        run: |
+          if [ ! -f playwright.config.ts ]; then
+            echo "The base branch has no Playwright suite yet, so there is nothing to compare against." >> "$GITHUB_STEP_SUMMARY"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          npm ci
+          npx playwright install chromium
+          npm run test:e2e:baseline || echo "::warning title=Base branch tests failed::Screenshots of the failing tests have no reference."
+          rm -rf ../../frontend/e2e/.baseline
+          cp -r e2e/.baseline ../../frontend/e2e/.baseline
+
+      - name: Compare
+        if: steps.baseline.outputs.skip != 'true'
+        continue-on-error: true
+        working-directory: frontend
+        run: npm run test:e2e:visual
+
+      - name: Summarise
+        if: steps.baseline.outputs.skip != 'true'
+        working-directory: frontend
+        run: |
+          compared=$(find e2e/.baseline -name '*.png' | wc -l)
+          changed=""; added=""
+          for actual in $(find e2e/test-results -name '*-actual.png' 2>/dev/null | sort); do
+            name=$(basename "$actual" -actual.png)
+            if [ -f "${actual%-actual.png}-diff.png" ]; then changed="$changed $name"; else added="$added $name"; fi
+          done
+          changed=$(echo $changed | tr ' ' '\n' | sort -u | paste -sd, - | sed 's/,/, /g')
+          added=$(echo $added | tr ' ' '\n' | sort -u | paste -sd, - | sed 's/,/, /g')
+          {
+            echo "### Screenshots against the base branch"
+            if [ -z "$changed$added" ]; then
+              echo "No visible changes ($compared screenshots compared)."
+            else
+              [ -n "$changed" ] && echo "- Changed: $changed"
+              [ -n "$added" ] && echo "- New, with no reference on the base branch: $added"
+              echo ""
+              echo "Download the \`visual-diff\` artifact and open \`report/index.html\` to compare before and after."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$changed" ]; then echo "::warning title=Screenshots changed::$changed"; fi
+
+      - name: Upload before/after images
+        if: steps.baseline.outputs.skip != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-diff
+          include-hidden-files: true
+          path: |
+            frontend/e2e/report
+            frontend/e2e/test-results
+            frontend/e2e/.baseline
+          if-no-files-found: ignore

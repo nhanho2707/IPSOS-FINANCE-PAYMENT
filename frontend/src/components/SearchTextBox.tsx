@@ -1,49 +1,79 @@
 import SearchIcon from "@mui/icons-material/Search";
-import { InputAdornment, TextField } from "@mui/material"
-import React, { useState } from "react";
+import CloseIcon from "@mui/icons-material/Close";
+import { IconButton, InputAdornment, SxProps, TextField, Theme } from "@mui/material"
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface SearchTextBoxProps {
     placeholder?: string,
-    onSearchChange: (value: string)=> void
+    onSearchChange: (value: string) => void,
+    defaultValue?: string,
+    debounceMs?: number,
+    sx?: SxProps<Theme>,
 }
 
-const SearchTextBox: React.FC<SearchTextBoxProps> = ({placeholder = "Search...", onSearchChange}) => {
-    const [ search, setSearch ] = useState("");
+// Every list hook fetches when its search term changes, so the term is only reported once typing pauses:
+// fewer requests, and a slow response for "ab" cannot land after the one for "abc".
+const SearchTextBox: React.FC<SearchTextBoxProps> = ({ placeholder, onSearchChange, defaultValue = "", debounceMs = 300, sx }) => {
+    const [ search, setSearch ] = useState(defaultValue);
+    const { t } = useTranslation();
+    const timerRef = useRef<number | undefined>(undefined);
+    const onSearchChangeRef = useRef(onSearchChange);
 
-    const hanleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        onSearchChangeRef.current = onSearchChange;
+    }, [onSearchChange]);
+
+    useEffect(() => () => window.clearTimeout(timerRef.current), []);
+
+    const report = (value: string, delay: number) => {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = window.setTimeout(() => onSearchChangeRef.current(value), delay);
+    };
+
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setSearch(value);
-        onSearchChange(value);
+        report(value, debounceMs);
+    }
+
+    const handleClear = () => {
+        setSearch("");
+        report("", 0);
     }
 
     return (
-        <div style={{display: "flex", gap: "0.5rem", alignItems: "center", width: "20rem" }}>
-            <TextField
-                value={search}
-                onChange={hanleChange}
-                placeholder={placeholder ?? "Search..."}
-                variant="outlined"
-                size="small"
-                fullWidth
-                sx={{
-                    width: '20rem',
-                    '& .MuiInputBase-input::placeholder': {
-                    fontSize: '0.8rem', // 👈 chỉnh cỡ chữ placeholder
-                    opacity: 1,         // nếu placeholder quá mờ, tăng độ rõ
-                    },
-                }}
-                InputProps={{
+        <TextField
+            value={search}
+            onChange={handleChange}
+            onKeyDown={(event) => {
+                if (event.key === "Escape" && search) handleClear();
+            }}
+            placeholder={placeholder ?? t("common.search.placeholder")}
+            size="small"
+            sx={[
+                { width: "20rem", maxWidth: "100%", "& .MuiInputBase-input": { typography: "body2" } },
+                ...(Array.isArray(sx) ? sx : [sx]),
+            ]}
+            slotProps={{
+                input: {
                     startAdornment: (
                         <InputAdornment position="start">
-                            <SearchIcon />
+                            <SearchIcon fontSize="small" />
                         </InputAdornment>
                     ),
-                }}
-            >
-
-            </TextField>
-        </div>
-    )
+                    endAdornment: search ? (
+                        <InputAdornment position="end">
+                            <IconButton aria-label={t("common.search.clear")} size="small" edge="end" onClick={handleClear}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </InputAdornment>
+                    ) : null,
+                },
+                htmlInput: { "aria-label": placeholder },
+            }}
+        />
+    );
 }
 
 export default SearchTextBox;

@@ -1,100 +1,118 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import dayjs from "dayjs";
+import "dayjs/locale/vi";
+import enCommon from "./locales/en/common.json";
+import enNav from "./locales/en/nav.json";
+import enAuth from "./locales/en/auth.json";
+import enDashboard from "./locales/en/dashboard.json";
+import enStatistics from "./locales/en/statistics.json";
+import enFinance from "./locales/en/finance.json";
+import enTransactions from "./locales/en/transactions.json";
+import enGifts from "./locales/en/gifts.json";
+import enProjects from "./locales/en/projects.json";
+import enQuotation from "./locales/en/quotation.json";
+import enCati from "./locales/en/cati.json";
+import enInterviewers from "./locales/en/interviewers.json";
+import enAccounts from "./locales/en/accounts.json";
+import enSettings from "./locales/en/settings.json";
+import viCommon from "./locales/vi/common.json";
+import viNav from "./locales/vi/nav.json";
+import viAuth from "./locales/vi/auth.json";
+import viDashboard from "./locales/vi/dashboard.json";
+import viStatistics from "./locales/vi/statistics.json";
+import viFinance from "./locales/vi/finance.json";
+import viTransactions from "./locales/vi/transactions.json";
+import viGifts from "./locales/vi/gifts.json";
+import viProjects from "./locales/vi/projects.json";
+import viQuotation from "./locales/vi/quotation.json";
+import viCati from "./locales/vi/cati.json";
+import viInterviewers from "./locales/vi/interviewers.json";
+import viAccounts from "./locales/vi/accounts.json";
+import viSettings from "./locales/vi/settings.json";
 
-const resources = {
-    en: {
-        translation: {
-            dashboard: {
-                total_members  : "TOTAL MEMBERS",
-                number_of_surveys: "NUMBER OF SURVEYS",
-                response_rate: "RESPONSE RATE",
-                completed_qualified: "COMPLETED / QUALIFIED",
-                number_of_panelist: "NUMBER OF PANELIST",
-                house_hold_income: "HOUSE HOLD INCOME",
-                occupation: "OCCUPATION",
-                main_bank: "MAIN BANK",
-                products: "PRODUCTS",
-                channels: "CHANNELS",
-                age_group: "AGE GROUP",
-                gender: "GENDER",
-                gender_categories: {
-                    "Nam": "Male",
-                    "Nữ": "Female",
-                    "Khác": "Other"
-                },
-                province: "Province",
-                barchart: {
-                    categories: {
-                        "Từ 12.5 triệu đến dưới 25 triệu VND/tháng": "From 12.5 million to under 25 million VND/month",
-                        "Từ 25 triệu đến dưới 35 triệu VND/tháng": "From 25 million to under 35 million VND/month",
-                        "Từ 35 triệu đến dưới 45 triệu VND/tháng": "From 35 million to under 45 million VND/month",
-                        "Từ 45 triệu đến dưới 60 triệu VND/tháng": "From 45 million to under 60 million VND/month",
-                        "Từ 60 triệu đến dưới 80 triệu VND/tháng": "From 60 million to under 80 million VND/month",
-                        "Từ 80 triệu đến dưới 110 triệu VND/tháng": "From 80 million to under 110 million VND/month",
-                        "Chủ doanh nghiệp": "Business owner",
-                        "Buôn bán nhỏ lẻ / Hộ kinh doanh cá thể": "Small retail business owner / Sole proprietorship",
-                        "Làm việc tự do": "Freelancer",
-                        "Nhân viên văn phòng": "Office employee",
-                        "Khác (Công nhân/ Nhân viên không thuộc văn phòng/ chuyên gia/ ...)": "Others (Worker/ Non-office staff/ Specialist/ ...)",
-                        "Từ 200 triệu đến dưới 1 tỷ": "From 200 million to under 1 billion VND",
-                        "Dưới 200 triệu": "Under 200 million VND",
-                        "Từ 1 tỷ trở lên": "From 1 billion VND and above",
-                    }
-                },
-            }
-        }
-    },
-    vi: {
-        translation: {
-            dashboard: {
-                total_members  : "TỔNG SỐ THÀNH VIÊN",
-                number_of_surveys: "SỐ LƯỢNG KHẢO SÁT",
-                response_rate: "TỶ LỆ PHẢN HỒI",
-                completed_qualified: "HOÀN THÀNH / ĐỦ ĐIỀU KIỆN",
-                number_of_panelist: "DANH SÁCH ĐÁP VIÊN",
-                house_hold_income: "THU NHẬP HỘ GIA ĐÌNH",
-                occupation: "NGHỀ NGHIỆP",
-                main_bank: "NGÂN HÀNG CHÍNH",
-                products: "SẢN PHẨM",
-                channels: "KÊNH GIAO DỊCH",
-                age_group: "ĐỘ TUỔI",
-                gender: "GIỚI TÍNH",
-                gender_categories: {
-                    "Nam": "Nam",
-                    "Nữ": "Nữ",
-                    "Khác": "Khác"
-                },
-                province: "Thành Phố",
-                barchart: {
-                    categories: {
-                        "Từ 12.5 triệu đến dưới 25 triệu VND/tháng": "Từ 12.5 triệu đến dưới 25 triệu VND/tháng",
-                        "Từ 25 triệu đến dưới 35 triệu VND/tháng": "Từ 25 triệu đến dưới 35 triệu VND/tháng",
-                        "Từ 35 triệu đến dưới 45 triệu VND/tháng": "Từ 35 triệu đến dưới 45 triệu VND/tháng",
-                        "Từ 45 triệu đến dưới 60 triệu VND/tháng": "Từ 45 triệu đến dưới 60 triệu VND/tháng",
-                        "Từ 60 triệu đến dưới 80 triệu VND/tháng": "Từ 60 triệu đến dưới 80 triệu VND/tháng",
-                        "Từ 80 triệu đến dưới 110 triệu VND/tháng": "Từ 80 triệu đến dưới 110 triệu VND/tháng",
-                        "Chủ doanh nghiệp": "Chủ doanh nghiệp",
-                        "Buôn bán nhỏ lẻ / Hộ kinh doanh cá thể": "Buôn bán nhỏ lẻ / Hộ kinh doanh cá thể",
-                        "Làm việc tự do": "Làm việc tự do",
-                        "Nhân viên văn phòng": "Nhân viên văn phòng",
-                        "Khác (Công nhân/ Nhân viên không thuộc văn phòng/ chuyên gia/ ...)": "Khác (Công nhân/ Nhân viên không thuộc văn phòng/ chuyên gia/ ...)",
-                        "Từ 200 triệu đến dưới 1 tỷ": "Từ 200 triệu đến dưới 1 tỷ",
-                        "Dưới 200 triệu": "Dưới 200 triệu",
-                        "Từ 1 tỷ trở lên": "Từ 1 tỷ trở lên",
-                    },
-                }
-            }
-        }
+export type Language = "en" | "vi";
+
+export const LANGUAGES: Language[] = ["en", "vi"];
+
+const STORAGE_KEY = "language";
+const DEFAULT_LANGUAGE: Language = "en";
+
+const en = {
+    common: enCommon, nav: enNav, auth: enAuth, dashboard: enDashboard,
+    projects: enProjects, gifts: enGifts, transactions: enTransactions, finance: enFinance, statistics: enStatistics,
+    settings: enSettings, accounts: enAccounts, interviewers: enInterviewers, cati: enCati, quotation: enQuotation,
+};
+
+// Typed against English, so a key missing from a Vietnamese file fails the type check.
+const vi: typeof en = {
+    common: viCommon, nav: viNav, auth: viAuth, dashboard: viDashboard,
+    projects: viProjects, gifts: viGifts, transactions: viTransactions, finance: viFinance, statistics: viStatistics,
+    settings: viSettings, accounts: viAccounts, interviewers: viInterviewers, cati: viCati, quotation: viQuotation,
+};
+
+export const resources = { en: { translation: en }, vi: { translation: vi } };
+
+declare module "i18next" {
+    interface CustomTypeOptions {
+        defaultNS: "translation";
+        resources: { translation: typeof en };
+    }
+}
+
+type LeafKeys<T, Prefix extends string = ""> = {
+    [K in keyof T & string]: T[K] extends string ? `${Prefix}${K}` : LeafKeys<T[K], `${Prefix}${K}.`>;
+}[keyof T & string];
+
+// A key that names one piece of text (not a group of them), for labels kept in config files
+// and translated where they are shown.
+export type TranslationKey = LeafKeys<typeof en>;
+
+const readStoredLanguage = (): Language => {
+    try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        return LANGUAGES.includes(stored as Language) ? (stored as Language) : DEFAULT_LANGUAGE;
+    } catch {
+        return DEFAULT_LANGUAGE;
     }
 };
 
+const applyLanguage = (language: string) => {
+    document.documentElement.lang = language;
+    dayjs.locale(language);
+};
+
 i18n.use(initReactI18next).init({
-  resources,
-  lng: 'en', // default language
-  fallbackLng: 'en', // fallback language if translation is missing
-  interpolation: {
-    escapeValue: false, // react already escapes values
-  }
+    resources,
+    lng: readStoredLanguage(),
+    fallbackLng: DEFAULT_LANGUAGE,
+    interpolation: {
+        escapeValue: false, // React already escapes values
+    },
 });
+
+applyLanguage(i18n.language);
+
+i18n.on("languageChanged", (language) => {
+    applyLanguage(language);
+    try {
+        window.localStorage.setItem(STORAGE_KEY, language);
+    } catch {
+        // Private windows can refuse storage; the choice then lasts until the page is reloaded.
+    }
+});
+
+// Text for a key held in a config file. i18next types a union of keys as returning any of their values,
+// so this pins it to the string a leaf key always is. Call it in a component that uses useTranslation(),
+// so the text changes with the language.
+export const tKey = (key: TranslationKey): string => i18n.t(key) as string;
+
+// Values that come from the data (gender, income band...) are looked up by name and shown as they are when unknown.
+export const translateDataValue = (prefix: string, value: string): string =>
+    i18n.t(`${prefix}.${value}` as TranslationKey, { defaultValue: value });
+
+export const currentLanguage = (): Language => (i18n.language === "vi" ? "vi" : "en");
+
+export const changeLanguage = (language: Language) => i18n.changeLanguage(language);
 
 export default i18n;

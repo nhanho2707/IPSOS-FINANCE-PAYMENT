@@ -158,11 +158,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('industries', function(Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-        });
+        // industries is created by 2026_06_02_032917_create_table_products_2 with its codes and names.
 
         Schema::create('target_audiences', function(Blueprint $table) {
             $table->id();

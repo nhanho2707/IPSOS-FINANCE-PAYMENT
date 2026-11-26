@@ -1,25 +1,33 @@
-import { useState } from "react";
-import Sidebar from "../components/Sidebar/Sidebar";
+import React from "react";
 import { Outlet } from "react-router-dom";
+import AppShell, { SidebarSearchButton } from "../components/Shell/AppShell";
+import SidebarNav, { SidebarNavGroup } from "../components/Shell/SidebarNav";
+import { getAppNavGroupsForRole } from "../config/AppNavConfig";
+import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from "react-i18next";
+import { tKey } from "../i18n/i18n";
 
 const DefaultLayout: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const { user } = useAuth();
+  const { t } = useTranslation();
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const groups: SidebarNavGroup[] = getAppNavGroupsForRole(user?.role).map((group) => ({
+    key: group.label,
+    label: tKey(group.label),
+    items: group.items.map((item) => ({ key: item.to, label: tKey(item.label), to: item.to, icon: item.icon })),
+  }));
 
   return (
-    <>
-      <div className="wrapper">
-        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <div className="content">
-          <div className="content-detail">
-            <Outlet />
-          </div>
-        </div>
-      </div>
-    </>
+    <AppShell
+      sidebar={({ collapsed, openPalette }) => (
+        <>
+          <SidebarSearchButton collapsed={collapsed} onClick={() => openPalette("search")} />
+          <SidebarNav ariaLabel={t("nav.shell.main")} groups={groups} collapsed={collapsed} />
+        </>
+      )}
+    >
+      <Outlet />
+    </AppShell>
   );
 };
 

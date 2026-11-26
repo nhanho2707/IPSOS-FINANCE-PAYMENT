@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Crypt;
@@ -50,7 +49,10 @@ class VinnetController extends Controller
             return response()->json([
                 'status_code' => Response::HTTP_OK, //200
                 'message' => 'Successful request.',
-                'data' => $envObject->merchantInfo
+                'data' => [
+                    'VINNET_MERCHANT_CODE' => $envObject->merchantInfo['VINNET_MERCHANT_CODE'],
+                    'VINNET_MERCHANT_KEY' => $this->mask_secret($envObject->merchantInfo['VINNET_MERCHANT_KEY'])
+                ]
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -90,7 +92,7 @@ class VinnetController extends Controller
             $serviceCode = $vinnetService->get_service_code($phoneNumber);
 
             Log::info('Transaction Info: ', [
-                'token' => $token,
+                'token' => Str::before((string) $token, '.'),
                 'service_type' => $serviceType,
                 'requested_service_code' => $requestedServiceCode,
                 'service_code' => $serviceCode,
@@ -145,7 +147,7 @@ class VinnetController extends Controller
 
             Log::info('Price item by province: ' . intval($price));
             
-            if($projectRespondent->environment === 'test'){
+            if($projectRespondent->syncEnvironment() === ProjectRespondent::ENVIRONMENT_TEST){
 
                 Log::info('Environment: Staging');
 
@@ -163,8 +165,8 @@ class VinnetController extends Controller
 
             Log::info('Environment: Live');
 
-            // Stops a double click from buying the same cards twice.
-            $lock = Cache::lock('vinnet-transaction-' . $projectRespondent->id, 300);
+            // Stops a double click, or a GotIt request for the same respondent, from buying twice.
+            $lock = $projectRespondent->giftLock();
 
             if(!$lock->get()){
                 return response()->json([
@@ -176,6 +178,24 @@ class VinnetController extends Controller
 
             try
             {
+                // Re-opening an interview after the gift went out through the other provider must neither buy a
+                // second gift nor overwrite the channel the gift was recorded under.
+                $deliveredChannel = $projectRespondent->deliveredGiftChannel();
+
+                if($deliveredChannel !== null && $deliveredChannel !== 'vinnet'){
+                    Log::warning('Gift already delivered through another provider', [
+                        'project_respondent_id' => $projectRespondent->id,
+                        'delivered_by' => $deliveredChannel,
+                        'requested' => 'vinnet'
+                    ]);
+
+                    return response()->json([
+                        'status_code' => ProjectRespondent::CODE_GIFT_ALREADY_DELIVERED,
+                        'message' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel),
+                        'error' => ProjectRespondent::giftAlreadyDeliveredMessage($deliveredChannel)
+                    ], 409);
+                }
+
                 if($deliveryMethod === 'sms'){
                     try
                     {
@@ -575,92 +595,51 @@ class VinnetController extends Controller
      * @return string
      * 
      */
-    public function change_key(Request $request, VinnetService $vinnetService)
+    public function change_key(VinnetService $vinnetService)
     {
-        try{
-            Log::info('Changing key');
-
-            $envObject = new ENVObject();
-            $environment = $envObject->environment;
-            $merchantInfo = $envObject->merchantInfo;
-            $url = $envObject->url;
-
-            $uuid = $vinnetService->generate_formated_uuid();
-            Log::info('UUID: ' . $uuid);
-
-            $reqData = $vinnetService->encrypt_data(json_encode(['oldMerchantKey' => str_replace('"', '', $merchantInfo['VINNET_MERCHANT_KEY'])]));
-            
-            $signature = $vinnetService->generate_signature(str_replace('"', '', $merchantInfo['VINNET_MERCHANT_CODE']) . $uuid . $reqData);
-
-            $postData = [
-                'merchantCode' => str_replace('"', '', $merchantInfo['VINNET_MERCHANT_CODE']),
-                'reqUuid' => $uuid,
-                'reqData' => $reqData,
-                'sign' => $signature
-            ];
-
-            Log::info('Data post: ' . json_encode($postData));
-            
-            $response = $this->post_vinnet_request(str_replace('"', '', $url) . '/changekey', null, $postData);
-
-            $decodedResponse = json_decode($response, true);
-
-            if ($decodedResponse === null && json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON Decode Error: ' . json_last_error_msg());
-                throw new \Exception('JSON Decode Error: ' . json_last_error_msg());
-            }
-            
-            if (!is_array($decodedResponse)) {
-                throw new \Exception('Decoded services data is not an array');
-            }
-
-            Log::info('Decoded Response Data: ' . json_encode($decodedResponse));
-
-            Log::info('Decoded resData: '. $decodedResponse['resData']);
-
-            $decryptedData = $this->decrypt_data($decodedResponse['resData']);
-
-            $decodedData = json_decode($decryptedData, true);
-            
-            Log::info('Decoded New Merchant Key: ' . $decodedData);
-
-            if ($decodedData === null && json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON Decode Error: ' . json_last_error_msg());
-                throw new \Exception('JSON Decode Error: ' . json_last_error_msg());
-            }
-            
-            $decodedData = json_decode($decodedData, true);
-            
-            Log::info('New merchant key: ' . $decodedData['newMerchantKey']);
-            
-            // Assuming the decrypted information is an array with the expected keys
-            if($environment === 'production'){
-                $envObject->setEnvValue('VINNET_MERCHANT_KEY', $decodedData['newMerchantKey']);
-                // $envObject->updateEnv([
-                //     'VINNET_MERCHANT_KEY' =>  $decodedData['newMerchantKey']
-                // ]);
-            } else {
-                $envObject->setEnvValue('VINNET_MERCHANT_KEY_STAGING', $decodedData['newMerchantKey']);
-                // $envObject->updateEnv([
-                //     'VINNET_MERCHANT_KEY_STAGING' =>  $decodedData['newMerchantKey']
-                // ]);
-            }
-            
-            Log::info("The end for change key.");
+        try
+        {
+            $newMerchantKey = $vinnetService->change_merchant_key();
+        } catch (\Throwable $e) {
+            Log::error('Changing the Vinnet merchant key failed: ' . $e->getMessage());
 
             return response()->json([
-                'status_code' => Response::HTTP_OK, //200
-                'message' => 'Successful request.',
-                'data' => $decodedData['newMerchantKey']
-            ], Response::HTTP_OK);
-
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json([
-                'status_code' => Response::HTTP_BAD_REQUEST, //400
-                'message' => $e->getMessage(),
+                'status_code' => Response::HTTP_BAD_REQUEST,
+                'message' => 'Changing the merchant key failed: ' . $e->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
+
+        $envObject = new ENVObject();
+        $envKey = $envObject->environment === 'production' ? 'VINNET_MERCHANT_KEY' : 'VINNET_MERCHANT_KEY_STAGING';
+
+        try
+        {
+            $envObject->setEnvValue($envKey, $newMerchantKey);
+        } catch (\Throwable $e) {
+            Log::error('The new Vinnet merchant key could not be saved: ' . $e->getMessage());
+
+            // Vinnet has already switched to the new key; this response is the only place it is left.
+            return response()->json([
+                'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                'message' => "Vinnet changed the merchant key but it could not be saved. Set {$envKey} in .env to the key below.",
+                'data' => $newMerchantKey
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        Log::info('Vinnet merchant key changed', ['user_id' => Auth::id(), 'env_key' => $envKey]);
+
+        return response()->json([
+            'status_code' => Response::HTTP_OK,
+            'message' => 'Successful request.',
+            'data' => $this->mask_secret($newMerchantKey)
+        ], Response::HTTP_OK);
+    }
+
+    private function mask_secret(?string $secret): string
+    {
+        $secret = (string) $secret;
+
+        return strlen($secret) <= 4 ? str_repeat('*', strlen($secret)) : str_repeat('*', 8) . substr($secret, -4);
     }
 
     /**
@@ -703,6 +682,16 @@ class VinnetController extends Controller
 
             try
             {
+                $tokenService->respondentForTransactionLookup((string) $token, (string) $transaction_id);
+            } catch(\Exception $e) {
+                return response()->json([
+                    'status_code' => 995,
+                    'message' => TransactionStatus::STATUS_INVALID_TRANSACTION
+                ], 403);
+            }
+
+            try
+            {
                 $tokenData = $vinnetService->authenticate_token();
 
                 if($tokenData['code'] != 0)
@@ -740,8 +729,6 @@ class VinnetController extends Controller
                         $dataRequest['pay_item']['cardItems'][0]['expiryDate'] ?? 'N/A'
                     );
 
-                    Log::info('Checked Transaction: ' . $messagesToSend);
-
                     return response()->json([
                         'data' => $messagesToSend,
                         'status_code' => 900,
@@ -771,14 +758,4 @@ class VinnetController extends Controller
             ], 400);
         }
     }
-
-    public function test_sms(Request $request){
-        $apiCMCObject = new APICMCObject();
-
-        $phone_number = $request->input('phone_number');
-        $messageCard = $request->input('message');
-                    
-        $responseSMSData = $apiCMCObject->send_sms($phone_number, $messageCard);
-    }
-    
 }

@@ -1,4 +1,5 @@
 import { ColumnFormat } from "../config/ColumnConfig";
+import i18n from "../i18n/i18n";
 
 export interface EmployeeData {
     id: number,
@@ -9,18 +10,19 @@ export interface EmployeeData {
     vinnet_total: number,
     gotit_total: number,
     other_total: number,
-    transaction_count: number
+    transaction_total: number
 };
 
-export const EmployeeCellConfig: ColumnFormat[] = [
+// A function, so the headers are read in the current language.
+export const employeeColumns = (): ColumnFormat[] => [
     {
-        label: "ID",
+        label: i18n.t("interviewers.columns.id"),
         name: "employee_id",
         type: "string",
         flex: 1
     },
     {
-        label: "Full Name",
+        label: i18n.t("interviewers.columns.fullName"),
         name: "full_name",
         type: "string",
         flex: 1.5

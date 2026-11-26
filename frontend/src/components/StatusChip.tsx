@@ -50,13 +50,12 @@ const StatusChip: React.FC<StatusChipProps> = ({
           <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
             {label}
           </Box>
-          {showCaret && <ArrowDropDown sx={{ fontSize: "1.125rem", ml: 0.25, mr: -0.5 }} />}
+          {showCaret && <ArrowDropDown sx={{ fontSize: 16, ml: 0.25, mr: -0.5 }} />}
         </Box>
       }
       sx={{
         maxWidth: maxWidth ?? "100%",
         height: 24,
-        fontSize: "0.75rem",
         color: colors.fg,
         backgroundColor: colors.bg,
         "& .MuiChip-icon": { ml: 1, mr: -0.25 },

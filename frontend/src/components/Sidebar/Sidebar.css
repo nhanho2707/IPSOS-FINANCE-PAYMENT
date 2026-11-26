@@ -21,8 +21,8 @@
 }
 
 .sidebar.close ~ .content {
-  width: calc(100% - var(--sidebar-width-collapsed));
-  left: var(--sidebar-width-collapsed);
+  width: 100%;
+  left: 0;
 }
 
 /* ── Header (logo + toggle button) ── */
@@ -208,8 +208,8 @@
   }
 
   .sidebar.close ~ .content {
-    width: calc(100% - var(--sidebar-width-collapsed));
-    left: var(--sidebar-width-collapsed);
+    margin-left: var(--sidebar-collapsed);
+    width: calc(100% - var(--sidebar-collapsed));
   }
 
   .sidebar.open ~ .content {

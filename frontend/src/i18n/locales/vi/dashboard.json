@@ -1,0 +1,38 @@
+{
+    "total_members": "TỔNG SỐ THÀNH VIÊN",
+    "number_of_surveys": "SỐ LƯỢNG KHẢO SÁT",
+    "response_rate": "TỶ LỆ PHẢN HỒI",
+    "completed_qualified": "HOÀN THÀNH / ĐỦ ĐIỀU KIỆN",
+    "number_of_panelist": "DANH SÁCH ĐÁP VIÊN",
+    "house_hold_income": "THU NHẬP HỘ GIA ĐÌNH",
+    "occupation": "NGHỀ NGHIỆP",
+    "main_bank": "NGÂN HÀNG CHÍNH",
+    "products": "SẢN PHẨM",
+    "channels": "KÊNH GIAO DỊCH",
+    "age_group": "ĐỘ TUỔI",
+    "gender": "GIỚI TÍNH",
+    "gender_categories": {
+        "Nam": "Nam",
+        "Nữ": "Nữ",
+        "Khác": "Khác"
+    },
+    "province": "Thành Phố",
+    "barchart": {
+        "categories": {
+            "Từ 12.5 triệu đến dưới 25 triệu VND/tháng": "Từ 12.5 triệu đến dưới 25 triệu VND/tháng",
+            "Từ 25 triệu đến dưới 35 triệu VND/tháng": "Từ 25 triệu đến dưới 35 triệu VND/tháng",
+            "Từ 35 triệu đến dưới 45 triệu VND/tháng": "Từ 35 triệu đến dưới 45 triệu VND/tháng",
+            "Từ 45 triệu đến dưới 60 triệu VND/tháng": "Từ 45 triệu đến dưới 60 triệu VND/tháng",
+            "Từ 60 triệu đến dưới 80 triệu VND/tháng": "Từ 60 triệu đến dưới 80 triệu VND/tháng",
+            "Từ 80 triệu đến dưới 110 triệu VND/tháng": "Từ 80 triệu đến dưới 110 triệu VND/tháng",
+            "Chủ doanh nghiệp": "Chủ doanh nghiệp",
+            "Buôn bán nhỏ lẻ / Hộ kinh doanh cá thể": "Buôn bán nhỏ lẻ / Hộ kinh doanh cá thể",
+            "Làm việc tự do": "Làm việc tự do",
+            "Nhân viên văn phòng": "Nhân viên văn phòng",
+            "Khác (Công nhân/ Nhân viên không thuộc văn phòng/ chuyên gia/ ...)": "Khác (Công nhân/ Nhân viên không thuộc văn phòng/ chuyên gia/ ...)",
+            "Từ 200 triệu đến dưới 1 tỷ": "Từ 200 triệu đến dưới 1 tỷ",
+            "Dưới 200 triệu": "Dưới 200 triệu",
+            "Từ 1 tỷ trở lên": "Từ 1 tỷ trở lên"
+        }
+    }
+}

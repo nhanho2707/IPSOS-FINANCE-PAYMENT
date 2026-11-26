@@ -101,8 +101,8 @@ export default function MiniCATI() {
   };
   
   return (
-    <Box p={3}>
-      
+    <Box sx={{ p: 3 }}>
+
       {/* ================= FILTER ================= */}
       <Grid container spacing={2}>
         {Object.entries(options || {
@@ -111,7 +111,9 @@ export default function MiniCATI() {
           filter_3: [],
           filter_4: []
         }).map(([key, values]) => (
-          <Grid item xs={12} sm={6} md={3} key={key}>
+          <Grid
+            key={key}
+            size={{ xs: 12, sm: 6, md: 3 }}>
             <div style={{ marginBottom: "1rem" }}>
               <Typography variant="body2" gutterBottom>
                   Filter {key.replace("filter_", "")}
@@ -134,7 +136,7 @@ export default function MiniCATI() {
         ))}
       </Grid>
 
-      <Box display="flex" gap={2} mb={2}>
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <Button 
             disabled={Boolean(currentRespondent)}
             variant="contained" 
@@ -152,12 +154,12 @@ export default function MiniCATI() {
                 <CardContent>
 
                     {/* 🔥 Title */}
-                    <Typography variant="h6" fontWeight="bold" mb={2}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                     Respondent Information
                     </Typography>
 
                     {/* 🔥 Info */}
-                    <Box mb={2}>
+                    <Box sx={{ mb: 2 }}>
                         <Typography>
                             <strong>ID:</strong> {currentRespondent.respondent_id}
                         </Typography>
@@ -191,7 +193,7 @@ export default function MiniCATI() {
                     </Box>
 
                     {/* 🔥 Action buttons */}
-                    <Box display="flex" flexDirection="column" gap={2} mt={2}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
                     
                         {/* 🔽 Status Combobox */}
                         <TextField
@@ -241,7 +243,7 @@ export default function MiniCATI() {
       ) : (
         <p>No sample available</p>
       )}
-      
+
       <ReusableTable
         columns={columns}
         data={catiRespondents}
@@ -253,12 +255,9 @@ export default function MiniCATI() {
         onRowsPerPageChange={handleChangeRowsPerPage}
         topToolbar={
           <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
-              justifyContent="space-between"
-              alignItems={{ xs: "stretch", sm: "center" }}
-              sx={{ pt: 2, pb: 2 }}
-          >
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, pt: 2, pb: 2 }}>
               <TextField
                 label="Search phone"
                 variant="outlined"

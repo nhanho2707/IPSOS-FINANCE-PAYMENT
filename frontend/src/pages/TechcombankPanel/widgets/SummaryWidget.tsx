@@ -76,7 +76,7 @@ const SummaryWidget:React.FC<WidgetProps> = ({ title, widget_name, diff, trend, 
                             {diff}%
                             </Typography>
                         </Stack>
-                        <Typography color="text.secondary" variant="caption">
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
                             Since last month
                         </Typography>
                         </Stack>
@@ -84,7 +84,7 @@ const SummaryWidget:React.FC<WidgetProps> = ({ title, widget_name, diff, trend, 
                 </Stack>
             </CardContent>
         </Card>
-    )
+    );
 }
 
 export default SummaryWidget;

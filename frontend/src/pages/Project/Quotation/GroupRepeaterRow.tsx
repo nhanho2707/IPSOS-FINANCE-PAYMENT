@@ -15,6 +15,7 @@ import RadioRow from "./RadioRow";
 import RichTextRow from "./RichTextRow";
 import RangeRow from "./RangeRow";
 import { FieldSchema } from "../../../utils/renderFields";
+import { useTranslation } from "react-i18next";
 
 export type GroupItem = {
     group_name: string;
@@ -138,7 +139,7 @@ const GroupForm: React.FC<GroupFormProps> = ({ item, fields, isEditing, onUpdate
             sx={{
                 mb: 1.5,
                 border: "1px solid",
-                borderColor: "var(--body-color)",
+                borderColor: "divider",
                 borderRadius: "8px",
                 overflow: "hidden",
             }}
@@ -150,10 +151,10 @@ const GroupForm: React.FC<GroupFormProps> = ({ item, fields, isEditing, onUpdate
                     px: 2,
                     py: 1.25,
                     cursor: "pointer",
-                    backgroundColor: "rgba(0, 157, 156, 0.07)",
+                    backgroundColor: "background.default",
                     borderBottom: expanded ? "1px solid" : "none",
-                    borderBottomColor: "var(--body-color)",
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.12)" },
+                    borderBottomColor: "divider",
+                    "&:hover": { backgroundColor: "action.hover" },
                 }}
                 onClick={() => setExpanded(!expanded)}
             >
@@ -168,8 +169,6 @@ const GroupForm: React.FC<GroupFormProps> = ({ item, fields, isEditing, onUpdate
                     sx={{
                         flexGrow: 1,
                         fontWeight: 600,
-                        fontSize: "0.875rem",
-                        color: "var(--text-color)",
                     }}
                 >
                     {item.group_name}
@@ -218,6 +217,7 @@ type Props = {
 };
 
 const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
+    const { t } = useTranslation();
     const groups = Array.isArray(row.value) ? row.value : [];
 
     const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -249,7 +249,7 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
         <>
             <TableRow
                 sx={{
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                    "&:hover": { backgroundColor: "action.hover" },
                     "&:last-child td": { border: 0 },
                 }}
             >
@@ -257,17 +257,15 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                     width={200}
                     sx={{
                         fontWeight: 600,
-                        fontSize: "0.8125rem",
-                        color: "var(--text-color)",
                         verticalAlign: "top",
                         pt: 2,
                     }}
                 >
                     {row.label}
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                <TableCell>
                     {groups.length === 0 && !isEditing && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                             -
                         </Typography>
                     )}
@@ -288,7 +286,7 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                             onClick={() => setAddDialogOpen(true)}
                             sx={{ mt: groups.length > 0 ? 0.5 : 0 }}
                         >
-                            Add Group
+                            {t("quotation.form.addGroupButton")}
                         </Button>
                     )}
                 </TableCell>
@@ -300,14 +298,14 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                 maxWidth="xs"
                 fullWidth
             >
-                <DialogTitle>Add Respondent Group</DialogTitle>
+                <DialogTitle>{t("quotation.form.addGroupTitle")}</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
                         fullWidth
                         size="small"
-                        label="Group name"
-                        placeholder="e.g. Main, Booster..."
+                        label={t("quotation.form.groupName")}
+                        placeholder={t("quotation.form.groupPlaceholder")}
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
                         onKeyDown={(e) => {
@@ -317,13 +315,13 @@ const GroupRepeaterRow = memo(({ row, isEditing, onChange }: Props) => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button onClick={handleCloseDialog}>{t("quotation.form.cancel")}</Button>
                     <Button
                         variant="contained"
                         disabled={!newGroupName.trim()}
                         onClick={handleAdd}
                     >
-                        Add
+                        {t("quotation.form.add")}
                     </Button>
                 </DialogActions>
             </Dialog>

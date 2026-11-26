@@ -2,6 +2,7 @@ import React from "react";
 import BarChartComponent from "../../../components/Charts/BarChartComponent";
 import { Card, CardContent, CardHeader } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { translateDataValue } from "../../../i18n/i18n";
 
 interface Data {
     name: string,
@@ -22,7 +23,7 @@ const BarChartWidget: React.FC<WidgetPieChartProps> = ({title, legend_title, dat
 
     const translateData = translate ? data.map(item => ({
         ...item,
-        name: t(`dashboard.barchart.categories.${item.name}`)
+        name: translateDataValue('dashboard.barchart.categories', String(item.name))
     }))
     : data;
 

@@ -60,8 +60,6 @@ class APIObject
 
             throw new Exception('Signature is incorrect.');
         }
-        
-        Log::info('Signature: ' . $this->signatureData);
     }
 
     public function getTransactionRefId(){
@@ -155,8 +153,6 @@ class APIObject
                     $decryptedVoucherCode = $this->decrypt_data($voucher['voucherCode']);
                     $voucher['voucherCode'] = $decryptedVoucherCode;
 
-                    Log::info('Voucher code: ' . $voucher['voucherCode']);
-
                     $decryptedVoucherLink = $this->decrypt_data($voucher['voucherLink']);
                     $voucher['voucherLink'] = $decryptedVoucherLink;
 
@@ -237,6 +233,9 @@ class APIObject
 
             // Set cURL options
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            // Without these cURL waits forever and PHP's time limit kills the request with no error recorded.
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header); // Set headers if any
 
             // Execute cURL session and get the response
@@ -284,6 +283,8 @@ class APIObject
 
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET"); // ép GET
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 
             // Gửi body JSON
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
@@ -299,7 +300,6 @@ class APIObject
             // --- LOG trước khi gửi ---
             Log::info('GotIt API Request URL: ' . $url);
             Log::info('GotIt API Request Body: ' . json_encode($body));
-            Log::info('GotIt API Request Header: ' . json_encode($header));
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -338,6 +338,8 @@ class APIObject
 
             // Set cURL options
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 
             $header = $this->header;
 

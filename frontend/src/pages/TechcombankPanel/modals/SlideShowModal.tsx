@@ -45,17 +45,17 @@ const SlideShowModal: React.FC<ModalProps> = ({openModal, onClose})  => {
             id="modal-modal-title"
             variant="h6"
             component="h2"
-            textAlign="center"
+            sx={{ textAlign: "center" }}
             >
               Slides
             </Typography>
             <Divider />
-            <Grid container rowGap={3} columnSpacing={3} className="content-modal">
-                <Grid item xs={12}>
+            <Grid container columnSpacing={3} className="content-modal" sx={{ rowGap: 3 }}>
+                <Grid size={12}>
                 <img src={slides[currentSlide]} alt={`Slide ${currentSlide + 1}`} className="tcb-slide-image" />
                 </Grid>
             </Grid>
-            <Box className="btn-modal-footer" textAlign="end">
+            <Box className="btn-modal-footer" sx={{ textAlign: "end" }}>
                 <Button color="inherit" onClick={handlePrevSlide}>
                     Previous
                 </Button>

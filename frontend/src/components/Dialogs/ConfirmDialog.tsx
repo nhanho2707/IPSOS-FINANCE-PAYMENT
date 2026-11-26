@@ -7,7 +7,7 @@ import {
     DialogContentText,
     DialogTitle,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
+import T from "../../i18n/T";
 
 export type ConfirmDialogTone = "default" | "danger";
 
@@ -31,7 +31,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     onClose,
     onConfirm,
     showConfirmButton = true,
-    confirmText = "Confirm",
+    confirmText,
     cancelText,
     tone = "default",
     loading = false,
@@ -47,32 +47,32 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             aria-labelledby="confirm-dialog-title"
             aria-describedby="confirm-dialog-description"
         >
-            <DialogTitle id="confirm-dialog-title" sx={{ fontSize: "1.0625rem", fontWeight: 600 }}>
+            <DialogTitle id="confirm-dialog-title">
                 {title}
             </DialogTitle>
             <DialogContent>
                 <DialogContentText
                     id="confirm-dialog-description"
                     component="div"
-                    sx={{ whiteSpace: "pre-line", fontSize: "0.875rem" }}
+                    sx={{ whiteSpace: "pre-line" }}
                 >
                     {message}
                 </DialogContentText>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={onClose} color="inherit" disabled={loading}>
-                    {cancelText ?? (hasConfirm ? "Cancel" : "Close")}
+                    {cancelText ?? <T k={hasConfirm ? "common.actions.cancel" : "common.actions.close"} />}
                 </Button>
                 {hasConfirm && (
-                    <LoadingButton
+                    <Button
                         onClick={onConfirm}
                         variant="contained"
                         color={tone === "danger" ? "error" : "primary"}
                         loading={loading}
                         autoFocus={tone !== "danger"}
                     >
-                        {confirmText}
-                    </LoadingButton>
+                        {confirmText ?? <T k="common.actions.confirm" />}
+                    </Button>
                 )}
             </DialogActions>
         </Dialog>

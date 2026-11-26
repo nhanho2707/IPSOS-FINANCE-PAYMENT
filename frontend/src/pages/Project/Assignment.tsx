@@ -1,14 +1,14 @@
 import { useParams } from "react-router-dom";
+import axios from "axios";
 import { ProjectData } from "../../config/ProjectFieldsConfig";
 import { useEffect, useState } from "react";
 import { useProjects } from "../../hook/useProjects";
-import { Autocomplete, Box, Checkbox, Grid, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Checkbox, Grid, TextField, Typography, Button } from "@mui/material";
 import { useMetadata } from "../../hook/useMetadata";
-import LoadingButton from "@mui/lab/LoadingButton";
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import { UserData } from "../../config/AccountFieldsConfig";
-import ConfirmDialog from "../../components/Dialogs/ConfirmDialog";
-import useDialog from "../../hook/useDialog";
+import { useToast } from "../../contexts/ToastContext";
+import { useTranslation } from "react-i18next";
 
 const Assignment: React.FC = () => {
     const { id } = useParams<{id: string}>();
@@ -20,26 +20,28 @@ const Assignment: React.FC = () => {
 
     const { actionState, getProject, assignUsers } = useProjects();
     const { data, isLoading } = useMetadata();
-    const { openDialog, dialogProps } = useDialog();
+    const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const handleAssignUsers = async () => {
         try
         {
             const user_ids = assignedUsers.map(u => u.id);
 
+            setLoadingAssignUsers(true);
+
             const response = await assignUsers(projectId, user_ids);
 
-            openDialog({
-                title : 'Permissions',
-                message : response.status_code === 400 ? response.error : response.message,
-                showConfirmButton: false
-            });
-        } catch(error: any){
-            openDialog({
-                title : 'Permissions',
-                message : error.response.data.error || 'Assignment failed.',
-                showConfirmButton: false
-            });
+            if (response.status_code === 400) {
+                showToast(response.error || t('settings.assignment.failed'), 'error');
+            } else {
+                showToast(response.message || t('settings.assignment.saved'));
+            }
+        } catch(error){
+            const message = axios.isAxiosError(error) ? error.response?.data?.error : undefined;
+            showToast(message || t('settings.assignment.failed'), 'error');
+        } finally {
+            setLoadingAssignUsers(false);
         }
     }
 
@@ -59,9 +61,9 @@ const Assignment: React.FC = () => {
     
     return (
         <Grid container spacing={2}>
-            <Grid item xs={12}>
-                <Typography sx={{ mb: 2, fontSize: "0.875rem", fontWeight: 600, color: "var(--text-color)" }}>
-                    Select users to assign to this project:
+            <Grid size={12}>
+                <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
+                    {t("settings.assignment.select")}
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Box sx={{ flex: 1 }}>
@@ -80,27 +82,26 @@ const Assignment: React.FC = () => {
                                 </li>
                             )}
                             renderInput={(params) => (
-                                <TextField {...params} size="small" placeholder="Select..." />
+                                <TextField {...params} size="small" placeholder={t("settings.assignment.placeholder")} />
                             )}
                         />
                     </Box>
-                    <LoadingButton
+                    <Button
                         variant="contained"
                         onClick={handleAssignUsers}
                         size="small"
                         startIcon={<PersonAddAltOutlinedIcon />}
                         loading={loadingAssignUsers}
-                        loadingPosition="end"
+                        loadingPosition="start"
                         disabled={assignedUsers.length === 0}
                     >
-                        <span>Assign</span>
-                    </LoadingButton>
+                        <span>{t("settings.assignment.assign")}</span>
+                    </Button>
                 </Box>
 
-                <ConfirmDialog {...dialogProps} />
             </Grid>
         </Grid>
-    )
+    );
 }
 
 export default Assignment;

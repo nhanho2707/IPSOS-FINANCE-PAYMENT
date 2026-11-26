@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { VisibilityOff, Visibility } from "@mui/icons-material";
-import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
 
 import {
@@ -12,9 +11,12 @@ import {
     OutlinedInput,
     IconButton,
     FormControl,
-    Box
-  } from "@mui/material";
+    Box,
+    Button,
+} from "@mui/material";
 import { ApiConfig } from "../../config/ApiConfig";
+import LanguageSwitch from "../../components/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 const useQuery = () => {
     return new URLSearchParams(useLocation().search);
@@ -27,6 +29,7 @@ const ConfirmPassword = () => {
     
     const query = useQuery();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [email, setEmail] = useState(query.get('email') || '');
     const [token, setToken] = useState(query.get('token') || '');
     const [statusMessage, setStatusMessage] = useState('');
@@ -70,9 +73,12 @@ const ConfirmPassword = () => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: "var(--body-color)"
+                backgroundColor: "background.default"
             }}
         >
+            <Box sx={{ position: "fixed", top: 16, right: 16 }}>
+                <LanguageSwitch />
+            </Box>
             <Box
                 component="form"
                 noValidate
@@ -83,18 +89,18 @@ const ConfirmPassword = () => {
                     mx: 2,
                     p: 4,
                     borderRadius: 2,
-                    backgroundColor: "#fff",
+                    backgroundColor: "background.paper",
                     boxShadow: 3,
                     display: "flex",
                     flexDirection: "column",
                     gap: 3
                 }}
             >
-                <Typography variant="h5" textAlign="center">
-                    Confirm password
+                <Typography variant="h5" sx={{ textAlign: "center" }}>
+                    {t("auth.confirm.title")}
                 </Typography>
-                <Typography variant="body2" textAlign="center">
-                    This is a secure area of the application. Please confirm your password before continuing.
+                <Typography variant="body2" sx={{ textAlign: "center" }}>
+                    {t("auth.confirm.description")}
                 </Typography>
                 {statusMessage.length !== 0 && (
                     <div className='message-invalid'>
@@ -102,42 +108,42 @@ const ConfirmPassword = () => {
                     </div>
                 )}
                 <FormControl fullWidth>
-                    <InputLabel>Password</InputLabel>
+                    <InputLabel>{t("auth.password")}</InputLabel>
                     <OutlinedInput
                         type={showPassword ? "text" : "password"}
                         autoComplete="new-password"
                         onChange={(e) => handleChangeInput("password", e.target.value)}
                         endAdornment={
-                            <IconButton aria-label={showPassword ? "Hide password" : "Show password"} onClick={handleClickShowPassword}>
+                            <IconButton aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")} onClick={handleClickShowPassword}>
                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                         }
-                        label="Password"
+                        label={t("auth.password")}
                     />
                 </FormControl>
                 <FormControl fullWidth>
-                    <InputLabel>Confirm Password</InputLabel>
+                    <InputLabel>{t("auth.set.confirmPassword")}</InputLabel>
                     <OutlinedInput
                         type={showPassword ? "text" : "password"}
                         autoComplete="new-password"
                         onChange={(e) => handleChangeInput("password_confirmation", e.target.value)}
                         endAdornment={
-                            <IconButton aria-label={showPassword ? "Hide password" : "Show password"} onClick={handleClickShowPassword}>
+                            <IconButton aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")} onClick={handleClickShowPassword}>
                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                         }
-                        label="Confirm Password"
+                        label={t("auth.set.confirmPassword")}
                     />
                 </FormControl>
-                <LoadingButton
+                <Button
                     fullWidth
                     type="submit"
                     endIcon={<SendIcon />}
                     loading={loading}
                     variant="contained"
                 >
-                    Reset password
-                </LoadingButton>
+                    {t("auth.confirm.submit")}
+                </Button>
             </Box>
         </Box>
     );

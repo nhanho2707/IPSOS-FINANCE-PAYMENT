@@ -51,16 +51,29 @@ class ProjectRespondentController extends Controller
             }
 
             $perPage = $request->input('perPage', 10);
+            $giftStatus = $request->input('status');
 
-            $query = $project->projectRespondents()
-                                            ->with('province:id,name')
-                                            ->with('employee:id,employee_id');
+            $respondents = ProjectRespondent::query()
+                ->where('project_id', $project->id)
+                ->search($request->input('searchTerm'));
 
-            if($request->input('status') === 'pending'){
-                $query->where('status', ProjectRespondent::STATUS_RESPONDENT_PENDING);
+            // Counted before the status filter so every tab shows its own total for the current search.
+            $statusCounts = ProjectRespondent::giftStatusCounts($respondents);
+
+            $query = (clone $respondents)->with([
+                'province:id,name',
+                'employee:id,employee_id,first_name,last_name',
+            ]);
+
+            if($giftStatus){
+                $query->withGiftStatus($giftStatus);
             }
             
             $projectRespondents = $query->orderBy('id')->paginate($perPage);
+
+            // The resource works out each row's live/test from the project's status; share one loaded project.
+            $project->loadMissing('projectDetails');
+            $projectRespondents->getCollection()->each->setRelation('project', $project);
 
             return response()->json([
                 'status_code' => 400,
@@ -71,6 +84,7 @@ class ProjectRespondentController extends Controller
                     'per_page' => $projectRespondents->perPage(),
                     'total' => $projectRespondents->total(),
                     'last_page' => $projectRespondents->lastPage(),
+                    'status_counts' => $statusCounts,
                 ]
             ]);
         } 
@@ -235,23 +249,12 @@ class ProjectRespondentController extends Controller
             try
             {
                 $successCount = 0;
+                $environmentCounts = [ProjectRespondent::ENVIRONMENT_LIVE => 0, ProjectRespondent::ENVIRONMENT_TEST => 0];
 
                 foreach($projectRespondentData as $row)
                 {
-                    $environment = 'live';
-
-                    if($project->projectDetails->status === Project::STATUS_IN_COMING || $project->projectDetails->status === Project::STATUS_ON_HOLD || 
-                        ($project->projectDetails->status === Project::STATUS_ON_GOING && !in_array(substr(strtolower($row['employee_id']), 0, 2), ['hn', 'sg', 'dn', 'ct', 'ma'])))
-                        {
-                            $environment = 'test';
-                        }
-
-                    if(strlen($row['location_id']) == 0 || 
-                        strtolower($row['location_id']) === '_defaultsp' || 
-                            !in_array(substr(strtolower($row['location_id']), 0, 2), ['hn', 'sg', 'dn', 'ct', 'ma']))
-                            {
-                                $environment = 'test';
-                            }
+                    $environment = ProjectRespondent::environmentFor($project->projectDetails->status, $row['employee_id'], $row['location_id']);
+                    $environmentCounts[$environment]++;
                     
                     $province_id = $provinceIds[$row['province_name']];
                     $employee_id = $employeeIds[$row['employee_id']];
@@ -285,7 +288,10 @@ class ProjectRespondentController extends Controller
                     'status_code' => 900,
                     'message' => 'Import successfully',
                     'batch_id' => $batchId,
-                    'imported_count' => $successCount
+                    'imported_count' => $successCount,
+                    'live_count' => $environmentCounts[ProjectRespondent::ENVIRONMENT_LIVE],
+                    'test_count' => $environmentCounts[ProjectRespondent::ENVIRONMENT_TEST],
+                    'project_status' => $project->projectDetails->status,
                 ]);
             }
             catch (\Throwable $e) {

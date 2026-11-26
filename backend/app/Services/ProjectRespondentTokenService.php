@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
@@ -77,7 +76,11 @@ class ProjectRespondentTokenService
 
         $record = ProjectRespondentToken::where('token_public', $public)->first();
 
-        if(!$record || !Hash::check($secret, $record->token_hash)){
+        if(!$record){
+            throw new \Exception(TransactionStatus::STATUS_INVALID, 501);
+        }
+
+        if(!Hash::check($secret, $record->token_hash)){
             $record->increment('attempts');
             throw new \Exception(TransactionStatus::STATUS_INVALID, 501);
         }
@@ -160,14 +163,10 @@ class ProjectRespondentTokenService
 
         [$public, $batch_id] = explode('.', $token);
 
-        Log::info('Token Offline: ', [$public, $batch_id]);
-
         $record = ProjectRespondentToken::where('token_public', $public)
                                             ->where('batch_id', $batch_id)
                                             ->where('status', 'active')
                                             ->first();
-        
-        Log::info('Error: ' . $record);
 
         if(!$record){
             throw new \Exception(TransactionStatus::STATUS_INVALID, 501);
@@ -187,5 +186,41 @@ class ProjectRespondentTokenService
         return $record;
     }
 
+    /**
+     * The respondent a gift lookup belongs to: the token must be theirs (online secret or offline batch id)
+     * and the transaction one of their own. Expiry and blocking are not checked, so a respondent can look
+     * their code up again after the gift was sent, but nobody can read another respondent's code.
+     */
+    public function respondentForTransactionLookup(string $token, string $transactionId): ProjectRespondent
+    {
+        if(!str_contains($token, '.')){
+            throw new \Exception(TransactionStatus::STATUS_INVALID, 501);
+        }
 
+        [$public, $secret] = explode('.', $token, 2);
+
+        $record = ProjectRespondentToken::where('token_public', $public)->first();
+
+        $isOwner = $record && (
+            ($record->batch_id !== null && hash_equals((string) $record->batch_id, $secret))
+            || Hash::check($secret, $record->token_hash)
+        );
+
+        if(!$isOwner){
+            throw new \Exception(TransactionStatus::STATUS_INVALID, 501);
+        }
+
+        $projectRespondent = $record->projectRespondent;
+
+        $ownsTransaction = $projectRespondent && (
+            $projectRespondent->vinnetTransactions()->where('vinnet_payservice_requuid', $transactionId)->exists()
+            || $projectRespondent->gotitVoucherTransactions()->where('transaction_ref_id', $transactionId)->exists()
+        );
+
+        if(!$ownsTransaction){
+            throw new \Exception(TransactionStatus::STATUS_INVALID_TRANSACTION, 501);
+        }
+
+        return $projectRespondent;
+    }
 }

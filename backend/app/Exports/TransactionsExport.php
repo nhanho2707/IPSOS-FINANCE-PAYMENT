@@ -37,7 +37,7 @@ class TransactionsExport extends StreamedXlsxExport
                             'Thành công',
                             'Voucher được cập nhật thành công.'
                         ])
-                        ->orWhere(DB::raw("COALESCE(pvt.vinnet_token_message, pgv.voucher_status) like 'Voucher được cancelled by GotIt ngày%'"));
+                        ->orWhereRaw("COALESCE(pvt.vinnet_token_message, pgv.voucher_status) like 'Voucher được cancelled by GotIt ngày%'");
                     })
                     ->whereIn('pr.channel', [
                         'vinnet',
@@ -56,7 +56,8 @@ class TransactionsExport extends StreamedXlsxExport
                         DB::raw("COALESCE(pvt.vinnet_payservice_requuid, pgv.transaction_ref_id) as transaction_id"),
                         'pr.service_code',
                         DB::raw("COALESCE(pvt.created_at, pgv.created_at) as created_at"),
-                        'pr.channel',
+                        // The provider of the transaction on this row; pr.channel can say 'other' after a refusal.
+                        DB::raw("CASE WHEN pvt.id IS NULL THEN 'gotit' ELSE 'vinnet' END as channel"),
                         'pr.phone_number',
                         DB::raw("COALESCE(pvt.total_amt, pgv.voucher_value) as amount"),
                         'pvt.discount',

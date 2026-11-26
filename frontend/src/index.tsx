@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import reportWebVitals from "./reportWebVitals";
 import "./assets/css/global.css";
 import "./assets/css/layout.css";
 import "./assets/css/components.css";
@@ -10,9 +9,10 @@ import "./assets/css/table.css";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { GlobalStyles, ThemeProvider } from "@mui/material";
-import { appTheme, themeCssVariables } from "./config/ThemeConfig";
+import { GlobalStyles } from "@mui/material";
+import { themeCssVariables } from "./config/ThemeConfig";
 import { ToastProvider } from "./contexts/ToastContext";
+import AppLocaleProvider from "./i18n/AppLocaleProvider";
 
 const queryClient = new QueryClient();
 
@@ -22,20 +22,15 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={appTheme}>
-      <GlobalStyles styles={{ ":root": themeCssVariables }} />
-      <ToastProvider>
-        <I18nextProvider i18n={i18n}>
+    <I18nextProvider i18n={i18n}>
+      <AppLocaleProvider>
+        <GlobalStyles styles={{ ":root": themeCssVariables }} />
+        <ToastProvider>
           <QueryClientProvider client={queryClient}>
             <App />
           </QueryClientProvider>
-        </I18nextProvider>
-      </ToastProvider>
-    </ThemeProvider>
+        </ToastProvider>
+      </AppLocaleProvider>
+    </I18nextProvider>
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

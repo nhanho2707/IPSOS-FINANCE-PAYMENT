@@ -1,0 +1,186 @@
+{
+    "wait": {
+        "early": "Trước khi PV kết thúc",
+        "le15": "Trong 15 phút",
+        "le60": "15–60 phút",
+        "le360": "1–6 giờ",
+        "le1440": "6–24 giờ",
+        "gt1440": "Hơn 1 ngày"
+    },
+    "weekdays": {
+        "1": "T2",
+        "2": "T3",
+        "3": "T4",
+        "4": "T5",
+        "5": "T6",
+        "6": "T7",
+        "7": "CN"
+    },
+    "giftStatus": {
+        "success": "Đã gửi quà",
+        "pending": "Đang chờ",
+        "refused": "Từ chối nhận",
+        "failed": "Thất bại",
+        "none": "Không có giao dịch"
+    },
+    "duration": {
+        "minutes": "{{m}} phút",
+        "hours": "{{h}} giờ {{m}} phút",
+        "days": "{{d}} ngày {{h}} giờ"
+    },
+    "panel": {
+        "noInterviewer": "Không có PVV",
+        "projectNumber": "Dự án {{id}}",
+        "noChange": "Không đổi",
+        "vs": "so với {{period}}",
+        "dayBefore": "ngày trước đó",
+        "previousDays": "{{days}} ngày trước đó",
+        "interviews": "Số bài",
+        "giftsSent": "Quà đã gửi",
+        "ofInterviews": "{{share}} số bài",
+        "giftValue": "Giá trị quà",
+        "perGift": "{{amount}} mỗi quà",
+        "medianWait": "Thời gian chờ quà (trung vị)",
+        "measuredOn_one": "Tính trên {{n}} quà",
+        "measuredOn_other": "Tính trên {{n}} quà",
+        "toReview": "Cần kiểm tra",
+        "reviewCaption": "Gửi trước khi PV kết thúc",
+        "reviewShare": "{{share}} số quà đo được",
+        "overTime": "Theo thời gian",
+        "byInterviewer": "Theo PVV",
+        "byInterviewerDescription": "Số bài và quà theo từng mã PVV. Chọn một dòng để lọc toàn bộ trang.",
+        "interviewerId": "Mã PVV",
+        "interviewer": "PVV",
+        "showOnlyInterviewer": "chỉ xem PVV này",
+        "searchInterviewer": "Tìm PVV",
+        "byProject": "Theo dự án",
+        "byProjectDescription": "Số bài và quà theo từng dự án. Chọn một dòng để xem riêng dự án đó.",
+        "projectCode": "Mã dự án",
+        "projectName": "Tên dự án",
+        "showOnlyProject": "chỉ xem dự án này",
+        "searchProject": "Tìm dự án"
+    },
+    "breakdown": {
+        "interviews": "Số bài",
+        "gifts": "Quà",
+        "giftValue": "Giá trị quà",
+        "medianWait": "Chờ (trung vị)",
+        "toReview": "Cần kiểm tra",
+        "reviewTooltip": "Quà gửi trước khi PV kết thúc",
+        "exportExcel": "Xuất Excel",
+        "nothingMatches": "Không có kết quả cho “{{term}}”",
+        "noInterviews": "Không có bài nào với bộ lọc này"
+    },
+    "hours": {
+        "title": "Theo giờ trong ngày",
+        "description": "Giờ bắt đầu phỏng vấn và giờ nhận quà (giờ Việt Nam). Chọn một giờ để lọc.",
+        "started": "Bài bắt đầu",
+        "received": "Quà đã nhận",
+        "groupLabel": "Số bài bắt đầu và số quà nhận theo giờ. Dùng phím mũi tên để đọc từng giờ, Enter để lọc.",
+        "imgLabel": "Số bài bắt đầu và số quà nhận theo giờ",
+        "announce": "{{hour}}: {{started}} bài bắt đầu, {{received}} quà đã nhận"
+    },
+    "heatmap": {
+        "title": "Tổng quan theo tuần",
+        "description": "Số bài bắt đầu theo thứ và giờ (giờ Việt Nam). Chọn một ô để lọc.",
+        "groupLabel": "Số bài bắt đầu theo thứ và giờ. Dùng phím mũi tên để đọc từng giờ, Enter để lọc.",
+        "imgLabel": "Số bài bắt đầu theo thứ và giờ",
+        "announce": "{{slot}}: {{count}} bài bắt đầu"
+    },
+    "waitChart": {
+        "title": "Thời gian chờ quà",
+        "description": "Từ lúc kết thúc phỏng vấn đến lúc nhận quà. Chọn một dòng để lọc.",
+        "earlyNote": "Sớm hơn {{minutes}} phút",
+        "aria": "{{label}}: {{gifts}} quà, {{share}}",
+        "noEnd": "{{n}} bài không có giờ kết thúc",
+        "offline": "{{n}} bài nhập offline",
+        "notMeasured": "Không tính: {{items}}.",
+        "and": " và "
+    },
+    "trend": {
+        "metrics": {
+            "interviews": "Số bài",
+            "gifts": "Số quà",
+            "amount": "Giá trị quà"
+        },
+        "units": {
+            "day": "ngày",
+            "week": "tuần",
+            "month": "tháng"
+        },
+        "description": "{{metric}} theo {{unit}}, tính theo ngày phỏng vấn.",
+        "zoomHint": "Chọn một cột để xem chi tiết.",
+        "measure": "Chỉ số",
+        "groupLabel": "{{title}}: {{metric}} theo {{unit}}. Dùng phím mũi tên để đọc từng {{unit}}.",
+        "groupLabelZoom": "{{title}}: {{metric}} theo {{unit}}. Dùng phím mũi tên để đọc từng {{unit}}, Enter để xem chi tiết.",
+        "imgLabel": "{{metric}} theo {{unit}}",
+        "total": "Tổng"
+    },
+    "chartEmpty": "Không có dữ liệu với bộ lọc này",
+    "filters": {
+        "interviewDate": "Ngày phỏng vấn",
+        "channel": "Kênh",
+        "interviewer": "PVV",
+        "wait": "Thời gian chờ",
+        "time": "Giờ",
+        "reset": "Đặt lại"
+    },
+    "interviews": {
+        "title": "Danh sách bài",
+        "description": "Các bài phỏng vấn đứng sau số liệu ở trên. “Cần kiểm tra” là các quà gửi sớm hơn {{minutes}} phút trước khi PV kết thúc.",
+        "views": {
+            "review": "Cần kiểm tra",
+            "all": "Tất cả bài",
+            "no_gift": "Chưa có quà"
+        },
+        "empty": {
+            "review": "Không có quà nào gửi trước khi PV kết thúc",
+            "all": "Không có bài nào với bộ lọc này",
+            "no_gift": "Mọi bài đều đã có quà"
+        },
+        "nothingMatches": "Không có kết quả cho “{{term}}”",
+        "search": "Tìm mã, SĐT hoặc PVV",
+        "exportExcel": "Xuất Excel",
+        "exportFailed": "Xuất file không thành công: {{error}}",
+        "columns": {
+            "respondent": "Đáp viên",
+            "project": "Dự án",
+            "channel": "Kênh",
+            "interviewer": "PVV",
+            "interview": "Phỏng vấn",
+            "giftReceived": "Nhận quà",
+            "giftValue": "Giá trị quà",
+            "wait": "Chờ"
+        },
+        "offlineImport": "Nhập offline",
+        "endedAt": "Kết thúc {{time}}",
+        "noEnd": "Không có giờ kết thúc"
+    },
+    "drawer": {
+        "fallbackTitle": "Bài phỏng vấn",
+        "showOnly": "Chỉ xem {{code}}",
+        "needsReview": "Cần kiểm tra",
+        "needsReviewTooltip": "Quà được gửi trước khi PV kết thúc",
+        "offlineImport": "Nhập offline",
+        "timeline": "Dòng thời gian",
+        "imported": "Đã nhập",
+        "started": "Bắt đầu phỏng vấn",
+        "ended": "Kết thúc phỏng vấn",
+        "length": "Dài {{duration}}",
+        "giftReceived": "Nhận quà",
+        "noGift": "Chưa có quà",
+        "offlineWait": "Nhập offline nên không đo thời gian chờ",
+        "before": "{{duration}} trước khi PV kết thúc",
+        "after": "{{duration}} sau khi PV kết thúc",
+        "details": "Chi tiết",
+        "respondentId": "Mã đáp viên",
+        "phone": "Số điện thoại",
+        "interviewer": "PVV",
+        "project": "Dự án",
+        "giftValue": "Giá trị quà"
+    },
+    "errors": {
+        "summary": "Không tải được thống kê giao dịch.",
+        "interviews": "Không tải được danh sách bài."
+    }
+}

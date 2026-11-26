@@ -1,0 +1,104 @@
+{
+    "status": {
+        "pending": "Đang chờ",
+        "success": "Đã gửi",
+        "failed": "Thất bại",
+        "refused": "Từ chối nhận"
+    },
+    "all": "Tất cả",
+    "emptyTab": {
+        "pending": "Không có quà nào đang chờ gửi",
+        "success": "Chưa gửi quà nào",
+        "failed": "Không có quà gửi lỗi",
+        "refused": "Không có đáp viên từ chối nhận quà"
+    },
+    "bulkResult": {
+        "title_one": "Đã gửi {{sent}} / {{n}} quà",
+        "title_other": "Đã gửi {{sent}} / {{n}} quà",
+        "stopped_one": "Đã dừng gửi sau {{max}} lần lỗi liên tiếp, nên {{n}} đáp viên chưa được gửi. Hãy kiểm tra nguyên nhân (ví dụ số dư tài khoản) trước khi gửi lại.",
+        "stopped_other": "Đã dừng gửi sau {{max}} lần lỗi liên tiếp, nên {{n}} đáp viên chưa được gửi. Hãy kiểm tra nguyên nhân (ví dụ số dư tài khoản) trước khi gửi lại.",
+        "userStopped_one": "Bạn đã dừng; {{n}} đáp viên chưa được gửi.",
+        "userStopped_other": "Bạn đã dừng; {{n}} đáp viên chưa được gửi.",
+        "failedFallback": "Thất bại",
+        "more_one": "…và {{n}} lỗi khác",
+        "more_other": "…và {{n}} lỗi khác"
+    },
+    "test": {
+        "chip": "Test",
+        "hint": "Khi gửi, quà này được đánh dấu là đã nhận mà không trả qua Vinnet hay GotIt."
+    },
+    "importResult": {
+        "title_one": "Đã nhập {{n}} đáp viên: {{live}} thật, {{test}} test",
+        "title_other": "Đã nhập {{n}} đáp viên: {{live}} thật, {{test}} test",
+        "testNote": "Gửi quà cho đáp viên test chỉ đánh dấu là đã nhận, không trả tiền.",
+        "projectIs": "Dự án đang ở trạng thái <b>{{status}}</b>, nên mọi đáp viên đều tính là test cho đến khi dự án Đang triển khai.",
+        "rule": "Đáp viên là test khi dự án đang Sắp triển khai hoặc Tạm dừng, hoặc khi mã PVV (lúc Đang triển khai) hay mã địa điểm không bắt đầu bằng HN, SG, DN, CT hoặc MA. Điều này được kiểm tra lại mỗi lần gửi quà, nên đáp viên có mã hợp lệ sẽ được trả quà khi dự án Đang triển khai."
+    },
+    "remove": {
+        "title": "Xoá đáp viên",
+        "confirm": "Xoá",
+        "message": "Xoá {{id}} khỏi dự án? Quà của đáp viên này chưa được gửi.",
+        "menu": "Xoá đáp viên",
+        "onlyPending": "Chỉ xoá được đáp viên đang chờ nhận quà"
+    },
+    "toast": {
+        "noPending": "Không có đáp viên nào đang chờ quà.",
+        "pendingLoadFailed": "Không tải được danh sách đáp viên đang chờ. Vui lòng thử lại.",
+        "unexpectedStop": "Việc gửi bị dừng do lỗi không mong muốn. Hãy kiểm tra danh sách trước khi thử lại.",
+        "missingColumns": "Nhập không thành công: file thiếu các cột {{columns}}.",
+        "noRows": "Nhập không thành công: file không có dòng đáp viên nào."
+    },
+    "send": {
+        "title": "Gửi quà",
+        "confirm_one": "Gửi {{n}} quà",
+        "confirm_other": "Gửi {{n}} quà",
+        "message_one": "Gửi quà cho {{n}} đáp viên đã chọn? Mỗi quà được trừ vào tài khoản nhà cung cấp ngay khi gửi.",
+        "message_other": "Gửi quà cho {{n}} đáp viên đã chọn? Mỗi quà được trừ vào tài khoản nhà cung cấp ngay khi gửi.",
+        "one": "Gửi quà",
+        "bulk": "Gửi quà",
+        "stop": "Dừng",
+        "stopping": "Đang dừng…"
+    },
+    "columns": {
+        "selectPage": "Chọn các đáp viên đang chờ ở trang này",
+        "selectRow": "Chọn {{id}}",
+        "respondent": "Đáp viên",
+        "giftPhone": "SĐT nhận quà: {{phone}}",
+        "surveyPhone": "SĐT khảo sát: {{phone}}",
+        "email": "Email: {{email}}",
+        "interviewer": "Phỏng vấn viên",
+        "province": "Tỉnh",
+        "channel": "Kênh",
+        "amount": "Giá trị",
+        "status": "Trạng thái",
+        "actionsFor": "Thao tác cho {{id}}"
+    },
+    "banner": {
+        "failed_one": "{{n}} quà gửi lỗi. Lý do ghi dưới từng quà.",
+        "failed_other": "{{n}} quà gửi lỗi. Lý do ghi dưới từng quà.",
+        "failedSearch_one": "{{n}} quà gửi lỗi trong kết quả tìm kiếm này. Lý do ghi dưới từng quà.",
+        "failedSearch_other": "{{n}} quà gửi lỗi trong kết quả tìm kiếm này. Lý do ghi dưới từng quà.",
+        "showFailed": "Xem quà lỗi"
+    },
+    "bulk": {
+        "selected_one": "Đã chọn {{n}} đáp viên",
+        "selected_other": "Đã chọn {{n}} đáp viên",
+        "total": "Tổng {{amount}}",
+        "selectAllPending": "Chọn tất cả đang chờ",
+        "progress_one": "Đang gửi {{done}} / {{n}} quà — {{sent}} thành công, {{failed}} lỗi. Đừng đóng trang này.",
+        "progress_other": "Đang gửi {{done}} / {{n}} quà — {{sent}} thành công, {{failed}} lỗi. Đừng đóng trang này."
+    },
+    "import": "Nhập đáp viên",
+    "searchPlaceholder": "Tìm số điện thoại",
+    "empty": {
+        "notFound": "Không tìm thấy đáp viên",
+        "nothingMatches": "Không có kết quả cho “{{term}}”.",
+        "nothingMatchesIn": "Không có kết quả cho “{{term}}” trong nhóm quà {{status}}.",
+        "noneTitle": "Chưa có đáp viên",
+        "noneDescription": "Nhập danh sách đáp viên (InstanceID, Shell_ChainID, PhoneNumber, Channel…) để bắt đầu gửi quà."
+    },
+    "errors": {
+        "importFailed": "Nhập không thành công.",
+        "load": "Không tải được danh sách đáp viên"
+    }
+}

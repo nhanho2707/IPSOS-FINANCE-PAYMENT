@@ -1,0 +1,107 @@
+{
+    "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "close": "Close",
+        "submit": "Submit",
+        "submitReason": "Submit reason",
+        "retry": "Retry",
+        "apply": "Apply",
+        "copy": "Copy to clipboard",
+        "moreActions": "More actions",
+        "showValue": "Show value",
+        "hideValue": "Hide value"
+    },
+    "search": {
+        "placeholder": "Search…",
+        "clear": "Clear search"
+    },
+    "table": {
+        "noData": "No data",
+        "bulkActions": "Bulk actions",
+        "bulkProgress": "Bulk progress",
+        "clearSelection": "Clear selection"
+    },
+    "filters": {
+        "clear": "Clear {{label}} filter",
+        "noOptions": "No options",
+        "from": "From",
+        "to": "To",
+        "chooseDates": "Choose dates",
+        "startAfterEnd": "The start date must be on or before the end date.",
+        "presets": {
+            "thisMonth": "This month",
+            "lastMonth": "Last month",
+            "lastDays": "Last {{count}} days",
+            "thisYear": "This year",
+            "lastYear": "Last year",
+            "nextYear": "Next year"
+        }
+    },
+    "toast": {
+        "copied": "Copied to clipboard",
+        "copyFailed": "Copy failed. Please copy it manually."
+    },
+    "sample": {
+        "progress": "Sample progress",
+        "noTarget": "No sample size set",
+        "behind": "behind",
+        "behindTooltip": "{{percent}}% done; about {{expected}}% of the field period has passed",
+        "ofTarget": "{{percent}}% of the target"
+    },
+    "unknown": "Unknown",
+    "status": {
+        "planned": "Planned",
+        "in coming": "Upcoming",
+        "on going": "In field",
+        "completed": "Completed",
+        "on hold": "On hold",
+        "cancelled": "Cancelled",
+        "pending": "Pending",
+        "success": "Success",
+        "refused": "Refused",
+        "failed": "Failed",
+        "suppended": "Suspended",
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "fm_confirmed": "FM confirmed",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "resolved": "Resolved",
+        "active": "Active",
+        "blocked": "Blocked"
+    },
+    "fieldTiming": {
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "startsTomorrow": "Starts tomorrow",
+        "startsIn_one": "Starts in {{count}} day",
+        "startsIn_other": "Starts in {{count}} days",
+        "endsTomorrow": "Ends tomorrow",
+        "endsIn_one": "Ends in {{count}} day",
+        "endsIn_other": "Ends in {{count}} days",
+        "endsToday": "Ends today",
+        "endedYesterday": "Ended yesterday",
+        "endedAgo_one": "Ended {{count}} day ago",
+        "endedAgo_other": "Ended {{count}} days ago"
+    },
+    "language": {
+        "label": "Language",
+        "en": "English",
+        "vi": "Tiếng Việt"
+    },
+    "errorPage": {
+        "notFound": "Page not found",
+        "forbidden": "No access to this page",
+        "generic": "Something went wrong",
+        "defaultMessage": "Sorry, the page you are looking for does not exist.",
+        "code": "Error {{code}}",
+        "backToProjects": "Back to projects",
+        "goBack": "Go back"
+    },
+    "breadcrumb": "Breadcrumb",
+    "providers": {
+        "other": "Other"
+    }
+}

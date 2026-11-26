@@ -13,4 +13,6 @@ declare module 'jsrsasign' {
     export namespace KEYUTIL {
       function getKey(key: string): any;
     }
+
+    export function hextob64(hex: string): string;
 }

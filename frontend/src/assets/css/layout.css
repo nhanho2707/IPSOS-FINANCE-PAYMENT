@@ -4,7 +4,7 @@
 
 .wrapper {
   display: flex;
-  background-color: var(--background-color);
+  background-color: var(--canvas-color);
 }
 
 .content {
@@ -14,7 +14,7 @@
   left: var(--sidebar-expanded);
   transition: var(--transition-02);
   border-radius: 1.25rem;
-  padding: 1.5rem;
+  padding: 4.5rem 1rem 1.5rem;
 }
 
 .content-detail {

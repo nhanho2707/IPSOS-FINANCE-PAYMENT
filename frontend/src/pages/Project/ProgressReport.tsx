@@ -13,6 +13,7 @@ import {
   LinearProgress,
 } from "@mui/material";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend, ResponsiveContainer } from "recharts";
+import { BRAND, NEUTRAL } from "../../config/ThemeConfig";
 
 // Mock data
 const kpi = {
@@ -49,7 +50,7 @@ const DashboardProject: React.FC = () => {
     <Box sx={{ p: 3, fontFamily: "Roboto, sans-serif" }}>
       {/* KPI Overview */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Project progress</Typography>
@@ -58,7 +59,7 @@ const DashboardProject: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Quota completed</Typography>
@@ -73,7 +74,7 @@ const DashboardProject: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Days left</Typography>
@@ -81,7 +82,7 @@ const DashboardProject: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2">Risks / Alerts</Typography>
@@ -96,7 +97,7 @@ const DashboardProject: React.FC = () => {
       {/* Charts Section */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {/* Line chart: tiến độ theo tuần */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle1">Weekly progress</Typography>
@@ -106,7 +107,7 @@ const DashboardProject: React.FC = () => {
                   <XAxis dataKey="week" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="progress" stroke="#1976d2" strokeWidth={3} />
+                  <Line type="monotone" dataKey="progress" stroke={BRAND.accent} strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -114,7 +115,7 @@ const DashboardProject: React.FC = () => {
         </Grid>
 
         {/* Bar chart: quota theo team */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="subtitle1">Quota theo team</Typography>
@@ -125,8 +126,8 @@ const DashboardProject: React.FC = () => {
                   <YAxis type="category" dataKey="team" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" stackId="a" fill="#4caf50" name="Completed" />
-                  <Bar dataKey="remaining" stackId="a" fill="#e0e0e0" name="Remaining" />
+                  <Bar dataKey="completed" stackId="a" fill={BRAND.main} name="Completed" />
+                  <Bar dataKey="remaining" stackId="a" fill={NEUTRAL[200]} name="Remaining" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

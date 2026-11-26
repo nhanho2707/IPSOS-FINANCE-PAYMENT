@@ -42,12 +42,10 @@ const UMEDashboard = () => {
     });
 
     return (
-        <Box p={3} sx={{ backgroundColor: UME_COLORS.cream, minHeight: '100%' }}>
+        <Box sx={{ p: 3, backgroundColor: UME_COLORS.cream, minHeight: '100%' }}>
             <Typography
                 variant="h5"
-                fontWeight={700}
-                sx={{ color: UME_COLORS.y2026, fontFamily: UME_FONTS.heading, mb: 3 }}
-            >
+                sx={{ fontWeight: 700, color: UME_COLORS.y2026, fontFamily: UME_FONTS.heading, mb: 3 }}>
                 UME Dashboard
             </Typography>
 
@@ -61,21 +59,21 @@ const UMEDashboard = () => {
             />
 
             <Grid container spacing={3}>
-                <Grid item xs={12} md={5}>
+                <Grid size={{ xs: 12, md: 5 }}>
                     <NPSDonutChart title="NPS" data={npsData} />
                 </Grid>
-                <Grid item xs={12} md={7}>
+                <Grid size={{ xs: 12, md: 7 }}>
                     <RankedFactorTable title="Ranked factors" data={rankedFactors} />
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <YearComparisonBarChart
                         title="Spend distribution"
                         subheader={`Average: 2025: ${spendAverage.y2025} | 2026: ${spendAverage.y2026} (VND millions)`}
                         data={spendDistribution}
                     />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <ProductComparisonList
                         title="Products consumed"
                         data={productsConsumed}

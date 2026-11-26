@@ -75,8 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::prefix('trade-union/recipient-lists')->group(function () {
             Route::get('/', [TradeUnionRecipientListController::class, 'index']);
-            Route::post('/import', [ImportController::class, 'importRecipients']);
-            Route::post('/{id}/send-email', [TradeUnionRecipientListController::class, 'sendEmail']);
+            Route::post('/import', [ImportController::class, 'importRecipients'])->middleware('extendExecutionTime');
+            Route::post('/{id}/send-email', [TradeUnionRecipientListController::class, 'sendEmail'])->middleware('extendExecutionTime');
         });
     });
 
@@ -90,6 +90,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/projects/{projectId}/transactions/show', [TransactionController::class, 'show']);
         Route::get('/projects/{projectId}/transactions/statistics', [TransactionController::class, 'statistics'])
             ->middleware('ensureUserHasRole:Admin,Finance,Scripter');
+        Route::get('/projects/{projectId}/transactions/statistics/interviews', [TransactionController::class, 'statisticsInterviews'])
+            ->middleware('ensureUserHasRole:Admin,Finance,Scripter');
+        Route::get('/projects/{projectId}/transactions/statistics/interviews/export', [TransactionController::class, 'exportStatisticsInterviews'])
+            ->middleware(['ensureUserHasRole:Admin,Finance,Scripter', 'extendExecutionTime']);
         
         Route::put('/projects/{projectId}/update-info', [ProjectController::class, 'updateProjectInfo'])
             ->middleware('ensureUserHasRole:Admin,Scripter');
@@ -100,7 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/projects/{projectId}/provinces/prices', [ProjectController::class, 'deleteProjectPrice'])
             ->middleware('ensureUserHasRole:Admin,Scripter');
         Route::post('/projects/{projectId}/provinces/prices/import', [ProjectController::class, 'importProjectPrices'])
-            ->middleware('ensureUserHasRole:Admin,Scripter');
+            ->middleware(['ensureUserHasRole:Admin,Scripter', 'extendExecutionTime']);
 
         Route::middleware('ensureUserHasRole:Admin')->group(function () {
             Route::put('/projects/{projectId}/update', [ProjectController::class, 'update']);
@@ -108,7 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/projects/{projectId}/provinces/{provinceId}/remove', [ProjectController::class, 'removeProvinceFromProject']);
             Route::post('/projects/{projectId}/employees/store', [ProjectController::class, 'bulkAddEmployees']);
             Route::delete('/projects/{projectId}/employees/{employeeId}/destroy', [ProjectController::class, 'bulkRemoveEmployee']);
-            Route::post('/projects/{projectId}/offline/respondents/store', [ProjectRespondentController::class, 'bulkImportOfflineProjectRespondents']);
+            Route::post('/projects/{projectId}/offline/respondents/store', [ProjectRespondentController::class, 'bulkImportOfflineProjectRespondents'])->middleware('extendExecutionTime');
             Route::get('/projects/{projectId}/offline/respondents/show', [ProjectRespondentController::class, 'show']);
             Route::delete('/projects/{projectId}/offline/respondents/{projectRespondentId}/destroy', [ProjectRespondentController::class, 'bulkRemoveProjectRespondent']);
             Route::post('/projects/{projectId}/offline/respondents/{projectRespondentId}/transaction', [GotItController::class, 'perform_offline_transaction']);
@@ -126,7 +130,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::middleware('ensureUserHasRole:Admin,Scripter,Field Manager')
             ->prefix('projects/{projectId}/mini-cati')->group(function () {
                 Route::get('/batches/show', [CATIController::class, 'index']);
-                Route::post('/batch/import', [ImportController::class, 'importCATIRespondents']);
+                Route::post('/batch/import', [ImportController::class, 'importCATIRespondents'])->middleware('extendExecutionTime');
                 Route::delete('/batch/{batchId}/destroy', [CATIController::class, 'destroyBatch']);
                 Route::put('/batch/{batchId}/update-status', [CATIController::class, 'updateState']);
             });
@@ -163,10 +167,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('ensureUserHasRole:Admin,Finance')
         ->prefix('transaction-management')->group(function () {
             Route::get('/vinnet/merchant/view', [VinnetController::class, 'get_merchant_info']);
-            Route::post('/vinnet/change-key', [VinnetController::class, 'change_key']);
-            Route::get('/vinnet/merchantinfo', [VinnetController::class, 'merchantinfo']);
+            Route::post('/vinnet/change-key', [VinnetController::class, 'change_key'])->middleware('extendExecutionTime');
+            Route::get('/vinnet/merchantinfo', [VinnetController::class, 'merchantinfo'])->middleware('extendExecutionTime');
             Route::post('/gotit/account/store', [AccountDepositController::class, 'store']);
             Route::get('/gotit/account/{accountType}/view', [AccountDepositController::class, 'getGotItAccount']);
+            Route::get('/gotit/account/{accountType}/deposits', [AccountDepositController::class, 'deposits']);
+            Route::post('/gotit/account/deposits/{depositId}/void', [AccountDepositController::class, 'void']);
             Route::get('/export', [ExportController::class, 'exportTransaction']);
             Route::get('/projects/export', [ExportController::class, 'exportTransactionByProjects']);
         });
@@ -180,10 +186,10 @@ Route::prefix('project-management')->group(function () {
     Route::get('/project/verify_token', [TransactionController::class, 'verify']);
     Route::post('/project/authenticate_token', [TransactionController::class, 'authenticate_token']);
     Route::post('/project/refusal-transaction', [TransactionController::class, 'refusal_transaction']);
-    Route::post('/vinnet/transaction', [VinnetController::class, 'perform_transaction']);
-    Route::post('/vinnet/check-transaction', [VinnetController::class, 'check_transaction']);
-    Route::post('/gotit/transaction', [GotItController::class, 'perform_transaction']);
-    Route::post('/gotit/check-transaction', [GotItController::class, 'check_transaction']);
+    Route::post('/vinnet/transaction', [VinnetController::class, 'perform_transaction'])->middleware('extendExecutionTime');
+    Route::post('/vinnet/check-transaction', [VinnetController::class, 'check_transaction'])->middleware('extendExecutionTime');
+    Route::post('/gotit/transaction', [GotItController::class, 'perform_transaction'])->middleware('extendExecutionTime');
+    Route::post('/gotit/check-transaction', [GotItController::class, 'check_transaction'])->middleware('extendExecutionTime');
 });
 
 // ══════════════════════════════════════════════════════════
@@ -236,8 +242,6 @@ Route::post('cati/authenticate-token', [CatiController::class, 'authenticateToke
 // ══════════════════════════════════════════════════════════
 
 Route::get('/generate-qr', [QrCodeController::class, 'generate']);
-Route::post('/cmc-telecom/sendsms', [VinnetController::class, 'cmc_telecom_send_sms']);
-Route::get('/test_sms', [VinnetController::class, 'test_sms']);
 
 // ══════════════════════════════════════════════════════════
 //  SILVER BULLET DASHBOARD

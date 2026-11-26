@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { ApiConfig } from "../config/ApiConfig";
-import { CloneProjectPayload, ProjectData } from "../config/ProjectFieldsConfig";
-import dayjs, { Dayjs } from "dayjs";
+import { CloneProjectPayload, ProjectData, ProjectStatusCounts } from "../config/ProjectFieldsConfig";
+import { Dayjs } from "dayjs";
 import { ActionState } from "../components/Table/ReusableTable";
+import i18n from "../i18n/i18n";
+import { DEFAULT_ROWS_PER_PAGE } from "../config/ColumnConfig";
 
 export function useProjects() {
 
@@ -17,11 +19,15 @@ export function useProjects() {
     });
 
     const [ page, setPage ] = useState(0);
-    const [ rowsPerPage, setRowsPerPage ] = useState(10);
+    const [ rowsPerPage, setRowsPerPage ] = useState(DEFAULT_ROWS_PER_PAGE);
     const [ searchTerm, setSearchTerm ] = useState("");
 
-    const [ searchFromDate, setSearchFromDate ] = useState<Dayjs>(dayjs().startOf("year"));
-    const [ searchToDate, setSearchToDate ] = useState<Dayjs>(dayjs().endOf("year"));
+    // null on both ends means any field start date; the status tabs and the ordering
+    // (in field first) already keep the list focused without hiding last year's projects.
+    const [ searchFromDate, setSearchFromDate ] = useState<Dayjs | null>(null);
+    const [ searchToDate, setSearchToDate ] = useState<Dayjs | null>(null);
+    const [ statusFilter, setStatusFilter ] = useState<string>("all");
+    const [ statusCounts, setStatusCounts ] = useState<ProjectStatusCounts | null>(null);
 
     const [ meta, setMeta ] = useState<any>(null);
     const [ total, setTotal ] = useState(0); //Tổng số projects từ backend
@@ -49,22 +55,26 @@ export function useProjects() {
                     page: page + 1,        // Laravel dùng page = 1,2,3...
                     perPage: rowsPerPage,
                     searchTerm: searchTerm,
-                    searchFromDate: searchFromDate.format("YYYY-MM-DD"),
-                    searchToDate: searchToDate.format("YYYY-MM-DD")
+                    ...(statusFilter !== "all" && { status: statusFilter }),
+                    ...(searchFromDate && searchToDate && {
+                        searchFromDate: searchFromDate.format("YYYY-MM-DD"),
+                        searchToDate: searchToDate.format("YYYY-MM-DD")
+                    })
                 },
             });
 
             setProjects(response.data.data);
             setMeta(response.data.meta);
             setTotal(response.data.meta.total);
+            setStatusCounts(response.data.meta.status_counts ?? null);
 
             setActionState((prev) => ({
                 ...prev,
                 loading: false,
-                ...options?.silent ? {} : { message: response.data.message }
+                ...(options?.silent ? {} : { message: response.data.message })
             }));
         }catch(error: any){
-            let message = 'Failed to fetch Projects';
+            let message: string = i18n.t('projects.errors.load');
             
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -91,7 +101,7 @@ export function useProjects() {
             }
         }; 
 
-    }, [page, rowsPerPage, searchTerm, searchFromDate, searchToDate, showDisabled]);
+    }, [page, rowsPerPage, searchTerm, searchFromDate, searchToDate, showDisabled, statusFilter]);
 
     const addProject = useCallback(async (payload: Partial<ProjectData>) => {
         setActionState({ type: 'add', loading: true, error: false, message: '' });
@@ -109,7 +119,7 @@ export function useProjects() {
             await fetchProjects();
             return response.data.data;
         } catch (error) {
-            let message = 'Failed to create project';
+            let message: string = i18n.t('projects.errors.create');
             if (axios.isAxiosError(error)) {
                 message = error.response?.data.message ?? error.message;
             }
@@ -136,7 +146,7 @@ export function useProjects() {
             await fetchProjects({ silent: true });
             return response.data.data;
         } catch (error) {
-            let message = 'Failed to clone project';
+            let message: string = i18n.t('projects.errors.clone');
             if (axios.isAxiosError(error)) {
                 message = error.response?.data.message ?? error.message;
             }
@@ -178,10 +188,13 @@ export function useProjects() {
             },
         });
 
-        setProjects(prev => prev.filter(p => p.id !== id));
+        // With disabled projects listed, the row stays and just changes state; otherwise it leaves the list.
+        setProjects(prev => showDisabled
+            ? prev.map(p => p.id === id ? { ...p, disabled } : p)
+            : prev.filter(p => p.id !== id));
 
         return response.data;
-    }, []);
+    }, [showDisabled]);
 
     const assignUsers = async(id: number, user_ids: number[]) => {
         
@@ -292,5 +305,8 @@ export function useProjects() {
         assignUsers,
         showDisabled,
         setShowDisabled,
+        statusFilter,
+        setStatusFilter,
+        statusCounts,
     };
 }

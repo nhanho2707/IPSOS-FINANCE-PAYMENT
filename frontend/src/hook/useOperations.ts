@@ -3,6 +3,7 @@ import { ActionState } from "../components/Table/ReusableTable";
 import { OperationsData } from "../config/QuotationConfig";
 import { ApiConfig } from "../config/ApiConfig";
 import axios from "axios";
+import i18n from "../i18n/i18n";
 
 export function useOperations(projectId: number) {
     
@@ -45,10 +46,10 @@ export function useOperations(projectId: number) {
             setActionState((prev) => ({
                 ...prev,
                 loading: false,
-                ...options?.silent ? {} : { message: response.data.message }
+                ...(options?.silent ? {} : { message: response.data.message })
             }));
         } catch(error: any){
-            let message = 'Failed to get operations data.';
+            let message: string = i18n.t('quotation.errors.operations');
             
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message
@@ -112,7 +113,7 @@ export function useOperations(projectId: number) {
 
             return setSelectedOperations(response.data.data);
         } catch(error: any){
-            let message = 'Failed to get operations data.';
+            let message: string = i18n.t('quotation.errors.operations');
             
             if(axios.isAxiosError(error)){
                 message = error.response?.data.message || error.response?.data.error || error.message

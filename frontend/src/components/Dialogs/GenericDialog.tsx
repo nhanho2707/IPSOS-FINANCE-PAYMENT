@@ -1,6 +1,6 @@
 import React from "react";
 import { Breakpoint, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
+import T from "../../i18n/T";
 
 interface GenericDialogProps {
     open: boolean,
@@ -22,8 +22,8 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
     children,
     onClose,
     onSubmit,
-    submitText = "Submit",
-    cancelText = "Cancel",
+    submitText,
+    cancelText,
     submitDisabled = false,
     loading = false,
     tone = "default",
@@ -32,21 +32,21 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
 
     return (
         <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth={maxWidth}>
-            <DialogTitle sx={{ fontSize: "1.0625rem", fontWeight: 600 }}>{title}</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             <DialogContent sx={{ width: '100%', pt: 2 }}>
                 {children}
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={onClose} color="inherit" disabled={loading}>{cancelText}</Button>
-                <LoadingButton
+                <Button onClick={onClose} color="inherit" disabled={loading}>{cancelText ?? <T k="common.actions.cancel" />}</Button>
+                <Button
                     onClick={onSubmit}
                     variant="contained"
                     color={tone === "danger" ? "error" : "primary"}
                     disabled={submitDisabled}
                     loading={loading}
                 >
-                    {submitText}
-                </LoadingButton>
+                    {submitText ?? <T k="common.actions.submit" />}
+                </Button>
             </DialogActions>
         </Dialog>
     )

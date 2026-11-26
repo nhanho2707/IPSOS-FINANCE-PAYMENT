@@ -43,9 +43,8 @@ const LastestSurveys:React.FC<LastestSurveysProps> = ({ surveys = [], sx }) => {
             </ListItemAvatar>
             <ListItemText
               primary={survey.name}
-              primaryTypographyProps={{ variant: 'subtitle1' }}
               secondary={`Updated ${dayjs(survey.open_date).format('MMM D, YYYY')}`}
-              secondaryTypographyProps={{ variant: 'body2' }}
+              slotProps={{ primary: { variant: 'subtitle1' }, secondary: { variant: 'body2' } }}
             />
             <IconButton edge="end">
               <DotsThreeVerticalIcon weight="bold" />

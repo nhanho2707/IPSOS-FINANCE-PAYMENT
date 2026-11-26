@@ -21,21 +21,22 @@ const RichTextRow = memo(({ row, isEditing, onChange }: Props) => {
     return (
         <TableRow
             sx={{
-                "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                "&:hover": { backgroundColor: "action.hover" },
                 "&:last-child td": { border: 0 },
             }}
         >
             <TableCell
                 width={200}
-                sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-color)" }}
+                sx={{ fontWeight: 600 }}
             >
                 {row.label}
             </TableCell>
-            <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+            <TableCell>
                 <Box sx={{
                     '& .ql-toolbar': { display: isEditing ? 'block' : 'none' },
                     '& .ql-container': {
-                        borderTop: isEditing ? undefined : '1px solid #ccc',
+                        borderTop: isEditing ? undefined : '1px solid',
+                        borderTopColor: 'divider',
                         borderRadius: isEditing ? undefined : '4px',
                     },
                     opacity: isEditing ? 1 : 0.7,

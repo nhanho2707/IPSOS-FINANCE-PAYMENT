@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
+/* Inter is the app font. Roboto stays declared for the respondent pages and client dashboards that name it
+   explicitly; browsers only download a face that is actually used. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap");
 
 html {
   font-size: 14px;
@@ -18,7 +20,6 @@ body {
   --sidebar-collapsed: 5.5rem;  /* 88px */
   --sidebar-expanded: 15.625rem; /* 250px */
 
-  --text-primary-color: #707070;
   --text-secondary-color: #2f469c;
   --text-third-color: #3948a4;
   --text-fifth-color: rgb(214, 67, 67);
@@ -27,7 +28,7 @@ body {
   
   --body-color: rgb(238, 242, 246);
   --background-color: #fff;
-  --main-font: "Roboto","Helvetica","Arial",sans-serif;
+  --main-font: "Inter", "Helvetica", "Arial", sans-serif;
 
   /*   transition */
   --transition-02: all 0.2s ease;
@@ -54,6 +55,4 @@ body {
   --vinnet-color-primary: #007aff;
   --vinnet-color-secondary: #7a00df;
 
-  /* Text */
-  --text-color: #212121;
 }

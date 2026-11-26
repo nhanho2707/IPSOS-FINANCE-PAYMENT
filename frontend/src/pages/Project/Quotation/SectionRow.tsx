@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from "react";
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField, Tooltip, Typography } from "@mui/material";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField, Tooltip, Typography } from "@mui/material";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import RadioRow from "./RadioRow";
 import RangeRow from "./RangeRow";
 import MultiSelectRow from "./MultiSelectRow";
@@ -9,6 +9,11 @@ import RichTextRow from "./RichTextRow";
 import EditableRow from "./EditableRow";
 import { FieldSchema } from "../../../utils/renderFields";
 import { FeedbackThread, FeedbackThreadEntry } from "../../../config/QuotationConfig";
+import { formatDateTime, formatStatus } from "../../../utils/format";
+import StatusChip from "../../../components/StatusChip";
+import { FEEDBACK_STATUS_TONE, getStatusTone } from "../../../config/ThemeConfig";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n/i18n";
 
 export interface SectionRowData {
     [key: string]: any
@@ -30,11 +35,12 @@ type Props = {
 }
 
 // Field-specific overrides that don't belong in the generic backend schema
-const FIELD_OVERRIDES: Record<string, Partial<FieldSchema>> = {
+// A function, so the confirmation text is read in the current language.
+const fieldOverrides = (): Record<string, Partial<FieldSchema>> => ({
     internal_code: { disabled: true, rule: 'maskXXXX_XXXX' },
     project_name:  { rule: 'uppercaseNoSpecial' },
-    project_types: { confirmMessage: 'Changing project type may affect other fields. Are you sure you want to change?' },
-};
+    project_types: { confirmMessage: i18n.t("quotation.form.projectTypeChange") },
+});
 
 
 function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolved' | 'rejected' {
@@ -42,6 +48,11 @@ function getThreadStatus(thread?: FeedbackThread): 'none' | 'pending' | 'resolve
     const last = thread[thread.length - 1];
     if (last.type === 'feedback') return 'pending';
     return last.status ?? 'none';
+}
+
+function rejectionTooltip(thread: FeedbackThread): string {
+    const lastRejection = [...thread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
+    return lastRejection?.content ? i18n.t("quotation.feedback.reason", { reason: lastRejection.content }) : i18n.t("quotation.feedback.rejected");
 }
 
 function statusColor(status: ReturnType<typeof getThreadStatus>): string {
@@ -74,12 +85,9 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                 }}
             >
                 {!isFeedback && entry.status && (
-                    <Chip
-                        label={entry.status === 'resolved' ? 'Resolved' : 'Rejected'}
-                        size="small"
-                        color={entry.status === 'resolved' ? 'success' : 'error'}
-                        sx={{ mb: 0.5 }}
-                    />
+                    <Box sx={{ mb: 0.5 }}>
+                        <StatusChip label={formatStatus(entry.status)} tone={getStatusTone(entry.status, FEEDBACK_STATUS_TONE)} />
+                    </Box>
                 )}
                 {entry.content && (
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -87,14 +95,15 @@ function ThreadBubble({ entry }: { entry: FeedbackThreadEntry }) {
                     </Typography>
                 )}
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, px: 0.5 }}>
-                {entry.user_name} · {new Date(entry.created_at).toLocaleString()}
+            <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.25, px: 0.5 }}>
+                {entry.user_name} · {formatDateTime(entry.created_at)}
             </Typography>
         </Box>
     );
 }
 
 const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSave, onFeedbackResponse}: Props) => {
+    const { t } = useTranslation();
     const [ draft, setDraft ] = useState<SectionRowData>(row.value || {});
     const [ feedbackOpen, setFeedbackOpen ] = useState(false);
     const [ feedbackText, setFeedbackText ] = useState('');
@@ -131,7 +140,7 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
     const renderField = (fieldSchema: FieldSchema) => {
         let disabled = false;
         let options = fieldSchema.options ?? [];
-        const field: FieldSchema = { ...fieldSchema, ...FIELD_OVERRIDES[fieldSchema.name] };
+        const field: FieldSchema = { ...fieldSchema, ...fieldOverrides()[fieldSchema.name] };
 
         switch (field.type) {
             case 'text':
@@ -298,18 +307,18 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
         <>
             <TableRow
                 sx={{
-                    "&:hover": { backgroundColor: "rgba(0, 157, 156, 0.05)" },
+                    "&:hover": { backgroundColor: "action.hover" },
                     "&:last-child td": { border: 0 },
                 }}
             >
                 <TableCell
                     width={200}
-                    sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "var(--text-color)" }}
+                    sx={{ fontWeight: 600 }}
                 >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: 'wrap' }}>
                         <span>{row.label}</span>
                         {showIcon && (
-                            <Tooltip title={threadStatus === 'pending' ? 'Has pending feedback' : threadStatus === 'resolved' ? 'Resolved' : threadStatus === 'rejected' ? 'Rejected' : 'Add feedback'}>
+                            <Tooltip title={threadStatus === 'pending' ? t("quotation.feedback.pending") : threadStatus === 'resolved' ? t("quotation.feedback.resolved") : threadStatus === 'rejected' ? t("quotation.feedback.rejected") : t("quotation.feedback.add")}>
                                 <IconButton
                                     size="small"
                                     onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
@@ -319,50 +328,23 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                                 </IconButton>
                             </Tooltip>
                         )}
-                        {threadStatus === 'resolved' && (
-                            <Chip
-                                label="Resolved"
-                                size="small"
-                                color="success"
-                                variant="outlined"
+                        {threadStatus !== 'none' && (
+                            <StatusChip
+                                label={formatStatus(threadStatus)}
+                                tone={getStatusTone(threadStatus, FEEDBACK_STATUS_TONE)}
+                                tooltip={threadStatus === 'rejected' ? rejectionTooltip(safeThread) : undefined}
                                 onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
-                            />
-                        )}
-                        {threadStatus === 'rejected' && (() => {
-                            const lastResponse = [...safeThread].reverse().find(e => e.type === 'response' && e.status === 'rejected');
-                            return (
-                                <Tooltip title={lastResponse?.content ? `Reason: ${lastResponse.content}` : 'Rejected'} placement="top">
-                                    <Chip
-                                        label="Rejected"
-                                        size="small"
-                                        color="error"
-                                        variant="outlined"
-                                        onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                        sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
-                                    />
-                                </Tooltip>
-                            );
-                        })()}
-                        {threadStatus === 'pending' && (
-                            <Chip
-                                label="Pending"
-                                size="small"
-                                color="warning"
-                                variant="outlined"
-                                onClick={() => { setFeedbackText(''); setResponseText(''); setFeedbackOpen(true); }}
-                                sx={{ cursor: 'pointer', fontSize: '0.7rem', height: 20 }}
                             />
                         )}
                     </Box>
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.8125rem", color: "var(--text-color)" }}>
+                <TableCell>
                     { renderMiniTable(row.fields) }
                 </TableCell>
             </TableRow>
 
             <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>Feedback: {row.label}</DialogTitle>
+                <DialogTitle>{t("quotation.feedback.title", { label: row.label })}</DialogTitle>
                 <DialogContent sx={{ pt: 1 }}>
                     {safeThread.length > 0 && (
                         <Box sx={{ mb: 2 }}>
@@ -380,7 +362,7 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                             fullWidth
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Write feedback for Researcher..."
+                            placeholder={t("quotation.feedback.writePlaceholder")}
                             size="small"
                         />
                     )}
@@ -392,13 +374,13 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                             fullWidth
                             value={responseText}
                             onChange={(e) => setResponseText(e.target.value)}
-                            placeholder="Optional: add a note with your response..."
+                            placeholder={t("quotation.feedback.responsePlaceholder")}
                             size="small"
                         />
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setFeedbackOpen(false)}>Close</Button>
+                    <Button onClick={() => setFeedbackOpen(false)}>{t("quotation.feedback.close")}</Button>
 
                     {onFeedbackSave && (
                         <Button
@@ -406,17 +388,17 @@ const SectionRow = memo(({row, isEditing, onChange, feedbackThread, onFeedbackSa
                             disabled={!feedbackText.trim()}
                             onClick={handleSendFeedback}
                         >
-                            Send Feedback
+                            {t("quotation.feedback.send")}
                         </Button>
                     )}
 
                     {canRespond && (
                         <>
                             <Button color="error" variant="outlined" onClick={() => handleSendResponse('rejected')}>
-                                Reject
+                                {t("quotation.feedback.reject")}
                             </Button>
                             <Button color="success" variant="contained" onClick={() => handleSendResponse('resolved')}>
-                                Mark Resolved
+                                {t("quotation.feedback.resolve")}
                             </Button>
                         </>
                     )}

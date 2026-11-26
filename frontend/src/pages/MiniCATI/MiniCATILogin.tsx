@@ -1,5 +1,4 @@
-import { Box, FormControl, InputLabel, MenuItem, TextField, Typography } from "@mui/material";
-import LoadingButton from '@mui/lab/LoadingButton';
+import { Box, FormControl, InputLabel, MenuItem, TextField, Typography, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { ApiConfig } from "../../config/ApiConfig";
@@ -86,7 +85,7 @@ export default function MiniCATILogin(){
                     gap: 3
                 }}
             >
-                <Typography variant="h6" textAlign="center">
+                <Typography variant="h6" sx={{ textAlign: "center" }}>
                     <span>MINI-CATI Login</span>
                 </Typography>
                 {error.length != 0 && (
@@ -130,7 +129,7 @@ export default function MiniCATILogin(){
                     />
                 </FormControl>
 
-                <LoadingButton
+                <Button
                     fullWidth
                     onClick={handleLogin}
                     loading={loading}
@@ -138,8 +137,8 @@ export default function MiniCATILogin(){
                     variant="contained"
                 >
                     LOGIN
-                </LoadingButton>
+                </Button>
             </Box>
         </Box>
-    )
+    );
 } 

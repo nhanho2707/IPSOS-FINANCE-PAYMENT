@@ -1,12 +1,19 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { ApiConfig } from "../config/ApiConfig";
+import { DepositVoidResult, GotItDeposit } from "../config/FinanceConfig";
 
 interface gotitAccountData {
     deposited: number,
     spent: number,
     balance: number
 }
+
+const toAccount = (data: gotitAccountData): gotitAccountData => ({
+    deposited: data.deposited,
+    spent: data.spent,
+    balance: data.balance
+});
 
 export function useGotItAccount(accountType: string){
     const [ loading, setLoading ] = useState(false);
@@ -44,8 +51,8 @@ export function useGotItAccount(accountType: string){
         }
     }
     
-    // Resolves to false when the deposit was not saved, so the form can stay open and say so.
-    const addDeposit = async (amount: string, note: string): Promise<boolean> => {
+    // Resolves to the saved deposit (so it can be undone), or null when it was not saved and the form should stay open.
+    const addDeposit = async (amount: string, note: string): Promise<GotItDeposit | null> => {
         try{
             setError(false);
             setLoading(true);
@@ -62,11 +69,33 @@ export function useGotItAccount(accountType: string){
                 },
             });
 
-            setGotItAccount(res.data);
-            return true;
+            setGotItAccount(toAccount(res.data));
+            return res.data.deposit;
         } catch(error){
             setError(true);
-            return false;
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const voidDeposit = async (depositId: number, reason: string): Promise<DepositVoidResult> => {
+        try{
+            setLoading(true);
+
+            const token = localStorage.getItem('authToken');
+
+            const res = await axios.post(ApiConfig.gotit.voidDeposit.replace('{depositId}', depositId.toString()), { reason }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setGotItAccount(toAccount(res.data));
+            return "voided";
+        } catch(error){
+            if (axios.isAxiosError(error) && error.response?.status === 409) return "alreadyVoided";
+            return "failed";
         } finally {
             setLoading(false);
         }
@@ -80,6 +109,7 @@ export function useGotItAccount(accountType: string){
         loading,
         gotitAccount,
         addDeposit,
+        voidDeposit,
         getAccount
     }
 }

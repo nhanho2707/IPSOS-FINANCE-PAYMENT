@@ -57,7 +57,10 @@
         "notSaved": "The deposit was not saved. Check the amount and try again.",
         "added": "Deposit of {{amount}} added to the GotIt account.",
         "note": "Note (optional)",
-        "noteHelp": "E.g. bank transfer reference or invoice number"
+        "noteHelp": "E.g. bank transfer reference or invoice number",
+        "undo": "Undo",
+        "undoReason": "Undone right after adding",
+        "undone": "Deposit of {{amount}} undone. It stays in the history as voided."
     },
     "depositHistory": {
         "title": "GotIt deposit history",
@@ -69,6 +72,19 @@
         "notRecorded": "Not recorded",
         "notRecordedHint": "Added before the author of a deposit was recorded",
         "empty": "No deposits recorded yet.",
-        "loadFailed": "Could not load the deposit history."
+        "loadFailed": "Could not load the deposit history.",
+        "voidedBy": "Voided by {{name}} on {{date}}: {{reason}}",
+        "unknownUser": "unknown"
+    },
+    "depositVoid": {
+        "action": "Void deposit",
+        "title": "Void this deposit?",
+        "description": "{{amount}} added on {{date}} by {{name}}. A voided deposit stays in the history, struck through, and no longer counts toward the balance. To correct the amount, void it and add the right one.",
+        "reason": "Reason",
+        "reasonHelp": "E.g. typed 50,000,000 instead of 5,000,000",
+        "submit": "Void deposit",
+        "voided": "Deposit of {{amount}} voided.",
+        "alreadyVoided": "This deposit was already voided.",
+        "failed": "The deposit was not voided. Try again."
     }
 }

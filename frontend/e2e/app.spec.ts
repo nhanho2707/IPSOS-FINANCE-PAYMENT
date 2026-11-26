@@ -125,15 +125,40 @@ test.describe("admin", () => {
         await dialog.getByRole("button", { name: "Add deposit" }).click();
         expect((await saved).postDataJSON()).toEqual({ account_type: "gotit", amount: "50000000", note: "Bank transfer FT26306002" });
         await expect(page.getByText("Deposit of 50,000,000 ₫ added to the GotIt account.")).toBeVisible();
+        await capture(page, testInfo, "finance-deposit-undo", { fullPage: false });
+
+        // Undo straight from the confirmation voids the deposit just added.
+        const undone = page.waitForRequest((request) => request.url().endsWith("/gotit/account/deposits/6/void"));
+        await page.getByRole("button", { name: "Undo" }).click();
+        expect((await undone).postDataJSON()).toEqual({ reason: "Undone right after adding" });
+        await expect(page.getByText("Deposit of 50,000,000 ₫ undone. It stays in the history as voided.")).toBeVisible();
 
         await page.getByRole("button", { name: "Deposit history" }).click();
         const history = page.getByRole("dialog", { name: "GotIt deposit history" });
-        await expect(history.getByRole("row")).toHaveCount(5);
-        await expect(history.getByRole("row").nth(1)).toContainText("100,000,000 ₫");
-        await expect(history.getByRole("row").nth(1)).toContainText("Thu Vo");
-        await expect(history.getByRole("row").nth(1)).toContainText("Bank transfer FT26305811");
-        await expect(history.getByRole("row").nth(4)).toContainText("Not recorded");
+        await expect(history.getByRole("row")).toHaveCount(6);
+        await expect(history.getByRole("row").nth(1)).toContainText("800,000,000 ₫");
+        await expect(history.getByRole("row").nth(1)).toContainText("Voided by Thu Vo");
+        await expect(history.getByRole("row").nth(1)).toContainText("Typed 800,000,000 instead of 100,000,000");
+        await expect(history.getByRole("row").nth(1).getByRole("button", { name: "More actions" })).toHaveCount(0);
+        await expect(history.getByRole("row").nth(2)).toContainText("100,000,000 ₫");
+        await expect(history.getByRole("row").nth(2)).toContainText("Thu Vo");
+        await expect(history.getByRole("row").nth(2)).toContainText("Bank transfer FT26305811");
+        await expect(history.getByRole("row").nth(5)).toContainText("Not recorded");
         await capture(page, testInfo, "finance-deposit-history");
+
+        // Voiding from the history asks for a reason.
+        await history.getByRole("row").nth(3).getByRole("button", { name: "More actions" }).click();
+        await page.getByRole("menuitem", { name: "Void deposit" }).click();
+        const voidDialog = page.getByRole("dialog", { name: "Void this deposit?" });
+        await expect(voidDialog).toContainText("80,000,000 ₫ added on");
+        await expect(voidDialog.getByRole("button", { name: "Void deposit" })).toBeDisabled();
+        await voidDialog.getByLabel("Reason").fill("Duplicate of the September transfer");
+        await capture(page, testInfo, "finance-deposit-void", { fullPage: false });
+        const voidRequest = page.waitForRequest((request) => request.url().endsWith("/gotit/account/deposits/3/void"));
+        await voidDialog.getByRole("button", { name: "Void deposit" }).click();
+        expect((await voidRequest).postDataJSON()).toEqual({ reason: "Duplicate of the September transfer" });
+        await expect(page.getByText("Deposit of 80,000,000 ₫ voided.")).toBeVisible();
+        await expect(voidDialog).toBeHidden();
     });
 
     test("finance analysis: charts filter each other and the interviews export", async ({ page }, testInfo) => {

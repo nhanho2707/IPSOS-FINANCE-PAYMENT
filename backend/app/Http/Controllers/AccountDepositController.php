@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\AuditLogIndexRequest;
 use App\Http\Requests\StoreAccountDepositRequest;
+use App\Http\Requests\VoidAccountDepositRequest;
 use App\Http\Resources\AccountDepositResource;
 use App\Models\AccountDeposit;
 use App\Models\ProjectGotItVoucherTransaction;
@@ -31,7 +33,57 @@ class AccountDepositController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        return response()->json($this->accountSummary($validated['account_type']));
+        // The deposit comes back so the page can offer to undo it straight away.
+        return response()->json($this->accountSummary($validated['account_type']) + [
+            'deposit' => new AccountDepositResource($deposit->load('createdBy')),
+        ]);
+    }
+
+    public function void(VoidAccountDepositRequest $request, $depositId): JsonResponse
+    {
+        $reason = $request->validated()['reason'];
+
+        // The row lock makes a second click (or a second person) wait and then see the deposit already voided.
+        [$deposit, $alreadyVoided] = DB::transaction(function () use ($depositId, $reason) {
+            $deposit = AccountDeposit::whereKey($depositId)->lockForUpdate()->first();
+
+            if (!$deposit || $deposit->voided_at !== null) {
+                return [$deposit, true];
+            }
+
+            $deposit->update([
+                'voided_at' => now(),
+                'voided_by' => Auth::id(),
+                'void_reason' => $reason,
+            ]);
+
+            return [$deposit, false];
+        });
+
+        if (!$deposit) {
+            return response()->json([
+                'status_code' => 404,
+                'message' => 'Deposit not found.'
+            ], 404);
+        }
+
+        if ($alreadyVoided) {
+            return response()->json([
+                'status_code' => 409,
+                'message' => 'This deposit was already voided.'
+            ], 409);
+        }
+
+        Log::info('GotIt deposit voided', [
+            'deposit_id' => $deposit->id,
+            'amount' => $deposit->amount,
+            'user_id' => Auth::id(),
+            'reason' => $reason,
+        ]);
+
+        return response()->json($this->accountSummary($deposit->account_type) + [
+            'deposit' => new AccountDepositResource($deposit->load(['createdBy', 'voidedBy'])),
+        ]);
     }
 
     public function getGotItAccount($accountType): JsonResponse
@@ -61,7 +113,7 @@ class AccountDepositController extends Controller
 
     private function accountSummary(string $accountType): array
     {
-        $totalDeposit = AccountDeposit::where('account_type', $accountType)->sum('amount');
+        $totalDeposit = AccountDeposit::notVoided()->where('account_type', $accountType)->sum('amount');
 
         $spent = ProjectGotItVoucherTransaction::where('voucher_status', ProjectGotItVoucherTransaction::STATUS_VOUCHER_SUCCESS)
                             ->sum('amount');

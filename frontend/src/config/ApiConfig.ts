@@ -79,6 +79,7 @@ export const ApiConfig = {
     viewGotItAccount: `${host}/api/transaction-management/gotit/account/{accountType}/view`,
     depositedAccount: `${host}/api/transaction-management/gotit/account/store`,
     depositHistory: `${host}/api/transaction-management/gotit/account/{accountType}/deposits`,
+    voidDeposit: `${host}/api/transaction-management/gotit/account/deposits/{depositId}/void`,
 
     performTransaction: `${host}/api/project-management/gotit/transaction`,
     rejectTransaction: `${host}/api/project-management/gotit/reject-transaction`,

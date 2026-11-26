@@ -131,12 +131,17 @@ const paginated = (data: unknown[], total: number, message: string) => ({
 });
 
 // The oldest deposit predates recording who added it.
+// The oldest deposit predates recording who added it; the 800,000,000 one was a typo, voided.
+const notVoided = { voided_at: null, voided_by: null, void_reason: null };
 const gotitDeposits = [
-    { id: 4, amount: 100000000, note: "Bank transfer FT26305811", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-10-30T10:15:00+07:00" },
-    { id: 3, amount: 80000000, note: null, created_by: "Quang Le", created_by_email: "quang.le@ipsos.com", created_at: "2026-09-12T14:40:00+07:00" },
-    { id: 2, amount: 70000000, note: "Invoice 0412", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-07-03T09:05:00+07:00" },
-    { id: 1, amount: 50000000, note: null, created_by: null, created_by_email: null, created_at: "2026-04-01T11:00:00+07:00" },
+    { id: 5, amount: 800000000, note: "Bank transfer FT26305811", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-10-30T10:12:00+07:00",
+      voided_at: "2026-10-30T10:14:00+07:00", voided_by: "Thu Vo", void_reason: "Typed 800,000,000 instead of 100,000,000" },
+    { id: 4, amount: 100000000, note: "Bank transfer FT26305811", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-10-30T10:15:00+07:00", ...notVoided },
+    { id: 3, amount: 80000000, note: null, created_by: "Quang Le", created_by_email: "quang.le@ipsos.com", created_at: "2026-09-12T14:40:00+07:00", ...notVoided },
+    { id: 2, amount: 70000000, note: "Invoice 0412", created_by: "Thu Vo", created_by_email: "thu.vo@ipsos.com", created_at: "2026-07-03T09:05:00+07:00", ...notVoided },
+    { id: 1, amount: 50000000, note: null, created_by: null, created_by_email: null, created_at: "2026-04-01T11:00:00+07:00", ...notVoided },
 ];
+const newDeposit = { id: 6, amount: 50000000, note: "Bank transfer FT26306002", created_by: "Nhan Ho", created_by_email: "nhan.ho@ipsos.com", created_at: "2026-11-02T09:00:00+07:00", ...notVoided };
 
 const countBy = <T extends { status: string }>(rows: T[], statuses: string[]) =>
     Object.fromEntries(statuses.map((status) => [status, rows.filter((row) => row.status === status).length]));
@@ -199,7 +204,15 @@ export function respond(url: string): unknown {
     if (path.endsWith("/users/show")) return paginated(accounts, 7, "Successfully");
     if (path.endsWith("/vinnet/merchantinfo")) return { status_code: 200, data: JSON.stringify({ deposited: 500000000, spent: 412350000, balance: 87650000 }) };
     if (/gotit\/account\/.+\/view$/.test(path)) return { deposited: 300000000, balance: 64200000, spent: 235800000 };
-    if (path.endsWith("/gotit/account/store")) return { deposited: 350000000, balance: 114200000, spent: 235800000 };
+    if (path.endsWith("/gotit/account/store")) return { deposited: 350000000, balance: 114200000, spent: 235800000, deposit: newDeposit };
+    const voided = path.match(/gotit\/account\/deposits\/(\d+)\/void$/);
+    if (voided) {
+        const deposit = [newDeposit, ...gotitDeposits].find((row) => row.id === Number(voided[1])) ?? newDeposit;
+        return {
+            deposited: 300000000 - (deposit === newDeposit ? 0 : deposit.amount), balance: 64200000, spent: 235800000,
+            deposit: { ...deposit, voided_at: "2026-11-02T09:01:00+07:00", voided_by: "Nhan Ho", void_reason: "voided" },
+        };
+    }
     if (/gotit\/account\/.+\/deposits$/.test(path)) return paginated(gotitDeposits, gotitDeposits.length, "Successfully");
     if (path.endsWith("/quotation/versions")) return { project: projects[0], versions, message: "Successful." };
     if (path.endsWith("/quotation-template")) return quotationSchema;

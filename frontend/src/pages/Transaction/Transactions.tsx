@@ -15,7 +15,7 @@ import { useGotItAccount } from "../../hook/useGotItAccount";
 import { useTransactionStatistics } from "../../hook/useTransactionStatistics";
 import dayjs, { Dayjs } from "dayjs"
 import { ProjectData } from "../../config/ProjectFieldsConfig";
-import { GotItDeposit, LOW_BALANCE_THRESHOLDS, RECENT_SPEND_DAYS } from "../../config/FinanceConfig";
+import { DepositVoidResult, GotItDeposit, LOW_BALANCE_THRESHOLDS, RECENT_SPEND_DAYS } from "../../config/FinanceConfig";
 import { BRAND, getProviderStyle, NEUTRAL, STATUS_TONES } from "../../config/ThemeConfig";
 import { ProjectStatistics, TransactionChannel, TransactionStatisticsData } from "../../config/StatisticsConfig";
 import { useMetadata } from "../../hook/useMetadata";
@@ -33,6 +33,9 @@ import DetailDrawer from "../../components/DetailDrawer";
 import ReusableTable from "../../components/Table/ReusableTable";
 import { ColumnFormat } from "../../config/ColumnConfig";
 import { useGotItDeposits } from "../../hook/useGotItDeposits";
+import Block from "@mui/icons-material/Block";
+import CellStack from "../../components/Table/CellStack";
+import RowActions from "../../components/Table/RowActions";
 
 interface ProviderAccount {
     deposited: number;
@@ -163,7 +166,7 @@ const TopProjects: React.FC<{ projects: ProjectStatistics[]; period: string; onS
 
 const Transactions = () => {
     const { loading: vinnetLoading, vinnetAccount } = useVinnetAccount();
-    const { gotitAccount, addDeposit, loading: gotitLoading } = useGotItAccount('gotit');
+    const { gotitAccount, addDeposit, voidDeposit, loading: gotitLoading } = useGotItAccount('gotit');
     const [ searchParams, setSearchParams ] = useSearchParams();
     const tabParam = searchParams.get("tab");
     const tab: FinanceTab = TABS.find((item) => item === tabParam) ?? "overview";
@@ -179,8 +182,12 @@ const Transactions = () => {
     const [ note, setNote ] = useState("");
     const [ depositError, setDepositError ] = useState<string | null>(null);
     const [ historyOpen, setHistoryOpen ] = useState(false);
+    const [ voidTarget, setVoidTarget ] = useState<GotItDeposit | null>(null);
+    const [ voidReason, setVoidReason ] = useState("");
+    const [ voidError, setVoidError ] = useState<string | null>(null);
     const {
         deposits,
+        fetchDeposits,
         actionState: depositsState,
         total: depositsTotal,
         page: depositsPage,
@@ -226,6 +233,19 @@ const Transactions = () => {
         setOpen(true);
     }
 
+    const showVoidResult = (result: DepositVoidResult, successMessage: string) => {
+        if (result === "voided") showToast(successMessage);
+        else if (result === "alreadyVoided") showToast(t("finance.depositVoid.alreadyVoided"), "warning");
+        else showToast(t("finance.depositVoid.failed"), "error");
+
+        if (result !== "failed") fetchDeposits();
+    }
+
+    const undoDeposit = async (deposit: GotItDeposit) => {
+        const result = await voidDeposit(deposit.id, t("finance.deposit.undoReason"));
+        showVoidResult(result, t("finance.deposit.undone", { amount: formatMoney(deposit.amount) }));
+    }
+
     const handleAddDeposit = async () => {
         const saved = await addDeposit(amount, note);
 
@@ -235,7 +255,31 @@ const Transactions = () => {
         }
 
         setOpen(false);
-        showToast(t("finance.deposit.added", { amount: formatMoney(amount) }));
+        showToast(t("finance.deposit.added", { amount: formatMoney(amount) }), "success", {
+            label: t("finance.deposit.undo"),
+            onClick: () => undoDeposit(saved),
+        });
+    }
+
+    const openVoidDialog = (deposit: GotItDeposit) => {
+        setVoidReason("");
+        setVoidError(null);
+        setVoidTarget(deposit);
+    }
+
+    const handleVoidDeposit = async () => {
+        if (!voidTarget) return;
+
+        const result = await voidDeposit(voidTarget.id, voidReason.trim());
+
+        if (result === "failed") {
+            setVoidError(t("finance.depositVoid.failed"));
+            return;
+        }
+
+        const voided = voidTarget;
+        setVoidTarget(null);
+        showVoidResult(result, t("finance.depositVoid.voided", { amount: formatMoney(voided.amount) }));
     }
 
     const depositColumns: ColumnFormat[] = [
@@ -252,7 +296,11 @@ const Transactions = () => {
             type: "number",
             width: 150,
             align: "right",
-            renderCell: (row: GotItDeposit) => formatMoney(row.amount)
+            renderCell: (row: GotItDeposit) => (
+                <Box component="span" sx={row.voided_at ? { textDecoration: "line-through", color: "text.secondary" } : undefined}>
+                    {formatMoney(row.amount)}
+                </Box>
+            )
         },
         {
             label: t("finance.depositHistory.by"),
@@ -274,7 +322,35 @@ const Transactions = () => {
             name: "note",
             type: "string",
             flex: 1.5,
-            renderCell: (row: GotItDeposit) => row.note ?? "—"
+            renderCell: (row: GotItDeposit) => {
+                if (!row.voided_at) return row.note ?? "—";
+
+                const voidedBy = t("finance.depositHistory.voidedBy", {
+                    name: row.voided_by ?? t("finance.depositHistory.unknownUser"),
+                    date: formatDateTime(row.voided_at),
+                    reason: row.void_reason ?? "",
+                });
+
+                return <CellStack primary={row.note ?? "—"} secondary={voidedBy} title={voidedBy} />;
+            }
+        },
+        {
+            label: "",
+            name: "action",
+            type: "menu" as const,
+            align: "right" as const,
+            width: 56,
+            renderCell: (row: GotItDeposit) => (
+                <RowActions
+                    items={[{
+                        label: t("finance.depositVoid.action"),
+                        icon: Block,
+                        tone: "danger",
+                        hidden: Boolean(row.voided_at),
+                        onClick: () => openVoidDialog(row),
+                    }]}
+                />
+            )
         }
     ];
 
@@ -617,6 +693,36 @@ const Transactions = () => {
                     dense
                 />
             </DetailDrawer>
+
+            <FormDialog
+                open={Boolean(voidTarget)}
+                title={t("finance.depositVoid.title")}
+                description={voidTarget ? t("finance.depositVoid.description", {
+                    amount: formatMoney(voidTarget.amount),
+                    date: formatDateTime(voidTarget.created_at),
+                    name: voidTarget.created_by ?? t("finance.depositHistory.unknownUser"),
+                }) : undefined}
+                error={voidError}
+                onClose={() => setVoidTarget(null)}
+                onSubmit={handleVoidDeposit}
+                submitText={t("finance.depositVoid.submit")}
+                submitDisabled={voidReason.trim() === ""}
+                loading={gotitLoading}
+                tone="danger"
+                maxWidth="xs"
+            >
+                <TextField
+                    autoFocus
+                    size="small"
+                    label={t("finance.depositVoid.reason")}
+                    fullWidth
+                    required
+                    value={voidReason}
+                    onChange={(e) => setVoidReason(e.target.value)}
+                    helperText={t("finance.depositVoid.reasonHelp")}
+                    slotProps={{ htmlInput: { maxLength: 255 } }}
+                />
+            </FormDialog>
         </>
     );
 }

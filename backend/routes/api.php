@@ -172,6 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/gotit/account/store', [AccountDepositController::class, 'store']);
             Route::get('/gotit/account/{accountType}/view', [AccountDepositController::class, 'getGotItAccount']);
             Route::get('/gotit/account/{accountType}/deposits', [AccountDepositController::class, 'deposits']);
+            Route::post('/gotit/account/deposits/{depositId}/void', [AccountDepositController::class, 'void']);
             Route::get('/export', [ExportController::class, 'exportTransaction']);
             Route::get('/projects/export', [ExportController::class, 'exportTransactionByProjects']);
         });

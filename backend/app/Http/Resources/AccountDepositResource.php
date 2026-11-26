@@ -19,6 +19,9 @@ class AccountDepositResource extends JsonResource
             'created_by'       => $this->createdBy?->name,
             'created_by_email' => $this->createdBy?->email,
             'created_at'       => $this->created_at?->toIso8601String(),
+            'voided_at'        => $this->voided_at?->toIso8601String(),
+            'voided_by'        => $this->voidedBy?->name,
+            'void_reason'      => $this->void_reason,
         ];
     }
 }

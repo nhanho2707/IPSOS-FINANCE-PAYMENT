@@ -57,7 +57,10 @@
         "notSaved": "Chưa lưu được khoản nạp. Kiểm tra số tiền rồi thử lại.",
         "added": "Đã nạp {{amount}} vào tài khoản GotIt.",
         "note": "Ghi chú (không bắt buộc)",
-        "noteHelp": "Ví dụ: mã chuyển khoản hoặc số hoá đơn"
+        "noteHelp": "Ví dụ: mã chuyển khoản hoặc số hoá đơn",
+        "undo": "Hoàn tác",
+        "undoReason": "Hoàn tác ngay sau khi nạp",
+        "undone": "Đã hoàn tác lần nạp {{amount}}. Lần nạp vẫn nằm trong lịch sử với trạng thái đã huỷ."
     },
     "depositHistory": {
         "title": "Lịch sử nạp tiền GotIt",
@@ -69,6 +72,19 @@
         "notRecorded": "Không ghi nhận",
         "notRecordedHint": "Được nạp trước khi hệ thống ghi nhận người nạp",
         "empty": "Chưa có lần nạp tiền nào.",
-        "loadFailed": "Không tải được lịch sử nạp tiền."
+        "loadFailed": "Không tải được lịch sử nạp tiền.",
+        "voidedBy": "{{name}} huỷ lúc {{date}}: {{reason}}",
+        "unknownUser": "không rõ"
+    },
+    "depositVoid": {
+        "action": "Huỷ lần nạp",
+        "title": "Huỷ lần nạp này?",
+        "description": "{{amount}} được {{name}} nạp lúc {{date}}. Lần nạp bị huỷ vẫn nằm trong lịch sử, bị gạch ngang, và không còn được tính vào số dư. Muốn sửa số tiền, hãy huỷ rồi nạp lại số đúng.",
+        "reason": "Lý do",
+        "reasonHelp": "Ví dụ: nhập nhầm 50.000.000 thay vì 5.000.000",
+        "submit": "Huỷ lần nạp",
+        "voided": "Đã huỷ lần nạp {{amount}}.",
+        "alreadyVoided": "Lần nạp này đã được huỷ trước đó.",
+        "failed": "Chưa huỷ được lần nạp. Vui lòng thử lại."
     }
 }

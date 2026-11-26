@@ -13,7 +13,13 @@ export interface GotItDeposit {
     created_by: string | null;
     created_by_email: string | null;
     created_at: string;
+    // Set when the deposit was voided (entered by mistake); it then no longer counts toward the balance.
+    voided_at: string | null;
+    voided_by: string | null;
+    void_reason: string | null;
 }
+
+export type DepositVoidResult = "voided" | "alreadyVoided" | "failed";
 
 // The runway estimate on the provider cards uses the spending of this many recent days.
 export const RECENT_SPEND_DAYS = 30;

@@ -190,6 +190,8 @@ const [actionState, setActionState] = useState<ActionState>({
 
 ### GotIt (e-voucher)
 - Account balance tracked via deposit records in `AccountDeposit`. Each deposit keeps who added it (`created_user_id`) and an optional note; the GotIt card on the Finance page lists them under Deposit history.
+- Deposits are never deleted or entered as negative amounts. A mistaken one is voided (`voided_at`, `voided_by`, `void_reason`; `POST gotit/account/deposits/{id}/void`, reason required): it stays in the history struck through and `AccountDeposit::notVoided()` leaves it out of the balance. The confirmation after adding a deposit offers Undo, which voids it the same way.
+- `useToast().showToast(message, severity, { label, onClick })` adds an action button to a toast (kept on screen for 10 seconds).
 - Each transaction debits the balance; check balance before sending.
 
 ## Git & Branching
